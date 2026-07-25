@@ -35,6 +35,10 @@ Options:
                      Implementation repository Git remote URL for registration;
                      repeatable. Defaults to current repo's Git origin URL
                      when present
+  --domain-generated-file PATH
+                     Add a repo-root-relative generated domain output path to
+                     repos/<repo_id>/REPO.md domain_generated_files;
+                     repeatable, preserving first occurrence order
   --dir DIR           Working clone dir; default: PI_ENV_COORD_DIR or .pi-env/coordination
   --agent-id ID       Agent identity; default: PI_ENV_COORD_AGENT_ID or USER
   --bare-only         Only create the bare remote
@@ -149,6 +153,7 @@ Suggested coordination settings:
   Agent ID:                    $agent_id
   Implementation repo id:      ${implementation_repo_id:-<unresolved>}
   Implementation repo remote:  ${implementation_remotes_display:-<none>}
+  Domain generated files:      ${domain_generated_files_display:-<none>}
   Register implementation:     $register_repo
   Registration required:       $registration_required
 
@@ -303,8 +308,63 @@ bootstrap_set_repo_manifest_remotes() {
   return 0
 }
 
+bootstrap_validate_domain_generated_file() {
+  local path component
+  path="$1"
+  [ -n "$path" ] || coord_die "--domain-generated-file requires a non-empty repo-root-relative path"
+  case "$path" in
+    /*) coord_die "--domain-generated-file must be repo-root-relative, not absolute: $path" ;;
+  esac
+  IFS=/ read -r -a components <<<"$path"
+  for component in "${components[@]}"; do
+    [ "$component" != ".." ] \
+      || coord_die "--domain-generated-file must not contain '..' traversal components: $path"
+  done
+}
+
+bootstrap_add_domain_generated_file() {
+  local path existing
+  path="$1"
+  bootstrap_validate_domain_generated_file "$path"
+  for existing in "${domain_generated_files[@]}"; do
+    [ "$existing" != "$path" ] || return 0
+  done
+  domain_generated_files+=("$path")
+}
+
+bootstrap_set_repo_manifest_domain_generated_files() {
+  local manifest tmp files_text path
+  manifest="$1"
+  [ "${#domain_generated_files[@]}" -gt 0 ] || return 1
+  files_text=""
+  for path in "${domain_generated_files[@]}"; do
+    files_text="${files_text}  - $(coord_yaml_scalar "$path")"$'\n'
+  done
+  tmp="$(mktemp)"
+  awk -v files_text="$files_text" '
+    NR == 1 && $0 == "---" { in_fm = 1; print; next }
+    in_fm && /^domain_generated_files:/ {
+      printf "domain_generated_files:\n%s", files_text
+      skip_files = 1
+      saw_files = 1
+      next
+    }
+    skip_files && /^[[:space:]]*-[[:space:]]*/ { next }
+    skip_files { skip_files = 0 }
+    in_fm && $0 == "---" && !saw_files {
+      printf "domain_generated_files:\n%s", files_text
+      in_fm = 0
+      print
+      next
+    }
+    { print }
+  ' "$manifest" >"$tmp"
+  mv "$tmp" "$manifest"
+  return 0
+}
+
 bootstrap_register_or_report_repo() {
-  local match canonical kind status manifest repo_tool add_args actor
+  local match canonical kind status manifest repo_tool add_args actor changed
   [ -n "$implementation_repo_id" ] || return 0
   coord_repo_id_is_valid "$implementation_repo_id" \
     || coord_die "invalid repo id '$implementation_repo_id'; use lowercase letters, digits, dots, underscores, and hyphens"
@@ -322,17 +382,25 @@ bootstrap_register_or_report_repo() {
       coord_die "repo id '$implementation_repo_id' is $status as canonical repo '$canonical'; not reactivating retired registry entries"
     fi
     manifest="$(printf '%s' "$match" | cut -d: -f4-)"
+    changed=0
     if [ "${bootstrap_initialized_coordination:-0}" = "1" ] \
       && [ "$register_repo" = "1" ] \
       && [ "${#implementation_remotes[@]}" -gt 0 ] \
       && [ -f "$manifest" ] \
       && [ -z "$(coord_repo_manifest_list_values "$manifest" remotes | sed '/^$/d')" ]; then
-      bootstrap_set_repo_manifest_remotes "$manifest" "${implementation_remotes[@]}" || true
+      if bootstrap_set_repo_manifest_remotes "$manifest" "${implementation_remotes[@]}"; then
+        changed=1
+      fi
+    fi
+    if [ -f "$manifest" ] && bootstrap_set_repo_manifest_domain_generated_files "$manifest"; then
+      changed=1
+    fi
+    if [ "$changed" = "1" ]; then
       git -C "$coord_dir_abs" add "$manifest"
       actor="$(coord_effective_actor "$agent_id" "$(coord_default_role)")"
-      if (cd "$coord_dir_abs" && coord_commit_all_if_changed "Register $implementation_repo_id implementation repo remotes" "$actor"); then
+      if (cd "$coord_dir_abs" && coord_commit_all_if_changed "Update $implementation_repo_id repo manifest" "$actor"); then
         git -C "$coord_dir_abs" push origin HEAD >/dev/null
-        coord_note "recorded implementation remotes for '$implementation_repo_id'"
+        coord_note "updated implementation repo manifest for '$implementation_repo_id'"
       fi
       return 0
     fi
@@ -351,6 +419,7 @@ bootstrap_register_or_report_repo() {
     add_args+=(--remote "$remote")
   done
   "$repo_tool" "${add_args[@]}" >/dev/null
+  bootstrap_set_repo_manifest_domain_generated_files "$coord_dir_abs/repos/$implementation_repo_id/REPO.md" || true
   git -C "$coord_dir_abs" add "repos/$implementation_repo_id"
   actor="$(coord_effective_actor "$agent_id" "$(coord_default_role)")"
   if (cd "$coord_dir_abs" && coord_commit_all_if_changed "Register $implementation_repo_id implementation repo" "$actor"); then
@@ -471,6 +540,7 @@ project_key_arg=""
 repo_id_arg=""
 register_repo=0
 implementation_remotes=()
+domain_generated_files=()
 bare_only=0
 print_only=0
 status_after=1
@@ -527,6 +597,11 @@ while [ "$#" -gt 0 ]; do
     --implementation-remote)
       [ "$#" -ge 2 ] || coord_die "--implementation-remote requires a value"
       implementation_remotes+=("$2")
+      shift 2
+      ;;
+    --domain-generated-file)
+      [ "$#" -ge 2 ] || coord_die "--domain-generated-file requires a value"
+      bootstrap_add_domain_generated_file "$2"
       shift 2
       ;;
     --bare-only)
@@ -639,6 +714,7 @@ if [ "${#implementation_remotes[@]}" -eq 0 ]; then
   fi
 fi
 implementation_remotes_display="$(printf '%s ' "${implementation_remotes[@]}" | sed 's/[[:space:]]$//')"
+domain_generated_files_display="$(printf '%s ' "${domain_generated_files[@]}" | sed 's/[[:space:]]$//')"
 
 inspect_dir="$(pwd -P)"
 root_abs="$(coord_abs "$root")"

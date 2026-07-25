@@ -1557,7 +1557,10 @@ implementation repo. When `PI_ENV_COORD_DIR` is unset, fresh projects use
 
 Each `repos/<repo_id>/REPO.md` manifest can also declare the domain-wide
 generated outputs committed by that implementation repo, with paths relative to
-the implementation repo root, for example:
+the implementation repo root. During bootstrap, pass repeatable
+`--domain-generated-file PATH` options to write or update this list; paths must
+be repo-root-relative and must not contain `..` traversal components. For
+example:
 
 ```yaml
 domain_generated_files:

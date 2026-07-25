@@ -703,17 +703,25 @@ options. `--project` names the coordination domain and `--project-key`
 selects the domain-level item ID prefix stored in root `PROJECT.md`; neither
 option identifies the implementation repository namespace. A separate
 implementation `repo_id` must identify the current implementation repo.
+Repeatable `--domain-generated-file PATH` options must populate the resolved
+implementation repo manifest's `domain_generated_files` list in first-seen
+order without duplicates. Paths must be implementation-repo-root-relative;
+empty paths, absolute paths, and `..` traversal components are invalid.
+`--print-only` and `--dry-run` plans must show the requested generated-file
+settings without mutating coordination state.
 
 For existing coordination domains, bootstrap should support an explicit
 registration mode that attaches the current implementation repo and, only
 when requested, mutates shared coordination state. A real bootstrap may write
 `.pi-env-coordination.yaml` `repo_id` for the implementation repo. When an
 explicit registration option is provided, it may create the missing
-`repos/<repo_id>/REPO.md` manifest and issue-status directories, then commit
-and push that coordination-domain registry change. Without the explicit
-registration option, bootstrap must not silently add a repo namespace; it
-should report that the repo id is unregistered and tell the user how to
-register it.
+`repos/<repo_id>/REPO.md` manifest and issue-status directories, including any
+provided `domain_generated_files`, then commit and push that coordination-domain
+registry change. Existing registered repo manifests may be explicitly updated
+with a provided `domain_generated_files` list during bootstrap, committing and
+pushing when that manifest changes. Without the explicit registration option,
+bootstrap must not silently add a repo namespace; it should report that the repo
+id is unregistered and tell the user how to register it.
 
 `--print-only`/`--dry-run` must not create, restore, register, commit, push,
 or otherwise mutate anything. Default `pi-env` startup and non-registration
