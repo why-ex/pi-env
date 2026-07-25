@@ -108,12 +108,14 @@ run_sandbox_outer_only_case run --foo
 run_sandbox_outer_only_case --runtime nix
 run_sandbox_outer_only_case shell -- -lc true
 run_sandbox_outer_only_case sandbox --help
+run_sandbox_outer_only_case roles serial --role developer
 run_sandbox_outer_only_case install --prefix /tmp/pienv
 run_sandbox_outer_only_case uninstall --prefix /tmp/pienv
 
 (
   export PI_ENV_INSIDE_SANDBOX=1
   run_case $'cmd=pi-env-coord-status\narg=--repo-id\narg=pi-env' coord status --repo-id pi-env
+  run_case $'cmd=pi-env-serial-roles\narg=--help' roles serial --help
 )
 
 completion_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" completion bash)"

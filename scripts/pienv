@@ -697,7 +697,16 @@ case "${1:-}" in
     shift
     case "${1:-}" in
       ""|-h|--help) roles_help; exit 0 ;;
-      serial) shift; exec_command pi-env-serial-roles "$@" ;;
+      serial)
+        shift
+        if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+          case "${1:-}" in
+            -h|--help) run_command_help pi-env-serial-roles; exit 0 ;;
+            *) sandbox_outer_only roles serial "$@" ;;
+          esac
+        fi
+        exec_command pi-env-serial-roles "$@"
+        ;;
       *) unknown roles "${1:-}" ;;
     esac
     ;;
