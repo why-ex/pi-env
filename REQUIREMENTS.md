@@ -705,10 +705,14 @@ option identifies the implementation repository namespace. A separate
 implementation `repo_id` must identify the current implementation repo.
 Repeatable `--domain-generated-file PATH` options must populate the resolved
 implementation repo manifest's `domain_generated_files` list in first-seen
-order without duplicates. Paths must be implementation-repo-root-relative;
-empty paths, absolute paths, and `..` traversal components are invalid.
-`--print-only` and `--dry-run` plans must show the requested generated-file
-settings without mutating coordination state.
+order without duplicates. The `--generated-requirements-docs` convenience alias
+must expand to `--domain-generated-file REQUIREMENTS.md` and
+`--domain-generated-file REQUIREMENTS_COVERAGE.md`; it must compose with
+explicit generated-file options using the same first-seen de-duplication, and
+must not imply registration or alter project/project-key semantics. Paths must
+be implementation-repo-root-relative; empty paths, absolute paths, and `..`
+traversal components are invalid. `--print-only` and `--dry-run` plans must
+show the requested generated-file settings without mutating coordination state.
 
 For existing coordination domains, bootstrap should support an explicit
 registration mode that attaches the current implementation repo and, only

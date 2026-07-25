@@ -1559,8 +1559,12 @@ Each `repos/<repo_id>/REPO.md` manifest can also declare the domain-wide
 generated outputs committed by that implementation repo, with paths relative to
 the implementation repo root. During bootstrap, pass repeatable
 `--domain-generated-file PATH` options to write or update this list; paths must
-be repo-root-relative and must not contain `..` traversal components. For
-example:
+be repo-root-relative and must not contain `..` traversal components. As a
+convenience for repos that commit both generated requirements documents,
+`--generated-requirements-docs` expands to `--domain-generated-file
+REQUIREMENTS.md` and `--domain-generated-file REQUIREMENTS_COVERAGE.md`; it can
+be combined with explicit generated-file options, with duplicates removed in
+first-seen order. For example:
 
 ```yaml
 domain_generated_files:

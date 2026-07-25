@@ -39,6 +39,9 @@ Options:
                      Add a repo-root-relative generated domain output path to
                      repos/<repo_id>/REPO.md domain_generated_files;
                      repeatable, preserving first occurrence order
+  --generated-requirements-docs
+                     Convenience alias for --domain-generated-file REQUIREMENTS.md
+                     and --domain-generated-file REQUIREMENTS_COVERAGE.md
   --dir DIR           Working clone dir; default: PI_ENV_COORD_DIR or .pi-env/coordination
   --agent-id ID       Agent identity; default: PI_ENV_COORD_AGENT_ID or USER
   --bare-only         Only create the bare remote
@@ -603,6 +606,11 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || coord_die "--domain-generated-file requires a value"
       bootstrap_add_domain_generated_file "$2"
       shift 2
+      ;;
+    --generated-requirements-docs)
+      bootstrap_add_domain_generated_file REQUIREMENTS.md
+      bootstrap_add_domain_generated_file REQUIREMENTS_COVERAGE.md
+      shift
       ;;
     --bare-only)
       bare_only=1
