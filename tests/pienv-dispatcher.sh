@@ -16,6 +16,10 @@ make_stub() {
 set -euo pipefail
 {
   printf 'cmd=%s\n' "$(basename "$0")"
+  if [ "${PIENV_TEST_LOG_CONTEXT:-0}" = "1" ]; then
+    printf 'cwd=%s\n' "$PWD"
+    printf 'PI_ENV_COORD_DIR=%s\n' "${PI_ENV_COORD_DIR:-}"
+  fi
   for arg in "$@"; do
     printf 'arg=%s\n' "$arg"
   done
@@ -25,7 +29,7 @@ STUB
 }
 
 for name in \
-  pi-env pi-env-shell pi-env-bwrap pi-env-bootstrap-coordination \
+  nix pi-env pi-env-shell pi-env-bwrap pi-env-bootstrap-coordination \
   pi-env-coord-init pi-env-coord-clone pi-env-coord-status pi-env-coord-list \
   pi-env-coord-cat pi-env-coord-new pi-env-coord-claim pi-env-coord-done \
   pi-env-coord-review pi-env-coord-verify pi-env-coord-close pi-env-coord-pull \
@@ -112,11 +116,56 @@ run_sandbox_outer_only_case roles serial --role developer
 run_sandbox_outer_only_case install --prefix /tmp/pienv
 run_sandbox_outer_only_case uninstall --prefix /tmp/pienv
 
+run_sandbox_safe_no_dispatch_case() {
+  local args=("$@")
+  : > "$tmp_dir/log"
+  if ! PI_ENV_INSIDE_SANDBOX=1 PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
+    echo "in-sandbox safe command unexpectedly failed: pienv ${args[*]}" >&2
+    cat "$tmp_dir/err" >&2
+    exit 1
+  fi
+  if [ -s "$tmp_dir/log" ]; then
+    echo "in-sandbox safe command dispatched unexpectedly: pienv ${args[*]}" >&2
+    cat "$tmp_dir/log" >&2
+    exit 1
+  fi
+}
+
+run_sandbox_context_case() {
+  local expected="$1"
+  shift
+  : > "$tmp_dir/log"
+  mkdir -p "$tmp_dir/project" "$tmp_dir/coord"
+  (
+    cd "$tmp_dir/project"
+    PI_ENV_INSIDE_SANDBOX=1 \
+      PI_ENV_COORD_DIR="$tmp_dir/coord" \
+      PIENV_TEST_LOG_CONTEXT=1 \
+      PIENV_TEST_LOG="$tmp_dir/log" \
+      PATH="$tmp_dir/bin:$PATH" \
+      "$tmp_dir/support/pienv" "$@"
+  )
+  actual="$(cat "$tmp_dir/log")"
+  if [ "$actual" != "$expected" ]; then
+    echo "in-sandbox context dispatch mismatch for args: $*" >&2
+    echo "expected:" >&2
+    printf '%s\n' "$expected" >&2
+    echo "actual:" >&2
+    printf '%s\n' "$actual" >&2
+    exit 1
+  fi
+}
+
+run_sandbox_safe_no_dispatch_case help
+run_sandbox_safe_no_dispatch_case help coord
+run_sandbox_safe_no_dispatch_case recipe flake-agent-shell --help
 (
   export PI_ENV_INSIDE_SANDBOX=1
   run_case $'cmd=pi-env-coord-status\narg=--repo-id\narg=pi-env' coord status --repo-id pi-env
   run_case $'cmd=pi-env-serial-roles\narg=--help' roles serial --help
 )
+run_sandbox_context_case $'cmd=pi-env-coord-status\ncwd='"$tmp_dir"$'/project\nPI_ENV_COORD_DIR='"$tmp_dir"$'/coord' coord status
+run_sandbox_context_case $'cmd=pi-env-bootstrap-coordination\ncwd='"$tmp_dir"$'/project\nPI_ENV_COORD_DIR='"$tmp_dir"$'/coord\narg=--print-only' coord bootstrap --print-only
 
 completion_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" completion bash)"
 case "$completion_output" in
