@@ -197,16 +197,14 @@
           agentCoordCommands = builtins.attrValues (mkAgentCoordCommands pkgs);
           coordinationPackages = if includeCoordinationHelpers then agentCoordCommands else [ ];
           roleManagerPackage = mkRoleManagerPackage pkgs;
+          # Only expose sandbox-aware commands inside Pi.  The outer runtime
+          # launchers remain available in the dev shell itself, but are kept
+          # off PI_ENV_BWRAP_EXTRA_PATH so they cannot be invoked directly from
+          # inside the Bubblewrap sandbox.
           piSandboxCommandPath = pkgs.lib.makeBinPath ([
-            piBwrap
-            piEnv
-            piEnvShell
             pienv
           ] ++ coordinationPackages);
           extraPackagePath = pkgs.lib.makeBinPath (extraPackages ++ [
-            piBwrap
-            piEnv
-            piEnvShell
             pienv
           ] ++ coordinationPackages);
         in

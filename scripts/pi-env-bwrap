@@ -907,6 +907,7 @@ copy_env PI_ENV_COORD_PROJECT
 copy_env PI_ENV_COORD_AGENT_ID
 copy_env PI_ENV_COORD_PROJECT_KEY
 copy_env PI_ENV_COORD_ROLE
+copy_env PI_ENV_NIX_SANDBOX_COMMAND_PATH
 if [ -n "$sandbox_coord_dir" ]; then
   set_env PI_ENV_COORD_DIR "$sandbox_coord_dir"
 else
