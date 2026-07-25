@@ -197,7 +197,18 @@
           agentCoordCommands = builtins.attrValues (mkAgentCoordCommands pkgs);
           coordinationPackages = if includeCoordinationHelpers then agentCoordCommands else [ ];
           roleManagerPackage = mkRoleManagerPackage pkgs;
-          extraPackagePath = pkgs.lib.makeBinPath extraPackages;
+          piSandboxCommandPath = pkgs.lib.makeBinPath ([
+            piBwrap
+            piEnv
+            piEnvShell
+            pienv
+          ] ++ coordinationPackages);
+          extraPackagePath = pkgs.lib.makeBinPath (extraPackages ++ [
+            piBwrap
+            piEnv
+            piEnvShell
+            pienv
+          ] ++ coordinationPackages);
         in
         pkgs.mkShell {
           packages = (mkRuntime pkgs) ++ (mkDevShellTools pkgs) ++ [
@@ -212,6 +223,7 @@
             export PI_ENV_DEV_SHELL_PS1="$PS1"
             export PI_ENV_ROLE_MANAGER_PACKAGE="${roleManagerPackage}"
             export PI_ENV_NIX_PROJECT_BWRAP="${piBwrap}/bin/pi-env-bwrap"
+            export PI_ENV_NIX_SANDBOX_COMMAND_PATH="${piSandboxCommandPath}"
             if [ -n "${extraPackagePath}" ]; then
               if [ -n "''${PI_ENV_BWRAP_EXTRA_PATH:-}" ]; then
                 export PI_ENV_BWRAP_EXTRA_PATH="${extraPackagePath}:$PI_ENV_BWRAP_EXTRA_PATH"

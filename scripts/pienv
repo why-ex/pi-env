@@ -23,6 +23,8 @@ Usage:
   pienv install [args...]
   pienv uninstall [args...]
   pienv completion bash
+  pienv diagnostics
+  pienv version
   pienv help [command...]
 
 Commands:
@@ -36,6 +38,8 @@ Commands:
   install             Non-Nix installer (existing command: pi-env-install-non-nix)
   uninstall           Non-Nix uninstaller (existing command: pi-env-uninstall)
   completion bash     Print Bash completion for pienv
+  diagnostics         Print sandbox/runtime diagnostics without launching Pi
+  version             Print pi-env version information
   help                Show help for pienv commands
 
 Launcher options for the default, run, shell, and pi-env --raw forms:
@@ -53,6 +57,35 @@ recipe, install, uninstall, and sandbox commands have separate option sets.
 Use 'pienv -- ...' to pass a first Pi argument that would otherwise be
 parsed as a pienv subcommand.
 USAGE
+}
+
+version_output() {
+  if [ -n "${PI_ENV_VERSION:-}" ]; then
+    printf 'pienv %s\n' "$PI_ENV_VERSION"
+  else
+    printf 'pienv (pi-env checkout)\n'
+  fi
+}
+
+diagnostics_output() {
+  printf 'PI_ENV_INSIDE_SANDBOX=%s\n' "${PI_ENV_INSIDE_SANDBOX:-0}"
+  printf 'PI_ENV_COORD_DIR=%s\n' "${PI_ENV_COORD_DIR:-}"
+  printf 'PI_ENV_COORD_REMOTE=%s\n' "${PI_ENV_COORD_REMOTE:-}"
+  printf 'PI_ENV_NIX_SANDBOX_COMMAND_PATH=%s\n' "${PI_ENV_NIX_SANDBOX_COMMAND_PATH:-}"
+  if command -v pienv >/dev/null 2>&1; then
+    printf 'pienv=%s\n' "$(command -v pienv)"
+  fi
+  if command -v pi-env-coord-status >/dev/null 2>&1; then
+    printf 'coordination_helpers=available\n'
+  else
+    printf 'coordination_helpers=unavailable\n'
+  fi
+}
+
+sandbox_outer_only() {
+  echo "pienv: '$*' must be run from the outer terminal, not from inside Pi's sandbox." >&2
+  echo "pienv: inside the sandbox, use 'pienv help', 'pienv diagnostics', 'pienv recipe ...', or 'pienv coord ...'." >&2
+  exit 2
 }
 
 coord_help() {
@@ -337,7 +370,7 @@ _pienv() {
       command_path="recipe"
       [ "${words[2]:-}" = "flake-agent-shell" ] && command_path="recipe flake-agent-shell"
       ;;
-    install|uninstall|completion|help) command_path="${words[1]}" ;;
+    install|uninstall|completion|diagnostics|version|help) command_path="${words[1]}" ;;
   esac
 
   if [ "$prev" = "--runtime" ]; then
@@ -383,7 +416,7 @@ _pienv() {
   fi
 
   case "$cword" in
-    1) COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall help completion") ); return 0 ;;
+    1) COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version help completion") ); return 0 ;;
   esac
 
   case "${words[1]:-}" in
@@ -408,7 +441,7 @@ _pienv() {
       ;;
     help)
       case "${words[2]:-}" in
-        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall completion") ) ;;
+        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version completion") ) ;;
         coord)
           case "${words[3]:-}" in
             "") [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
@@ -537,6 +570,8 @@ help_dispatch() {
     shell) run_command_help pi-env-shell ;;
     sandbox) run_command_help pi-env-bwrap ;;
     install) run_command_help pi-env-install-non-nix ;;
+    diagnostics) diagnostics_output ;;
+    version) version_output ;;
     uninstall)
       if command -v pi-env-uninstall >/dev/null 2>&1; then
         run_command_help pi-env-uninstall
@@ -555,6 +590,9 @@ unknown() {
 }
 
 if [ "$#" -eq 0 ]; then
+  if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    sandbox_outer_only run
+  fi
   exec_command pi-env
 fi
 
@@ -563,28 +601,57 @@ case "${1:-}" in
     usage
     exit 0
     ;;
+  --version|version)
+    version_output
+    exit 0
+    ;;
+  diagnostics|diagnose|diag)
+    diagnostics_output
+    exit 0
+    ;;
+  --runtime|--runtime=*|--flake|--flake=*|--devshell|--devshell=*|--raw)
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only "$@"
+    fi
+    exec_command pi-env "$@"
+    ;;
   help)
     shift
     help_dispatch "$@"
     exit 0
     ;;
   --)
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only "$@"
+    fi
     shift
     exec_command pi-env "$@"
     ;;
   run)
     shift
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only run "$@"
+    fi
     exec_command pi-env "$@"
     ;;
   raw)
     shift
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only raw "$@"
+    fi
     exec_command pi-env --raw "$@"
     ;;
   shell)
     shift
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only shell "$@"
+    fi
     exec_command pi-env-shell "$@"
     ;;
   sandbox)
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only sandbox "${@:2}"
+    fi
     shift
     case "${1:-}" in
       -h|--help) run_command_help pi-env-bwrap; exit 0 ;;
@@ -651,10 +718,16 @@ case "${1:-}" in
     ;;
   install)
     shift
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only install "$@"
+    fi
     exec_command pi-env-install-non-nix "$@"
     ;;
   uninstall)
     shift
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only uninstall "$@"
+    fi
     if command -v pi-env-uninstall >/dev/null 2>&1; then
       exec_command pi-env-uninstall "$@"
     fi
@@ -673,6 +746,9 @@ case "${1:-}" in
     esac
     ;;
   *)
+    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only "$@"
+    fi
     exec_command pi-env "$@"
     ;;
 esac

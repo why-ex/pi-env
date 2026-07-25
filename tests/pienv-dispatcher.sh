@@ -72,6 +72,50 @@ run_case $'cmd=pi-env-uninstall\narg=--prefix\narg=/tmp/pienv' uninstall --prefi
 rm "$tmp_dir/bin/pi-env-uninstall"
 run_case $'cmd=pi-env-install-non-nix\narg=--uninstall\narg=--prefix\narg=/tmp/pienv' uninstall --prefix /tmp/pienv
 
+version_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" version)"
+case "$version_output" in
+  'pienv '*) ;;
+  *) echo "pienv version did not print version output" >&2; exit 1 ;;
+esac
+
+diagnostics_output="$(PI_ENV_INSIDE_SANDBOX=1 PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" diagnostics)"
+case "$diagnostics_output" in
+  *'PI_ENV_INSIDE_SANDBOX=1'*'coordination_helpers=available'* ) ;;
+  *) echo "pienv diagnostics did not report sandbox/runtime state" >&2; exit 1 ;;
+esac
+
+run_sandbox_outer_only_case() {
+  local args=("$@")
+  : > "$tmp_dir/log"
+  if PI_ENV_INSIDE_SANDBOX=1 PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
+    echo "in-sandbox outer-only command unexpectedly succeeded: pienv ${args[*]}" >&2
+    exit 1
+  fi
+  if [ -s "$tmp_dir/log" ]; then
+    echo "in-sandbox outer-only command dispatched unexpectedly: pienv ${args[*]}" >&2
+    cat "$tmp_dir/log" >&2
+    exit 1
+  fi
+  if ! grep -Fq 'must be run from the outer terminal' "$tmp_dir/err"; then
+    echo "in-sandbox outer-only command missed actionable diagnostic: pienv ${args[*]}" >&2
+    cat "$tmp_dir/err" >&2
+    exit 1
+  fi
+}
+
+run_sandbox_outer_only_case
+run_sandbox_outer_only_case run --foo
+run_sandbox_outer_only_case --runtime nix
+run_sandbox_outer_only_case shell -- -lc true
+run_sandbox_outer_only_case sandbox --help
+run_sandbox_outer_only_case install --prefix /tmp/pienv
+run_sandbox_outer_only_case uninstall --prefix /tmp/pienv
+
+(
+  export PI_ENV_INSIDE_SANDBOX=1
+  run_case $'cmd=pi-env-coord-status\narg=--repo-id\narg=pi-env' coord status --repo-id pi-env
+)
+
 completion_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" completion bash)"
 case "$completion_output" in
   *'complete -F _pienv pienv'*) ;;
@@ -143,7 +187,9 @@ for snippet in \
   'PI_ENV_FLAKE' \
   'PI_ENV_NIX_DEVSHELL' \
   'CLI options win' \
-  'pienv raw'; do
+  'pienv raw' \
+  'pienv diagnostics' \
+  'pienv version'; do
   if ! grep -Fq -- "$snippet" <<<"$help_output"; then
     echo "pienv help missed command, recipe, or runtime launcher guidance: $snippet" >&2
     exit 1

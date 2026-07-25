@@ -1002,6 +1002,7 @@ bwrap_args+=(
   --setenv PWD "$inside_cwd"
   --setenv PI_CODING_AGENT_DIR /home/pi/.pi/agent
   --setenv PI_CODING_AGENT_SESSION_DIR /home/pi/.pi/agent/sessions
+  --setenv PI_ENV_INSIDE_SANDBOX 1
   --setenv XDG_CACHE_HOME /home/pi/.cache
   --setenv TMPDIR /tmp
   --setenv PATH "$sandbox_path"
