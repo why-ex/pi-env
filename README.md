@@ -1557,14 +1557,17 @@ implementation repo. When `PI_ENV_COORD_DIR` is unset, fresh projects use
 
 Each `repos/<repo_id>/REPO.md` manifest can also declare the domain-wide
 generated outputs committed by that implementation repo, with paths relative to
-the implementation repo root. During bootstrap, pass repeatable
-`--domain-generated-file PATH` options to write or update this list; paths must
-be repo-root-relative and must not contain `..` traversal components. As a
+the implementation repo root. During `pienv coord bootstrap`, pass repeatable
+`--domain-generated-file PATH` options to write or update the resolved
+implementation repo manifest's `domain_generated_files` list; paths must be
+repo-root-relative and must not contain `..` traversal components. As a
 convenience for repos that commit both generated requirements documents,
 `--generated-requirements-docs` expands to `--domain-generated-file
 REQUIREMENTS.md` and `--domain-generated-file REQUIREMENTS_COVERAGE.md`; it can
 be combined with explicit generated-file options, with duplicates removed in
-first-seen order. For example:
+first-seen order. These options only update the resolved manifest list. They do
+not imply `--register-repo`, select a different repo id, or change the
+coordination `--project`/`--project-key` domain semantics. For example:
 
 ```yaml
 domain_generated_files:

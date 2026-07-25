@@ -300,7 +300,7 @@ _pienv() {
   }
 
   launcher_options="--runtime --runtime= --flake --flake= --devshell --devshell= --help -h"
-  path_options="--coord-dir --coordination-dir --designs-dir --output -o --prefix --artifact-url --flake"
+  path_options="--coord-dir --coordination-dir --designs-dir --output -o --prefix --artifact-url --flake --domain-generated-file"
 
   raw_marker_seen=false
   for ((i = 1; i < cword; i++)); do
@@ -362,7 +362,7 @@ _pienv() {
       coord\ requirements\ generate) option_words="--project --coordination-dir --designs-dir --output -o --help -h" ;;
       coord\ requirements\ coverage) option_words="--project --coordination-dir --designs-dir --output -o --help -h" ;;
       coord\ claim|coord\ done|coord\ review|coord\ verify|coord\ close) option_words="--coord-dir --agent-id --role --result --message --no-pull --no-push --force --pass --fail --help -h" ;;
-      coord\ bootstrap) option_words="--project-root --root --remote --project --project-key --repo-id --register-repo --implementation-remote --dir --agent-id --bare-only --print-only --dry-run --no-status --help -h" ;;
+      coord\ bootstrap) option_words="--project-root --root --remote --project --project-key --repo-id --register-repo --implementation-remote --domain-generated-file --generated-requirements-docs --dir --agent-id --bare-only --print-only --dry-run --no-status --help -h" ;;
       coord\ pull|coord\ push|coord\ lint|coord\ repo|coord\ init|coord\ clone|coord\ new) option_words="--coord-dir --repo-id --help -h" ;;
       run|shell|"")
         if $raw_marker_seen; then
