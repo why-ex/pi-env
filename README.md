@@ -707,8 +707,14 @@ Then use:
 
 ```bash
 nix develop .#agent
-pienv
+pienv --runtime nix
 ```
+
+With `--runtime nix`, `pienv` enters the project's `.#agent` shell before Pi
+starts, so the sandbox inherits the tools and pi-env helpers from that Nix
+shell. By contrast, Pi TUI `!` and `!!` shell escapes run later from inside the
+already-created sandbox; they can use only the in-Pi command surface described
+in the command reference and cannot change the outer runtime selection.
 
 #### Wrap the devshell with `mkPiShell`
 
@@ -842,6 +848,42 @@ Select the runtime with `--runtime host|nix|auto` or
 `PI_ENV_RUNTIME=host|nix|auto`; the command-line option wins. Host runtime is
 unpinned and uses admitted host tools. Nix runtime is reproducible and pinned
 by the selected pi-env flake, entering `nix develop` when needed.
+
+#### Outer-terminal vs in-Pi `pienv` commands
+
+Pi TUI shell escapes (`!command` and `!!command`) run after Pi has already
+started, so they execute inside the Bubblewrap sandbox at `/workspace`, with the
+isolated home and deliberately limited credential/host filesystem view described
+below. They do not re-enter the outer terminal.
+
+The full launcher surface is for the outer terminal before Pi starts. Run these
+from your normal shell when you need to choose a runtime, enter a shell, manage
+installation, or start a new Pi sandbox:
+
+| Blocked inside Pi | Outer-terminal equivalent |
+| --- | --- |
+| `pienv`, `pienv run ...` | Start or resume Pi from the outer terminal with `pienv ...`. |
+| `pienv --runtime nix|host|auto ...` | Select the runtime before launch, for example `pienv --runtime nix ...`. |
+| `pienv shell ...` | Open a runtime/sandbox shell from outside Pi with `pienv shell ...`. |
+| `pienv sandbox ...`, `pienv sandbox shell ...` | Start the lower-level sandbox from outside Pi with the same command. |
+| `pienv install ...` | Install from the outer terminal, for example `pienv install --prefix ~/.local`. |
+| `pienv uninstall ...` | Uninstall from the outer terminal with `pienv uninstall ...`. |
+| `pienv roles serial ...` | Run serial orchestration from the outer terminal; `pienv roles serial --help` is allowed inside Pi for guidance. |
+
+Inside Pi, use the sandbox-safe subset for discovery, diagnostics, recipes, and
+coordination state that is already available in the sandbox:
+
+- `pienv help`, `pienv help coord`, `pienv help coord status`
+- `pienv version` and `pienv diagnostics`
+- `pienv recipe flake-agent-shell`
+- `pienv coord status`, `pienv coord list ...`, and `pienv coord show ITEM`
+- `pienv coord bootstrap --print-only` for bootstrap planning
+- other `pienv coord ...` helpers when their required coordination repository,
+  remotes, and credentials are intentionally available inside the sandbox
+
+Blocked commands fail with an actionable diagnostic instead of dispatching to
+the launcher. The same guidance is covered by `tests/pienv-dispatcher.sh` so
+humans and agents see consistent operational advice.
 
 #### `pienv` command mapping
 
@@ -1440,6 +1482,21 @@ pienv coord bootstrap --project-root /path/to/project --print-only
 pienv coord bootstrap --print-only
 ```
 
+From inside Pi, prefer planning first:
+
+```bash
+!pienv coord status
+!pienv coord bootstrap --print-only
+```
+
+Review the printed `PI_ENV_COORD_*` values and the suggested init/bootstrap
+command. For local-only setup, run the real `pienv coord bootstrap ...` from the
+outer terminal or paste it into a controlled sandbox shell if that is the
+intended context. For shared remotes that need SSH keys, tokens, or credential
+helpers, run or copy the real bootstrap command in the outer terminal or in an
+environment where those credentials have been deliberately provided; the normal
+Pi sandbox does not receive host Git credentials automatically.
+
 Create or bootstrap a local-only coordination domain for one implementation
 repo:
 
@@ -1544,7 +1601,11 @@ required. A local path remote is created by `pi-env-coord-init` when missing;
 Git-server remotes must already exist and be accessible to Git. Provide SSH
 keys, tokens, or credential helpers through narrowly-scoped sandbox/project
 configuration as needed; pi-env does not import the host `~/.ssh` directory or
-all host Git credentials wholesale.
+all host Git credentials wholesale. Remote Git operations launched from inside
+Pi remain constrained by the same sandbox credential policy and host-home
+isolation: Git config may be copied, but credential stores, SSH keys, signing
+keys, cloud credential directories, and the host home are not mounted unless you
+explicitly arrange a narrower project-specific mechanism.
 
 It then clones/scaffolds `$PI_ENV_COORD_DIR` with `AGENTS.md`, domain
 `PROJECT.md` metadata, a repo namespace at
