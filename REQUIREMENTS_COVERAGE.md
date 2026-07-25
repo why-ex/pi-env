@@ -4,8 +4,8 @@ This file is generated from active requirement items and `designs/*.md`.
 
 ## Summary
 
-- Requirements: 173
-- Covered by design: 173
+- Requirements: 174
+- Covered by design: 174
 - Not covered by design: 0
 
 ## Coverage by requirement
@@ -87,6 +87,7 @@ This file is generated from active requirement items and `designs/*.md`.
 | CMD-025 | PIENV-FRQ-20260711-092100-003 | designs/pienv-command-namespace.md |
 | CMD-026 | PIENV-FRQ-20260711-170000-001 | designs/pienv-command-namespace.md |
 | CMD-027 | PIENV-FRQ-20260720-091901-001 | designs/nix-runtime.md |
+| CMD-028 | PIENV-FRQ-20260725-125507-001 | designs/pienv-command-namespace.md |
 | PATH-004 | PIENV-FRQ-20260612-210000-051 | designs/bubblewrap-sandbox.md |
 | PATH-005 | PIENV-FRQ-20260612-210000-052 | designs/bubblewrap-sandbox.md |
 | PATH-006 | PIENV-FRQ-20260701-110514-001 | designs/host-runtime.md |

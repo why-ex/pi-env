@@ -179,6 +179,44 @@ entrypoints. The hard rename removes `pi-bwrap`, `bootstrap-coordination`,
 command surface. Users should call `pienv ...` for normal workflows or the
 renamed `pi-env-*` command directly only for low-level/debug workflows.
 
+## In-sandbox command surface
+
+Pi TUI shell commands (`!` and `!!`) execute inside the Bubblewrap sandbox,
+after `pienv --runtime ...` has already selected the runtime and started Pi.
+The canonical namespace should therefore have a sandbox-aware mode rather than
+trying to behave like the outer launcher recursively.
+
+`pi-env-bwrap` should set an explicit in-sandbox marker such as
+`PI_ENV_INSIDE_SANDBOX=1`. The dispatcher can use that marker to apply an
+allow/block table:
+
+- allow non-launcher discovery and diagnostic commands (`help`, grouped help,
+  version/doctor-style output, completion printing when harmless, and
+  `recipe` commands);
+- allow coordination helpers that operate on the mounted project and
+  coordination clone, including status/list/show and normal lifecycle helpers;
+- allow `pienv coord bootstrap --print-only` for planning, while real
+  bootstrap remains constrained by the mounted filesystem and available Git
+  authentication;
+- block runtime and process-boundary commands (`pienv` default launch,
+  `run`, `--runtime ...`, `shell`, `sandbox`, `install`, and `uninstall`) with
+  diagnostics that tell users to run the equivalent command in the outer
+  terminal.
+
+The implementation should expose the safe `pienv` entrypoint inside the
+sandbox only when the selected runtime or devshell supplies it. In Nix
+`mkPiShell` environments, the sandbox PATH can be extended with Nix-store
+package paths for the dispatcher and, when `includeCoordinationHelpers = true`,
+the coordination helpers. This keeps the existing no-host-home and explicit
+PATH policies intact while making human and agent commands symmetric for
+coordination workflows.
+
+Remote coordination operations from inside Pi should not relax credential
+policy. If SSH keys, credential helpers, or host-home files are unavailable,
+commands should fail clearly and documentation should recommend running the
+remote-authenticated operation from the outer terminal or using an existing
+explicit sandbox opt-in, not broad default mounts.
+
 ## Covers
 
 | Requirement | Coordination item |
@@ -187,4 +225,5 @@ renamed `pi-env-*` command directly only for low-level/debug workflows.
 | CMD-024 | PIENV-FRQ-20260711-092100-002 |
 | CMD-025 | PIENV-FRQ-20260711-092100-003 |
 | CMD-026 | PIENV-FRQ-20260711-170000-001 |
+| CMD-028 | PIENV-FRQ-20260725-125507-001 |
 | CRQ-015 | PIENV-CRQ-20260711-092100-001 |

@@ -705,14 +705,15 @@ option identifies the implementation repository namespace. A separate
 implementation `repo_id` must identify the current implementation repo.
 Repeatable `--domain-generated-file PATH` options must populate the resolved
 implementation repo manifest's `domain_generated_files` list in first-seen
-order without duplicates. The `--generated-requirements-docs` convenience alias
-must expand to `--domain-generated-file REQUIREMENTS.md` and
+order without duplicates. The `--generated-requirements-docs` convenience
+alias must expand to `--domain-generated-file REQUIREMENTS.md` and
 `--domain-generated-file REQUIREMENTS_COVERAGE.md`; it must compose with
 explicit generated-file options using the same first-seen de-duplication, and
 must not imply registration or alter project/project-key semantics. Paths must
 be implementation-repo-root-relative; empty paths, absolute paths, and `..`
 traversal components are invalid. `--print-only` and `--dry-run` plans must
-show the requested generated-file settings without mutating coordination state.
+show the requested generated-file settings without mutating coordination
+state.
 
 For existing coordination domains, bootstrap should support an explicit
 registration mode that attaches the current implementation repo and, only
@@ -1195,6 +1196,33 @@ The recipe should recommend that pi-env-integrated projects provide the
 `.#agent` selector consistently. If the default shell is already pi-env-aware,
 the recipe may show `agent` as an alias of that normal `nix develop` shell;
 otherwise it should show a separate `pi-env.lib.mkPiShell` agent shell.
+
+#### CMD-028 — Sandbox-aware pienv command surface
+
+pi-env should expose a small, sandbox-aware `pienv` command surface inside
+Pi sessions so humans and agents can discover and run coordination and
+diagnostic helpers from the same working directory and with the same command
+names.
+
+The in-Pi command surface must preserve the runtime boundary: commands that
+select or enter runtimes, start Pi, open nested sandbox shells, or install and
+uninstall pi-env remain outer-launcher operations. Inside Pi they should fail
+with a clear diagnostic that explains the command is terminal-only and shows
+the equivalent command to run outside Pi when practical.
+
+The supported in-Pi subset should include non-launcher diagnostics and
+documentation helpers, such as help/version/recipe commands, and coordination
+helpers that operate on the mounted implementation checkout and coordination
+clone. Coordination commands may remain subject to the existing sandbox
+filesystem, network, and authentication policy; failures caused by missing
+SSH keys or host home credentials should be explicit and documented rather
+than worked around by broadening sandbox mounts.
+
+pi-env should detect the in-sandbox context through an explicit marker set by
+the sandbox layer, not by guessing from paths. The marker lets the canonical
+`pienv` namespace apply a safe allow/block policy while preserving current
+behavior in outer terminals, Nix devshells, direct checkouts, and profile or
+non-Nix installs.
 
 ### 3.5 Project root and working directory requirements
 
