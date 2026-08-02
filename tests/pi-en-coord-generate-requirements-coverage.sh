@@ -24,7 +24,7 @@ requirement_class: functional
 requirement_kind: detailed-behavior
 domain: test
 status: active
-project: pi-env
+project: pi-en
 title: "$key"
 render_order: $order
 testable: no
@@ -34,9 +34,9 @@ body: |-
 EOF
 }
 
-write_req PIENV-FRQ-20260614-000000-001 UC-001 1
-write_req PIENV-FRQ-20260614-000000-002 UC-002 2
-write_req PIENV-FRQ-20260614-000000-003 UC-003 3
+write_req PIEN-FRQ-20260614-000000-001 UC-001 1
+write_req PIEN-FRQ-20260614-000000-002 UC-002 2
+write_req PIEN-FRQ-20260614-000000-003 UC-003 3
 
 cat > "$designs_dir/alpha.md" <<'EOF'
 # Alpha
@@ -45,8 +45,8 @@ cat > "$designs_dir/alpha.md" <<'EOF'
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-001 | PIENV-FRQ-20260614-000000-001 |
-| UC-002 | PIENV-FRQ-20260614-000000-002 |
+| UC-001 | PIEN-FRQ-20260614-000000-001 |
+| UC-002 | PIEN-FRQ-20260614-000000-002 |
 EOF
 
 cat > "$designs_dir/beta.md" <<'EOF'
@@ -56,17 +56,17 @@ cat > "$designs_dir/beta.md" <<'EOF'
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-002 | PIENV-FRQ-20260614-000000-002 |
+| UC-002 | PIEN-FRQ-20260614-000000-002 |
 EOF
 
 output="$tmpdir/coverage.md"
-scripts/pi-env-coord-generate-requirements-coverage \
+scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$designs_dir" \
   --output "$output"
 
 stdout_output="$tmpdir/stdout.md"
-scripts/pi-env-coord-generate-requirements-coverage \
+scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$designs_dir" > "$stdout_output"
 if [ "$(sha256sum "$output" | awk '{print $1}')" != "$(sha256sum "$stdout_output" | awk '{print $1}')" ]; then
@@ -77,9 +77,9 @@ fi
 grep -F -- '- Requirements: 3' "$output" >/dev/null
 grep -F -- '- Covered by design: 2' "$output" >/dev/null
 grep -F -- '- Not covered by design: 1' "$output" >/dev/null
-grep -F "| UC-001 | PIENV-FRQ-20260614-000000-001 | $designs_dir/alpha.md |" "$output" >/dev/null
-grep -F "| UC-002 | PIENV-FRQ-20260614-000000-002 | $designs_dir/alpha.md, $designs_dir/beta.md |" "$output" >/dev/null
-grep -F '| UC-003 | PIENV-FRQ-20260614-000000-003 | Not covered |' "$output" >/dev/null
+grep -F "| UC-001 | PIEN-FRQ-20260614-000000-001 | $designs_dir/alpha.md |" "$output" >/dev/null
+grep -F "| UC-002 | PIEN-FRQ-20260614-000000-002 | $designs_dir/alpha.md, $designs_dir/beta.md |" "$output" >/dev/null
+grep -F '| UC-003 | PIEN-FRQ-20260614-000000-003 | Not covered |' "$output" >/dev/null
 
 unknown_dir="$tmpdir/unknown-designs"
 mkdir -p "$unknown_dir"
@@ -90,9 +90,9 @@ cat > "$unknown_dir/bad.md" <<'EOF'
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-999 | PIENV-FRQ-20260614-000000-999 |
+| UC-999 | PIEN-FRQ-20260614-000000-999 |
 EOF
-if scripts/pi-env-coord-generate-requirements-coverage \
+if scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$unknown_dir" \
   --check 2>"$tmpdir/unknown.err"; then
@@ -110,9 +110,9 @@ cat > "$stale_dir/stale.md" <<'EOF'
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-001 | PIENV-FRQ-20260614-000000-003 |
+| UC-001 | PIEN-FRQ-20260614-000000-003 |
 EOF
-if scripts/pi-env-coord-generate-requirements-coverage \
+if scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$stale_dir" \
   --check 2>"$tmpdir/stale.err"; then
@@ -130,9 +130,9 @@ cat > "$malformed_dir/malformed.md" <<'EOF'
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-001 | PIENV-FRQ-20260614-000000-001 | extra |
+| UC-001 | PIEN-FRQ-20260614-000000-001 | extra |
 EOF
-if scripts/pi-env-coord-generate-requirements-coverage \
+if scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$malformed_dir" \
   --check 2>"$tmpdir/malformed.err"; then
@@ -142,7 +142,7 @@ fi
 grep -F 'malformed Covers row' "$tmpdir/malformed.err" >/dev/null
 
 preview="$tmpdir/preview.md"
-scripts/pi-env-coord-generate-requirements-coverage \
+scripts/pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \
   --designs-dir "$unknown_dir" \
   --preview > "$preview"

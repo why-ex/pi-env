@@ -3,14 +3,14 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-generate-requirements-coverage - render design coverage for requirements
+pi-en-coord-generate-requirements-coverage - render design coverage for requirements
 
 Usage:
-  pi-env-coord-generate-requirements-coverage [options]
+  pi-en-coord-generate-requirements-coverage [options]
 
 Options:
-  --project NAME            Project name; default: PI_ENV_COORD_PROJECT or pi-env
-  --coordination-dir DIR    Coordination clone; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --project NAME            Project name; default: PI_EN_COORD_PROJECT or pi-en
+  --coordination-dir DIR    Coordination clone; default: PI_EN_COORD_DIR or .pi-en/coordination
   --designs-dir DIR         Design documents directory; default: designs
   --output PATH, -o PATH    Write Markdown to PATH instead of stdout
   --check                   Validate inputs without writing Markdown
@@ -19,8 +19,8 @@ Options:
 USAGE
 }
 
-project="${PI_ENV_COORD_PROJECT:-pi-env}"
-coord_dir="${PI_ENV_COORD_DIR:-}"
+project="${PI_EN_COORD_PROJECT:-pi-en}"
+coord_dir="${PI_EN_COORD_DIR:-}"
 designs_dir="designs"
 output=""
 check=0
@@ -54,7 +54,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ -z "$coord_dir" ]; then
-  coord_dir=".pi-env/coordination"
+  coord_dir=".pi-en/coordination"
 fi
 
 requirements_dirs=()
@@ -179,7 +179,7 @@ for (const paths of coveredBy.values()) paths.sort();
 const coveredCount = requirements.filter((req) => coveredBy.get(req.key).length > 0).length;
 
 if (errors.length && !preview) {
-  for (const e of errors) console.error(`pi-env-coord-generate-requirements-coverage: ${e}`);
+  for (const e of errors) console.error(`pi-en-coord-generate-requirements-coverage: ${e}`);
   process.exit(1);
 }
 if (check) process.exit(0);

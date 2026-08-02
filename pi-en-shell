@@ -2,5 +2,5 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-export PI_ENV_SHELL_MODE=1
-exec "$script_dir/scripts/pi-env-launcher" "$@"
+export PI_EN_SHELL_MODE=1
+exec "$script_dir/scripts/pi-en-launcher" "$@"

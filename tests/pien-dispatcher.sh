@@ -6,8 +6,8 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 mkdir -p "$tmp_dir/support" "$tmp_dir/bin"
-cp "$repo_root/scripts/pienv" "$tmp_dir/support/pienv"
-chmod +x "$tmp_dir/support/pienv"
+cp "$repo_root/scripts/pien" "$tmp_dir/support/pien"
+chmod +x "$tmp_dir/support/pien"
 
 make_stub() {
   local name="$1"
@@ -16,27 +16,27 @@ make_stub() {
 set -euo pipefail
 {
   printf 'cmd=%s\n' "$(basename "$0")"
-  if [ "${PIENV_TEST_LOG_CONTEXT:-0}" = "1" ]; then
+  if [ "${PIEN_TEST_LOG_CONTEXT:-0}" = "1" ]; then
     printf 'cwd=%s\n' "$PWD"
-    printf 'PI_ENV_COORD_DIR=%s\n' "${PI_ENV_COORD_DIR:-}"
+    printf 'PI_EN_COORD_DIR=%s\n' "${PI_EN_COORD_DIR:-}"
   fi
   for arg in "$@"; do
     printf 'arg=%s\n' "$arg"
   done
-} > "$PIENV_TEST_LOG"
+} > "$PIEN_TEST_LOG"
 STUB
   chmod +x "$tmp_dir/bin/$name"
 }
 
 for name in \
-  nix pi-env pi-env-shell pi-env-bwrap pi-env-bootstrap-coordination \
-  pi-env-coord-init pi-env-coord-clone pi-env-coord-status pi-env-coord-list \
-  pi-env-coord-cat pi-env-coord-new pi-env-coord-claim pi-env-coord-done \
-  pi-env-coord-review pi-env-coord-verify pi-env-coord-close pi-env-coord-pull \
-  pi-env-coord-push pi-env-coord-lint pi-env-coord-repo \
-  pi-env-coord-upgrade-rules pi-env-coord-generate-requirements \
-  pi-env-coord-generate-requirements-coverage pi-env-serial-roles \
-  pi-env-install-non-nix pi-env-uninstall; do
+  nix pi-en pi-en-shell pi-en-bwrap pi-en-bootstrap-coordination \
+  pi-en-coord-init pi-en-coord-clone pi-en-coord-status pi-en-coord-list \
+  pi-en-coord-cat pi-en-coord-new pi-en-coord-claim pi-en-coord-done \
+  pi-en-coord-review pi-en-coord-verify pi-en-coord-close pi-en-coord-pull \
+  pi-en-coord-push pi-en-coord-lint pi-en-coord-repo \
+  pi-en-coord-upgrade-rules pi-en-coord-generate-requirements \
+  pi-en-coord-generate-requirements-coverage pi-en-serial-roles \
+  pi-en-install-non-nix pi-en-uninstall; do
   make_stub "$name"
 done
 
@@ -44,10 +44,10 @@ run_case() {
   local expected="$1"
   shift
   : > "$tmp_dir/log"
-  PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" "$@"
+  PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" "$@"
   actual="$(cat "$tmp_dir/log")"
   if [ "$actual" != "$expected" ]; then
-    echo "pienv dispatcher mismatch for args: $*" >&2
+    echo "pien dispatcher mismatch for args: $*" >&2
     echo "expected:" >&2
     printf '%s\n' "$expected" >&2
     echo "actual:" >&2
@@ -56,52 +56,52 @@ run_case() {
   fi
 }
 
-run_case $'cmd=pi-env'
-run_case $'cmd=pi-env\narg=--first' -- --first
-run_case $'cmd=pi-env\narg=--foo' run --foo
-run_case $'cmd=pi-env\narg=--raw\narg=--\narg=run' raw -- run
-run_case $'cmd=pi-env\narg=--raw\narg=--runtime\narg=host\narg=--flake\narg=.#agent\narg=--devshell=agent\narg=--\narg=run' raw --runtime host --flake .#agent --devshell=agent -- run
-run_case $'cmd=pi-env-shell\narg=--runtime\narg=nix' shell --runtime nix
-run_case $'cmd=pi-env-bwrap\narg=--continue' sandbox --continue
-run_case $'cmd=pi-env-bwrap\narg=--shell\narg=--\narg=-l' sandbox shell -- -l
-run_case $'cmd=pi-env-bootstrap-coordination\narg=--help' coord bootstrap --help
-run_case $'cmd=pi-env-coord-status\narg=--repo-id\narg=pi-env' coord status --repo-id pi-env
-run_case $'cmd=pi-env-coord-cat\narg=ITEM-1' coord show ITEM-1
-run_case $'cmd=pi-env-coord-upgrade-rules\narg=--check' coord rules upgrade --check
-run_case $'cmd=pi-env-coord-generate-requirements\narg=--repo-id\narg=pi-env' coord requirements generate --repo-id pi-env
-run_case $'cmd=pi-env-coord-generate-requirements-coverage' coord requirements coverage
-run_case $'cmd=pi-env-serial-roles\narg=--role\narg=developer' roles serial --role developer
-run_case $'cmd=pi-env-install-non-nix\narg=--prefix\narg=/tmp/pienv' install --prefix /tmp/pienv
-run_case $'cmd=pi-env-uninstall\narg=--prefix\narg=/tmp/pienv' uninstall --prefix /tmp/pienv
-rm "$tmp_dir/bin/pi-env-uninstall"
-run_case $'cmd=pi-env-install-non-nix\narg=--uninstall\narg=--prefix\narg=/tmp/pienv' uninstall --prefix /tmp/pienv
+run_case $'cmd=pi-en'
+run_case $'cmd=pi-en\narg=--first' -- --first
+run_case $'cmd=pi-en\narg=--foo' run --foo
+run_case $'cmd=pi-en\narg=--raw\narg=--\narg=run' raw -- run
+run_case $'cmd=pi-en\narg=--raw\narg=--runtime\narg=host\narg=--flake\narg=.#agent\narg=--devshell=agent\narg=--\narg=run' raw --runtime host --flake .#agent --devshell=agent -- run
+run_case $'cmd=pi-en-shell\narg=--runtime\narg=nix' shell --runtime nix
+run_case $'cmd=pi-en-bwrap\narg=--continue' sandbox --continue
+run_case $'cmd=pi-en-bwrap\narg=--shell\narg=--\narg=-l' sandbox shell -- -l
+run_case $'cmd=pi-en-bootstrap-coordination\narg=--help' coord bootstrap --help
+run_case $'cmd=pi-en-coord-status\narg=--repo-id\narg=pi-en' coord status --repo-id pi-en
+run_case $'cmd=pi-en-coord-cat\narg=ITEM-1' coord show ITEM-1
+run_case $'cmd=pi-en-coord-upgrade-rules\narg=--check' coord rules upgrade --check
+run_case $'cmd=pi-en-coord-generate-requirements\narg=--repo-id\narg=pi-en' coord requirements generate --repo-id pi-en
+run_case $'cmd=pi-en-coord-generate-requirements-coverage' coord requirements coverage
+run_case $'cmd=pi-en-serial-roles\narg=--role\narg=developer' roles serial --role developer
+run_case $'cmd=pi-en-install-non-nix\narg=--prefix\narg=/tmp/pien' install --prefix /tmp/pien
+run_case $'cmd=pi-en-uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
+rm "$tmp_dir/bin/pi-en-uninstall"
+run_case $'cmd=pi-en-install-non-nix\narg=--uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
 
-version_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" version)"
+version_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" version)"
 case "$version_output" in
-  'pienv '*) ;;
-  *) echo "pienv version did not print version output" >&2; exit 1 ;;
+  'pien '*) ;;
+  *) echo "pien version did not print version output" >&2; exit 1 ;;
 esac
 
-diagnostics_output="$(PI_ENV_INSIDE_SANDBOX=1 PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" diagnostics)"
+diagnostics_output="$(PI_EN_INSIDE_SANDBOX=1 PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" diagnostics)"
 case "$diagnostics_output" in
-  *'PI_ENV_INSIDE_SANDBOX=1'*'coordination_helpers=available'* ) ;;
-  *) echo "pienv diagnostics did not report sandbox/runtime state" >&2; exit 1 ;;
+  *'PI_EN_INSIDE_SANDBOX=1'*'coordination_helpers=available'* ) ;;
+  *) echo "pien diagnostics did not report sandbox/runtime state" >&2; exit 1 ;;
 esac
 
 run_sandbox_outer_only_case() {
   local args=("$@")
   : > "$tmp_dir/log"
-  if PI_ENV_INSIDE_SANDBOX=1 PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
-    echo "in-sandbox outer-only command unexpectedly succeeded: pienv ${args[*]}" >&2
+  if PI_EN_INSIDE_SANDBOX=1 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
+    echo "in-sandbox outer-only command unexpectedly succeeded: pien ${args[*]}" >&2
     exit 1
   fi
   if [ -s "$tmp_dir/log" ]; then
-    echo "in-sandbox outer-only command dispatched unexpectedly: pienv ${args[*]}" >&2
+    echo "in-sandbox outer-only command dispatched unexpectedly: pien ${args[*]}" >&2
     cat "$tmp_dir/log" >&2
     exit 1
   fi
   if ! grep -Fq 'must be run from the outer terminal' "$tmp_dir/err"; then
-    echo "in-sandbox outer-only command missed actionable diagnostic: pienv ${args[*]}" >&2
+    echo "in-sandbox outer-only command missed actionable diagnostic: pien ${args[*]}" >&2
     cat "$tmp_dir/err" >&2
     exit 1
   fi
@@ -113,19 +113,19 @@ run_sandbox_outer_only_case --runtime nix
 run_sandbox_outer_only_case shell -- -lc true
 run_sandbox_outer_only_case sandbox --help
 run_sandbox_outer_only_case roles serial --role developer
-run_sandbox_outer_only_case install --prefix /tmp/pienv
-run_sandbox_outer_only_case uninstall --prefix /tmp/pienv
+run_sandbox_outer_only_case install --prefix /tmp/pien
+run_sandbox_outer_only_case uninstall --prefix /tmp/pien
 
 run_sandbox_safe_no_dispatch_case() {
   local args=("$@")
   : > "$tmp_dir/log"
-  if ! PI_ENV_INSIDE_SANDBOX=1 PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
-    echo "in-sandbox safe command unexpectedly failed: pienv ${args[*]}" >&2
+  if ! PI_EN_INSIDE_SANDBOX=1 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" "${args[@]}" >"$tmp_dir/out" 2>"$tmp_dir/err"; then
+    echo "in-sandbox safe command unexpectedly failed: pien ${args[*]}" >&2
     cat "$tmp_dir/err" >&2
     exit 1
   fi
   if [ -s "$tmp_dir/log" ]; then
-    echo "in-sandbox safe command dispatched unexpectedly: pienv ${args[*]}" >&2
+    echo "in-sandbox safe command dispatched unexpectedly: pien ${args[*]}" >&2
     cat "$tmp_dir/log" >&2
     exit 1
   fi
@@ -138,12 +138,12 @@ run_sandbox_context_case() {
   mkdir -p "$tmp_dir/project" "$tmp_dir/coord"
   (
     cd "$tmp_dir/project"
-    PI_ENV_INSIDE_SANDBOX=1 \
-      PI_ENV_COORD_DIR="$tmp_dir/coord" \
-      PIENV_TEST_LOG_CONTEXT=1 \
-      PIENV_TEST_LOG="$tmp_dir/log" \
+    PI_EN_INSIDE_SANDBOX=1 \
+      PI_EN_COORD_DIR="$tmp_dir/coord" \
+      PIEN_TEST_LOG_CONTEXT=1 \
+      PIEN_TEST_LOG="$tmp_dir/log" \
       PATH="$tmp_dir/bin:$PATH" \
-      "$tmp_dir/support/pienv" "$@"
+      "$tmp_dir/support/pien" "$@"
   )
   actual="$(cat "$tmp_dir/log")"
   if [ "$actual" != "$expected" ]; then
@@ -160,17 +160,17 @@ run_sandbox_safe_no_dispatch_case help
 run_sandbox_safe_no_dispatch_case help coord
 run_sandbox_safe_no_dispatch_case recipe flake-agent-shell --help
 (
-  export PI_ENV_INSIDE_SANDBOX=1
-  run_case $'cmd=pi-env-coord-status\narg=--repo-id\narg=pi-env' coord status --repo-id pi-env
-  run_case $'cmd=pi-env-serial-roles\narg=--help' roles serial --help
+  export PI_EN_INSIDE_SANDBOX=1
+  run_case $'cmd=pi-en-coord-status\narg=--repo-id\narg=pi-en' coord status --repo-id pi-en
+  run_case $'cmd=pi-en-serial-roles\narg=--help' roles serial --help
 )
-run_sandbox_context_case $'cmd=pi-env-coord-status\ncwd='"$tmp_dir"$'/project\nPI_ENV_COORD_DIR='"$tmp_dir"$'/coord' coord status
-run_sandbox_context_case $'cmd=pi-env-bootstrap-coordination\ncwd='"$tmp_dir"$'/project\nPI_ENV_COORD_DIR='"$tmp_dir"$'/coord\narg=--print-only' coord bootstrap --print-only
+run_sandbox_context_case $'cmd=pi-en-coord-status\ncwd='"$tmp_dir"$'/project\nPI_EN_COORD_DIR='"$tmp_dir"$'/coord' coord status
+run_sandbox_context_case $'cmd=pi-en-bootstrap-coordination\ncwd='"$tmp_dir"$'/project\nPI_EN_COORD_DIR='"$tmp_dir"$'/coord\narg=--print-only' coord bootstrap --print-only
 
-completion_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" completion bash)"
+completion_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" completion bash)"
 case "$completion_output" in
-  *'complete -F _pienv pienv'*) ;;
-  *) echo "pienv completion bash did not print sourceable completion" >&2; exit 1 ;;
+  *'complete -F _pien pien'*) ;;
+  *) echo "pien completion bash did not print sourceable completion" >&2; exit 1 ;;
 esac
 bash -n <(printf '%s\n' "$completion_output")
 
@@ -181,22 +181,22 @@ completion_env="$tmp_dir/completion-env.sh"
 assert_completion() {
   local expected="$1"
   shift
-  COMP_WORDS=(pienv "$@")
+  COMP_WORDS=(pien "$@")
   COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
-  _pienv
+  _pien
   case " ${COMPREPLY[*]} " in
     *" $expected "*) ;;
-    *) echo "missing completion '$expected' for: pienv $* (got: ${COMPREPLY[*]})" >&2; exit 1 ;;
+    *) echo "missing completion '$expected' for: pien $* (got: ${COMPREPLY[*]})" >&2; exit 1 ;;
   esac
 }
 assert_no_completion() {
   local unexpected="$1"
   shift
-  COMP_WORDS=(pienv "$@")
+  COMP_WORDS=(pien "$@")
   COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
-  _pienv
+  _pien
   case " ${COMPREPLY[*]} " in
-    *" $unexpected "*) echo "unexpected completion '$unexpected' for: pienv $* (got: ${COMPREPLY[*]})" >&2; exit 1 ;;
+    *" $unexpected "*) echo "unexpected completion '$unexpected' for: pien $* (got: ${COMPREPLY[*]})" >&2; exit 1 ;;
   esac
 }
 assert_completion coord c
@@ -225,83 +225,83 @@ COMPTEST
 } > "$completion_env"
 bash "$completion_env"
 
-help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help)"
+help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help)"
 for snippet in \
-  'pienv coord <command>' \
-  'pienv recipe flake-agent-shell' \
+  'pien coord <command>' \
+  'pien recipe flake-agent-shell' \
   '--raw --' \
-  'pienv raw --' \
+  'pien raw --' \
   '--runtime host|nix|auto' \
   '--flake REF' \
   '--devshell NAME' \
-  'PI_ENV_RUNTIME' \
-  'PI_ENV_FLAKE' \
-  'PI_ENV_NIX_DEVSHELL' \
+  'PI_EN_RUNTIME' \
+  'PI_EN_FLAKE' \
+  'PI_EN_NIX_DEVSHELL' \
   'CLI options win' \
-  'pienv raw' \
-  'pienv diagnostics' \
-  'pienv version'; do
+  'pien raw' \
+  'pien diagnostics' \
+  'pien version'; do
   if ! grep -Fq -- "$snippet" <<<"$help_output"; then
-    echo "pienv help missed command, recipe, or runtime launcher guidance: $snippet" >&2
+    echo "pien help missed command, recipe, or runtime launcher guidance: $snippet" >&2
     exit 1
   fi
 done
 
-coord_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help coord)"
+coord_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help coord)"
 case "$coord_help_output" in
-  *'rules upgrade'*'pi-env-coord-upgrade-rules'*'requirements generate'*'pi-env-coord-generate-requirements'* ) ;;
-  *) echo "pienv help coord did not list nested command equivalents" >&2; exit 1 ;;
+  *'rules upgrade'*'pi-en-coord-upgrade-rules'*'requirements generate'*'pi-en-coord-generate-requirements'* ) ;;
+  *) echo "pien help coord did not list nested command equivalents" >&2; exit 1 ;;
 esac
 
-PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help coord status
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help coord status
 case "$(cat "$tmp_dir/log")" in
-  $'cmd=pi-env-coord-status\narg=--help') ;;
-  *) echo "pienv help coord status did not dispatch to leaf help" >&2; exit 1 ;;
+  $'cmd=pi-en-coord-status\narg=--help') ;;
+  *) echo "pien help coord status did not dispatch to leaf help" >&2; exit 1 ;;
 esac
 
-PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help run
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help run
 case "$(cat "$tmp_dir/log")" in
-  $'cmd=pi-env\narg=--help') ;;
-  *) echo "pienv help run did not delegate to pi-env help" >&2; exit 1 ;;
+  $'cmd=pi-en\narg=--help') ;;
+  *) echo "pien help run did not delegate to pi-en help" >&2; exit 1 ;;
 esac
-PIENV_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help shell
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help shell
 case "$(cat "$tmp_dir/log")" in
-  $'cmd=pi-env-shell\narg=--help') ;;
-  *) echo "pienv help shell did not delegate to pi-env-shell help" >&2; exit 1 ;;
+  $'cmd=pi-en-shell\narg=--help') ;;
+  *) echo "pien help shell did not delegate to pi-en-shell help" >&2; exit 1 ;;
 esac
 
-recipe_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" help recipe)"
+recipe_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help recipe)"
 case "$recipe_help_output" in
   *'flake-agent-shell'*'Recipes only print guidance'* ) ;;
-  *) echo "pienv help recipe did not describe recipe command" >&2; exit 1 ;;
+  *) echo "pien help recipe did not describe recipe command" >&2; exit 1 ;;
 esac
 
-recipe_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" recipe flake-agent-shell)"
+recipe_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" recipe flake-agent-shell)"
 for snippet in \
-  'pi-env.url = "git+file:///home/me/src/pi-env";' \
-  'outputs = { self, nixpkgs, flake-utils, pi-env, ... }:' \
+  'pi-en.url = "git+file:///home/me/src/pi-en";' \
+  'outputs = { self, nixpkgs, flake-utils, pi-en, ... }:' \
   'keep that expression on' \
   'devShells.${system} = {' \
   '} // {' \
-  'agent = pi-env.lib.mkPiShell {' \
+  'agent = pi-en.lib.mkPiShell {' \
   'agent = existingDevShells.default;' \
   'includeCoordinationHelpers = false;' \
   'extraPackages = with pkgs; [' \
   'does not read, edit, or write project files'; do
   if ! grep -Fq "$snippet" <<< "$recipe_output"; then
-    echo "pienv recipe flake-agent-shell missed stable recipe snippet: $snippet" >&2
+    echo "pien recipe flake-agent-shell missed stable recipe snippet: $snippet" >&2
     exit 1
   fi
 done
 if grep -Fq 'self.devShells.${system}' <<< "$recipe_output"; then
-  echo "pienv recipe flake-agent-shell must not recurse through self.devShells" >&2
+  echo "pien recipe flake-agent-shell must not recurse through self.devShells" >&2
   exit 1
 fi
 
-recipe_help_alias_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pienv" recipe flake-agent-shell --help)"
+recipe_help_alias_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" recipe flake-agent-shell --help)"
 case "$recipe_help_alias_output" in
-  *'pienv recipe flake-agent-shell'*'nix develop .#agent'* ) ;;
-  *) echo "pienv recipe flake-agent-shell --help did not print recipe" >&2; exit 1 ;;
+  *'pien recipe flake-agent-shell'*'nix develop .#agent'* ) ;;
+  *) echo "pien recipe flake-agent-shell --help did not print recipe" >&2; exit 1 ;;
 esac
 
-printf 'pienv dispatcher tests passed\n'
+printf 'pien dispatcher tests passed\n'

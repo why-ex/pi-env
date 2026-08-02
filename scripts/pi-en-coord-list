@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-list - list coordination items by type and optional status
+pi-en-coord-list - list coordination items by type and optional status
 
 Usage:
-  pi-env-coord-list [options] TYPE [STATUS]
+  pi-en-coord-list [options] TYPE [STATUS]
 
 Arguments:
   TYPE          Item type to list, for example issues, todos, notes,
@@ -27,7 +27,7 @@ Arguments:
   STATUS        Optional status filter, for example open, closed, or accepted
 
 Options:
-  --coord-dir DIR          Coordination clone; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --coord-dir DIR          Coordination clone; default: PI_EN_COORD_DIR or .pi-en/coordination
   --repo-id REPO_ID        List issue items for one repository
   --all-repos              List issue items across all repositories and root issues
   --show-repo              Add issue repository id as the first output column

@@ -5,6 +5,6 @@ result-*
 !/examples/project-role-override/.pi/
 !/examples/project-role-override/.pi/roles/
 !/examples/project-role-override/.pi/roles/*.md
-/.pi-env/
+/.pi-en/
 /coordination/
 /agent-remotes/

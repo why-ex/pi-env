@@ -1,12 +1,12 @@
-# Shared helpers for pi-env coordination commands.
+# Shared helpers for pi-en coordination commands.
 
 coord_die() {
-  printf 'pi-env-coord: %s\n' "$*" >&2
+  printf 'pi-en-coord: %s\n' "$*" >&2
   exit 1
 }
 
 coord_note() {
-  printf 'pi-env-coord: %s\n' "$*" >&2
+  printf 'pi-en-coord: %s\n' "$*" >&2
 }
 
 coord_abs() {
@@ -16,8 +16,8 @@ coord_abs() {
 coord_project_root() {
   local root abs_root pwd_abs project_root
 
-  if [ -n "${PI_ENV_COORD_PROJECT_ROOT:-}" ]; then
-    coord_abs "$PI_ENV_COORD_PROJECT_ROOT"
+  if [ -n "${PI_EN_COORD_PROJECT_ROOT:-}" ]; then
+    coord_abs "$PI_EN_COORD_PROJECT_ROOT"
     return
   fi
 
@@ -25,8 +25,8 @@ coord_project_root() {
   if [ -n "$root" ]; then
     abs_root="$(coord_abs "$root")"
     case "$abs_root" in
-      */.pi-env/coordination|*/.pi-env/coordination/*)
-        project_root="${abs_root%%/.pi-env/coordination*}"
+      */.pi-en/coordination|*/.pi-en/coordination/*)
+        project_root="${abs_root%%/.pi-en/coordination*}"
         coord_abs "$project_root"
         return
         ;;
@@ -37,8 +37,8 @@ coord_project_root() {
 
   pwd_abs="$(pwd -P)"
   case "$pwd_abs" in
-    */.pi-env/coordination|*/.pi-env/coordination/*)
-      project_root="${pwd_abs%%/.pi-env/coordination*}"
+    */.pi-en/coordination|*/.pi-en/coordination/*)
+      project_root="${pwd_abs%%/.pi-en/coordination*}"
       coord_abs "$project_root"
       ;;
     *)
@@ -48,7 +48,7 @@ coord_project_root() {
 }
 
 coord_impl_config_filename() {
-  printf '%s\n' ".pi-env-coordination.yaml"
+  printf '%s\n' ".pi-en-coordination.yaml"
 }
 
 coord_impl_config_path() {
@@ -130,7 +130,7 @@ coord_impl_config_set_value() {
     return
   fi
 
-  tmp="$(mktemp "${TMPDIR:-/tmp}/pi-env-coord-config.XXXXXX")" \
+  tmp="$(mktemp "${TMPDIR:-/tmp}/pi-en-coord-config.XXXXXX")" \
     || coord_die "failed to create temporary file"
   awk -v key="$key" -v rendered="$rendered" '
     BEGIN { written = 0 }
@@ -199,8 +199,8 @@ coord_normalize_coordination_remote() {
 
 coord_env_coordination_remote() {
   local remote
-  if [ -n "${PI_ENV_COORD_REMOTE:-}" ]; then
-    remote="$PI_ENV_COORD_REMOTE"
+  if [ -n "${PI_EN_COORD_REMOTE:-}" ]; then
+    remote="$PI_EN_COORD_REMOTE"
   else
     return 1
   fi
@@ -434,9 +434,9 @@ coord_resolve_repo_id() {
   if [ -n "$explicit" ]; then
     repo_id="$explicit"
     source="--repo-id"
-  elif [ -n "${PI_ENV_COORD_REPO_ID:-}" ]; then
-    repo_id="$PI_ENV_COORD_REPO_ID"
-    source="PI_ENV_COORD_REPO_ID"
+  elif [ -n "${PI_EN_COORD_REPO_ID:-}" ]; then
+    repo_id="$PI_EN_COORD_REPO_ID"
+    source="PI_EN_COORD_REPO_ID"
   else
     repo_id="$(coord_impl_config_value repo_id || true)"
     if [ -n "$repo_id" ]; then
@@ -445,7 +445,7 @@ coord_resolve_repo_id() {
     else
       remote="$(git remote get-url origin 2>/dev/null || true)"
       if [ -n "$remote" ]; then
-        registry_err="$(mktemp "${TMPDIR:-/tmp}/pi-env-coord-remote.XXXXXX")" || coord_die "failed to create temporary file"
+        registry_err="$(mktemp "${TMPDIR:-/tmp}/pi-en-coord-remote.XXXXXX")" || coord_die "failed to create temporary file"
         if repo_id="$(coord_registry_repo_id_for_remote "$remote" "$coord_dir" 2>"$registry_err")" && [ -n "$repo_id" ]; then
           rm -f "$registry_err"
           source="coordination registry remote"
@@ -463,7 +463,7 @@ coord_resolve_repo_id() {
       if [ -z "$repo_id" ] && repo_id="$(coord_infer_repo_id_from_remote 2>/dev/null || true)" && [ -n "$repo_id" ]; then
         source="git remote origin"
       elif [ -z "$repo_id" ]; then
-        coord_die "missing repo id; pass --repo-id, set PI_ENV_COORD_REPO_ID, add repo_id to $(coord_impl_config_filename), or configure git remote origin"
+        coord_die "missing repo id; pass --repo-id, set PI_EN_COORD_REPO_ID, add repo_id to $(coord_impl_config_filename), or configure git remote origin"
       fi
     fi
   fi
@@ -489,7 +489,7 @@ coord_resolve_coordination_remote() {
 coord_default_root_for_project() {
   local project_root
   project_root="$(coord_project_root)"
-  printf '%s\n' "$project_root/.pi-env/agent-remotes"
+  printf '%s\n' "$project_root/.pi-en/agent-remotes"
 }
 
 coord_default_root() {
@@ -503,20 +503,20 @@ coord_default_workspace() {
 coord_default_dir_for_project() {
   local project_root
   project_root="$(coord_project_root)"
-  printf '%s\n' "$project_root/.pi-env/coordination"
+  printf '%s\n' "$project_root/.pi-en/coordination"
 }
 
 coord_default_dir() {
-  if [ -n "${PI_ENV_COORD_DIR:-}" ]; then
-    printf '%s\n' "$PI_ENV_COORD_DIR"
+  if [ -n "${PI_EN_COORD_DIR:-}" ]; then
+    printf '%s\n' "$PI_EN_COORD_DIR"
   else
     coord_default_dir_for_project
   fi
 }
 
 coord_default_agent() {
-  if [ -n "${PI_ENV_COORD_AGENT_ID:-}" ]; then
-    printf '%s\n' "$PI_ENV_COORD_AGENT_ID"
+  if [ -n "${PI_EN_COORD_AGENT_ID:-}" ]; then
+    printf '%s\n' "$PI_EN_COORD_AGENT_ID"
   elif [ -n "${USER:-}" ]; then
     printf '%s\n' "$USER"
   else
@@ -525,7 +525,7 @@ coord_default_agent() {
 }
 
 coord_default_role() {
-  printf '%s\n' "${PI_ENV_COORD_ROLE:-}"
+  printf '%s\n' "${PI_EN_COORD_ROLE:-}"
 }
 
 coord_trim() {
@@ -573,8 +573,8 @@ coord_git_commit() {
 
 coord_template_dir() {
   local script_dir
-  if [ -n "${PI_ENV_COORD_TEMPLATE_DIR:-}" ]; then
-    printf '%s\n' "$PI_ENV_COORD_TEMPLATE_DIR"
+  if [ -n "${PI_EN_COORD_TEMPLATE_DIR:-}" ]; then
+    printf '%s\n' "$PI_EN_COORD_TEMPLATE_DIR"
     return
   fi
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -825,8 +825,8 @@ coord_local_remote_url_for_clone() {
   coord_dir="$(coord_abs "$1")"
   remote_path="$(coord_abs "$2")"
   project_root="$(coord_project_root)"
-  default_coord_dir="$(coord_abs "$project_root/.pi-env/coordination")"
-  default_remote_dir="$(coord_abs "$project_root/.pi-env/agent-remotes")"
+  default_coord_dir="$(coord_abs "$project_root/.pi-en/coordination")"
+  default_remote_dir="$(coord_abs "$project_root/.pi-en/agent-remotes")"
 
   if [ "$coord_dir" = "$default_coord_dir" ]; then
     case "$remote_path" in
@@ -851,14 +851,14 @@ coord_local_remote_url_for_clone() {
 }
 
 coord_ensure_operational_root_excluded() {
-  local target_dir project_root target_abs pi_env_root exclude_path
+  local target_dir project_root target_abs pi_en_root exclude_path
   target_dir="$1"
   project_root="$(coord_project_root)"
   target_abs="$(coord_abs "$target_dir")"
-  pi_env_root="$(coord_abs "$project_root/.pi-env")"
+  pi_en_root="$(coord_abs "$project_root/.pi-en")"
 
   case "$target_abs" in
-    "$pi_env_root"|"$pi_env_root"/*) ;;
+    "$pi_en_root"|"$pi_en_root"/*) ;;
     *) return 0 ;;
   esac
 
@@ -866,8 +866,8 @@ coord_ensure_operational_root_excluded() {
   [ -n "$exclude_path" ] || return 0
   mkdir -p "$(dirname "$exclude_path")"
   touch "$exclude_path"
-  if ! grep -Fxq '/.pi-env/' "$exclude_path"; then
-    printf '/.pi-env/\n' >>"$exclude_path"
+  if ! grep -Fxq '/.pi-en/' "$exclude_path"; then
+    printf '/.pi-en/\n' >>"$exclude_path"
   fi
 }
 
@@ -883,8 +883,8 @@ coord_is_coord_repo() {
 coord_resolve_dir() {
   local candidate git_root project_root
   candidate="${1:-}"
-  if [ -z "$candidate" ] && [ -n "${PI_ENV_COORD_DIR:-}" ]; then
-    candidate="$PI_ENV_COORD_DIR"
+  if [ -z "$candidate" ] && [ -n "${PI_EN_COORD_DIR:-}" ]; then
+    candidate="$PI_EN_COORD_DIR"
   fi
   if [ -z "$candidate" ]; then
     git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -893,7 +893,7 @@ coord_resolve_dir() {
       return
     fi
     project_root="$(coord_project_root)"
-    candidate="$project_root/.pi-env/coordination"
+    candidate="$project_root/.pi-en/coordination"
   fi
   [ -d "$candidate" ] || coord_die "coordination dir not found: $candidate"
   candidate="$(coord_abs "$candidate")"
@@ -1484,7 +1484,7 @@ coord_find_item() {
   fi
 
   if [ "$match_count" != "1" ]; then
-    printf 'pi-env-coord: multiple items match %s:\n%s' "$query" "$matches" >&2
+    printf 'pi-en-coord: multiple items match %s:\n%s' "$query" "$matches" >&2
     exit 1
   fi
   printf '%s' "$matches" | sed '/^$/d' | head -n 1

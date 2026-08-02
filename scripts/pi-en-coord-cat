@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-cat - print a coordination item by id or path
+pi-en-coord-cat - print a coordination item by id or path
 
 Usage:
-  pi-env-coord-cat [options] ITEM
+  pi-en-coord-cat [options] ITEM
 
 Arguments:
   ITEM            Item id, direct path, exact filename/stem, or unique
                   filename prefix resolved by coord_find_item.
 
 Options:
-  --coord-dir DIR   Coordination clone; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --coord-dir DIR   Coordination clone; default: PI_EN_COORD_DIR or .pi-en/coordination
   --path            Print only the resolved repo-relative item path
   -h, --help        Show this help
 USAGE

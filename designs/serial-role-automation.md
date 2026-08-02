@@ -8,11 +8,11 @@ one coordination checkout.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-024 | PIENV-FRQ-20260615-175835-001 |
-| CMD-020 | PIENV-FRQ-20260615-175837-001 |
-| AGENT-016 | PIENV-FRQ-20260615-175838-001 |
-| CRQ-013 | PIENV-CRQ-20260615-175840-001 |
-| TEST-032 | PIENV-QRQ-20260615-175842-001 |
+| UC-024 | PIEN-FRQ-20260615-175835-001 |
+| CMD-020 | PIEN-FRQ-20260615-175837-001 |
+| AGENT-016 | PIEN-FRQ-20260615-175838-001 |
+| CRQ-013 | PIEN-CRQ-20260615-175840-001 |
+| TEST-032 | PIEN-QRQ-20260615-175842-001 |
 
 ## Goal
 
@@ -30,7 +30,7 @@ parallel role workers with per-role clones or worktrees.
 - No parallel developer/reviewer/tester execution in the first version.
 - No tmux dependency.
 - No cross-process Git locking beyond a local single-run lockfile under
-  `.pi-env/locks/`.
+  `.pi-en/locks/`.
 - No reviewer/tester lease protocol yet; the serial orchestrator is the only
   worker using the clone.
 - No hidden database or queue outside the coordination repository.
@@ -45,14 +45,14 @@ Run a single long-lived shell orchestrator from the project root:
 serial orchestrator
   -> pull/rebase coordination
   -> select one tester, reviewer, or developer item
-  -> launch one fresh pi-env job for that role and item
+  -> launch one fresh pi-en job for that role and item
   -> wait for completion
   -> repeat
 ```
 
 The orchestrator, not Pi, owns the idle polling loop. Pi is invoked only when
 there is a concrete item to process. Each issue-related job is a new Pi session
-by invoking `pi-env --raw -- ...` without `--continue`. The default
+by invoking `pi-en --raw -- ...` without `--continue`. The default
 `--ui interactive` mode runs a watched normal Pi TUI with graceful shutdown
 requested after `role_cycle_done`. The user can choose `--ui json` for headless
 JSONL automation or `--ui none` for non-interactive `--print` output; every
@@ -86,29 +86,29 @@ Initial selection can use existing helpers:
 
 ```bash
 next_developer_item() {
-  scripts/pi-env-coord-list issues open | head -n1 | cut -f1
+  scripts/pi-en-coord-list issues open | head -n1 | cut -f1
 }
 
 next_reviewer_item() {
-  scripts/pi-env-coord-list issues done |
+  scripts/pi-en-coord-list issues done |
     awk -F'\t' '$3 ~ /reviewed:false/ { print $1; exit }'
 }
 
 next_tester_item() {
-  scripts/pi-env-coord-list issues done |
+  scripts/pi-en-coord-list issues done |
     awk -F'\t' '$3 ~ /reviewed:true/ && $3 ~ /verified:false/ { print $1; exit }'
 }
 ```
 
 A later implementation may replace this duplicated shell parsing with an
-`pi-env-coord-next` helper, but that is not required for the serial MVP.
+`pi-en-coord-next` helper, but that is not required for the serial MVP.
 
 ## Repository safety checks
 
 Before every Pi job the orchestrator should:
 
-- hold the default local lock at `.pi-env/locks/pi-env-serial-roles.lock`,
-  creating `.pi-env/locks` when needed, so two serial workers cannot
+- hold the default local lock at `.pi-en/locks/pi-en-serial-roles.lock`,
+  creating `.pi-en/locks` when needed, so two serial workers cannot
   accidentally run in the same clone;
 - ensure the project working tree is clean unless the previous role job left a
   documented failure state that the user must resolve;
@@ -122,41 +122,41 @@ Before every Pi job the orchestrator should:
 - stop rather than auto-reset, auto-stash, or discard project changes.
 
 Developer jobs must commit implementation changes before marking an item done
-and must pass a structured implementation ref to `pi-env-coord-done` when
+and must pass a structured implementation ref to `pi-en-coord-done` when
 possible. Reviewer and tester jobs should review or verify committed project
 state, not uncommitted leftovers.
 
 ## Pi invocation
 
 Serial automation logs and future local diagnostics, when written, should
-default under `.pi-env/logs/` so serial-role operational artifacts stay grouped
-with other pi-env generated state.
+default under `.pi-en/logs/` so serial-role operational artifacts stay grouped
+with other Pi-en generated state.
 
 The orchestrator should render a role-specific prompt that names exactly one
 item and says not to select other work. The prompt should tell the role to use
 sandbox-visible coordination helpers for lifecycle transitions. Packaged runs
 can expose the helper directory with
-`PI_ENV_BWRAP_EXTRA_PATH`; source-checkout runs should name paths under the mounted
+`PI_EN_BWRAP_EXTRA_PATH`; source-checkout runs should name paths under the mounted
 `/workspace` when the helpers live in the project checkout:
 
-- developer: `pi-env-coord-claim` before work, then `pi-env-coord-done` with
+- developer: `pi-en-coord-claim` before work, then `pi-en-coord-done` with
   implementation refs after project commits;
-- reviewer: `pi-env-coord-review --pass` or `pi-env-coord-review --fail`;
-- tester: `pi-env-coord-verify --pass` or `pi-env-coord-verify --fail`;
+- reviewer: `pi-en-coord-review --pass` or `pi-en-coord-review --fail`;
+- tester: `pi-en-coord-verify --pass` or `pi-en-coord-verify --fail`;
 - optional final close may be configurable and should only run after both
   review and verification have passed.
 
-Because `pi-env-bwrap` clears the environment, role activation through environment
+Because `pi-en-bwrap` clears the environment, role activation through environment
 variables requires explicit pass-through when used. A safe invocation shape is:
 
 ```bash
-PI_ENV_BWRAP_PASS_ENV=PI_ACTIVE_ROLE \
+PI_EN_BWRAP_PASS_ENV=PI_ACTIVE_ROLE \
 PI_ACTIVE_ROLE="$role" \
-PI_ENV_COORD_ROLE="$role" \
-PI_ENV_COORD_AGENT_ID="$agent_id" \
-PI_ENV_BWRAP_COORDINATION_DIR="$coordination_dir" \
-pi-env --raw -- \
-  -e "$PI_ENV_ROLE_MANAGER_PACKAGE" \
+PI_EN_COORD_ROLE="$role" \
+PI_EN_COORD_AGENT_ID="$agent_id" \
+PI_EN_BWRAP_COORDINATION_DIR="$coordination_dir" \
+pi-en --raw -- \
+  -e "$PI_EN_ROLE_MANAGER_PACKAGE" \
   --tools read,bash,edit,write,grep,find,ls,role_cycle_done \
   --print "$prompt"
 ```
@@ -174,18 +174,18 @@ from the `role_cycle_done` `tool_execution_end` event.
 For default watched auto-exit work, the same environment, role manager
 extension, coordination mount, and tool allowlist are used, but the Pi command
 omits both `--mode json` and `--print` and launches the normal TUI with the
-generated prompt as the initial message. `pi-env-serial-roles` additionally passes
+generated prompt as the initial message. `pi-en-serial-roles` additionally passes
 `PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE=1` through the sandbox:
 
 ```bash
-PI_ENV_BWRAP_PASS_ENV="PI_ACTIVE_ROLE PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE" \
+PI_EN_BWRAP_PASS_ENV="PI_ACTIVE_ROLE PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE" \
 PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE=1 \
 PI_ACTIVE_ROLE="$role" \
-PI_ENV_COORD_ROLE="$role" \
-PI_ENV_COORD_AGENT_ID="$agent_id" \
-PI_ENV_BWRAP_COORDINATION_DIR="$coordination_dir" \
-pi-env --raw -- \
-  -e "$PI_ENV_ROLE_MANAGER_PACKAGE" \
+PI_EN_COORD_ROLE="$role" \
+PI_EN_COORD_AGENT_ID="$agent_id" \
+PI_EN_BWRAP_COORDINATION_DIR="$coordination_dir" \
+pi-en --raw -- \
+  -e "$PI_EN_ROLE_MANAGER_PACKAGE" \
   --tools read,bash,edit,write,grep,find,ls,role_cycle_done \
   "$prompt"
 ```

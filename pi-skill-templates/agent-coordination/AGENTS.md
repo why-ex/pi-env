@@ -165,7 +165,7 @@ verification.
 - Done: use `git mv` into `done/`, set `status: done`, set
   `done: <timestamp>`, keep `closed: null`, reset `reviewed: false` and
   `verified: false`, append a `done` event/message, and include structured
-  implementation refs where possible: `repo: pi-env`, `branch: main`, and the
+  implementation refs where possible: `repo: pi-en`, `branch: main`, and the
   full `commit` hash.
 - Review pass: keep the item in `done/`, set `reviewed: true`, append a
   `reviewed` event/message, commit, and push.

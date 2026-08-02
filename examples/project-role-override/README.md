@@ -1,7 +1,7 @@
 # Project role override example
 
 This directory shows how a project can add role-manager roles without changing
-`pi-env`'s bundled base role package.
+`pi-en`'s bundled base role package.
 
 The example role lives at:
 

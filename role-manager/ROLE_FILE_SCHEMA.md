@@ -29,7 +29,7 @@ coordCommitter: architect
 | `icon` | no | string | Short visual marker for status, title, or selectors. |
 | `thinking` | no | string | Requested Pi thinking level: `off`, `minimal`, `low`, `medium`, `high`, or `xhigh`. |
 | `tools` | no | string list | Tool allowlist requested while the role is active. |
-| `coordCommitter` | no | string | Role value exported as `PI_ENV_COORD_ROLE` for coordination helpers, such as `architect`. Helpers combine it with the agent ID to render actors like `pi/architect`. |
+| `coordCommitter` | no | string | Role value exported as `PI_EN_COORD_ROLE` for coordination helpers, such as `architect`. Helpers combine it with the agent ID to render actors like `pi/architect`. |
 | `provider` | no | string | Optional provider override for future role activation. |
 | `model` | no | string | Optional model override for future role activation. |
 

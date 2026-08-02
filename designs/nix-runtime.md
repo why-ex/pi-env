@@ -8,24 +8,24 @@ contract for packages, apps, shells, and reusable shell construction.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-003 | PIENV-FRQ-20260612-210000-003 |
-| UC-017 | PIENV-FRQ-20260612-210000-017 |
-| UC-018 | PIENV-FRQ-20260612-210000-018 |
-| UC-019 | PIENV-FRQ-20260612-210000-019 |
-| UC-020 | PIENV-FRQ-20260612-210000-020 |
-| FLAKE-001 | PIENV-FRQ-20260612-210000-024 |
-| FLAKE-002 | PIENV-FRQ-20260612-210000-025 |
-| FLAKE-003 | PIENV-FRQ-20260612-210000-026 |
-| FLAKE-004 | PIENV-FRQ-20260612-210000-027 |
-| FLAKE-005 | PIENV-FRQ-20260612-210000-028 |
-| FLAKE-006 | PIENV-FRQ-20260612-210000-029 |
-| RUNTIME-001 | PIENV-FRQ-20260612-210000-030 |
-| RUNTIME-002 | PIENV-FRQ-20260612-210000-031 |
-| RUNTIME-003 | PIENV-FRQ-20260614-180306-001 |
-| RUNTIME-006 | PIENV-FRQ-20260720-094621-001 |
-| CMD-027 | PIENV-FRQ-20260720-091901-001 |
-| AGENT-018 | PIENV-FRQ-20260720-091904-001 |
-| DOC-005 | PIENV-QRQ-20260720-091907-001 |
+| UC-003 | PIEN-FRQ-20260612-210000-003 |
+| UC-017 | PIEN-FRQ-20260612-210000-017 |
+| UC-018 | PIEN-FRQ-20260612-210000-018 |
+| UC-019 | PIEN-FRQ-20260612-210000-019 |
+| UC-020 | PIEN-FRQ-20260612-210000-020 |
+| FLAKE-001 | PIEN-FRQ-20260612-210000-024 |
+| FLAKE-002 | PIEN-FRQ-20260612-210000-025 |
+| FLAKE-003 | PIEN-FRQ-20260612-210000-026 |
+| FLAKE-004 | PIEN-FRQ-20260612-210000-027 |
+| FLAKE-005 | PIEN-FRQ-20260612-210000-028 |
+| FLAKE-006 | PIEN-FRQ-20260612-210000-029 |
+| RUNTIME-001 | PIEN-FRQ-20260612-210000-030 |
+| RUNTIME-002 | PIEN-FRQ-20260612-210000-031 |
+| RUNTIME-003 | PIEN-FRQ-20260614-180306-001 |
+| RUNTIME-006 | PIEN-FRQ-20260720-094621-001 |
+| CMD-027 | PIEN-FRQ-20260720-091901-001 |
+| AGENT-018 | PIEN-FRQ-20260720-091904-001 |
+| DOC-005 | PIEN-QRQ-20260720-091907-001 |
 
 ## 1. Flake outputs
 
@@ -34,10 +34,10 @@ users and tests can invoke the same artifacts. Packages provide installable
 programs; apps provide convenient `nix run` entrypoints.
 
 The package boundary separates the core sandbox runtime from optional
-coordination helpers while using the current `pi-env-*` command names:
+coordination helpers while using the current `pi-en-*` command names:
 
-- `pi-core` contains `pi-env`, `pi-env-shell`, `pi-env-bwrap`, and the runtime tools.
-- `pi-env-coordination` contains the Git-backed coordination helper commands.
+- `pi-core` contains `pi-en`, `pi-en-shell`, `pi-en-bwrap`, and the runtime tools.
+- `pi-en-coordination` contains the Git-backed coordination helper commands.
 - `pi-runtime` remains the bundle containing both sets of renamed commands for
   consumers that want the full runtime in one package.
 
@@ -54,7 +54,7 @@ project-specific inputs. The function is the preferred extension point instead
 of duplicating package lists across flakes.
 
 `mkPiShell` keeps `includeCoordinationHelpers = true` by default so project
-shell consumers receive `pi-env-bootstrap-coordination` and `pi-env-coord-*`
+shell consumers receive `pi-en-bootstrap-coordination` and `pi-en-coord-*`
 commands. Projects that only need the sandbox/runtime set it to `false` for a
 core-only shell.
 
@@ -69,7 +69,7 @@ tool discovery inside the flake-defined environment when users opt into Nix.
 Scripts should still report clear missing-tool errors when run outside that
 environment, but the supported path is the reproducible flake shell.
 
-Project-specific build and test tools are not added to the global pi-env
+Project-specific build and test tools are not added to the global Pi-en
 runtime by default. Instead, `RUNTIME-003` extends the `mkPiShell` contract:
 callers declare project tools with `extraPackages`, and the shell exports the
 corresponding Nix-store `bin` path for the Bubblewrap launcher to validate and
@@ -78,26 +78,26 @@ project-specific tools reproducible and explicit.
 
 The exported path is an interface between the Nix layer and the sandbox layer,
 not a host-path inheritance mechanism. Nix computes package paths;
-`pi-env-bwrap` decides whether they are safe to admit.
+`pi-en-bwrap` decides whether they are safe to admit.
 
 ## 4. Agent-oriented flake integration recipes
 
 External project flakes often already encode domain-specific shell policy:
 profile maps, FHS environments, container targets, or custom shell hooks. When a
-user asks an agent to make `nix develop .#agent` work for pi-env, the intended
-architecture is not a generic project shell named `agent`; it is a pi-env-aware
-shell that exposes `pienv`, the Nix-backed pi-env runtime, and optional
+user asks an agent to make `nix develop .#agent` work for Pi-en, the intended
+architecture is not a generic project shell named `agent`; it is a Pi-en-aware
+shell that exposes `pien`, the Nix-backed Pi-en runtime, and optional
 coordination helpers.
 
 The stable integration target is therefore additive:
 
-1. add `pi-env` as a flake input and make it follow the project's `nixpkgs`
+1. add `pi-en` as a flake input and make it follow the project's `nixpkgs`
    input when practical;
-2. include `pi-env` in the `outputs` argument set;
+2. include `pi-en` in the `outputs` argument set;
 3. preserve existing `devShells`, package outputs, FHS/container outputs, and
    project-specific shell policy;
 4. expose `devShells.<system>.agent` either by merging a dedicated agent shell
-   using `pi-env.lib.mkPiShell` or by aliasing it to an already pi-env-aware
+   using `pi-en.lib.mkPiShell` or by aliasing it to an already Pi-en-aware
    default shell such as `existingDevShells.default`; and
 5. declare only explicit project tools in `extraPackages`.
 
@@ -108,10 +108,10 @@ should teach agents to consult that helper, to avoid inventing unrelated
 `agentProfile` shells, and to ask for clarification when a flake shape cannot
 be changed safely with a small textual patch.
 
-The `.#agent` selector should become the conventional target for pi-env-aware
+The `.#agent` selector should become the conventional target for Pi-en-aware
 project shells. Projects that do not need a separate agent shell can keep
 backward-compatible human behavior by defining `agent` as an alias of the
-normal default shell, provided that default shell is already pi-env-aware.
+normal default shell, provided that default shell is already Pi-en-aware.
 Launcher behavior should mirror that convention: Nix runtime startup may probe
 for the agent devshell and prefer it when present, fall back to the default
 shell when absent, and fail visibly when a present or explicitly selected agent

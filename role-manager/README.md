@@ -1,6 +1,6 @@
-# pi-env role-manager package
+# Pi-en role-manager package
 
-This is the Pi role-manager resource package for pi-env role template support.
+This is the Pi role-manager resource package for Pi-en role template support.
 
 It currently provides:
 
@@ -28,13 +28,13 @@ Try it locally from this repository with:
 pi -e ./role-manager
 ```
 
-Inside the `pi-env` devshell, `pi-env` loads the Nix-packaged role manager by
+Inside the `pi-en` devshell, `pi-en` loads the Nix-packaged role manager by
 default when the package path exists. The package remains inactive until a role
 is selected, restored from session state, or requested through supported
 environment variables. Opt out for one run with:
 
 ```bash
-PI_ENV_ROLE_MANAGER_AUTO=0 pi-env
+PI_EN_ROLE_MANAGER_AUTO=0 pi-en
 ```
 
 You can still install that package path into project-local Pi settings. If you
@@ -42,8 +42,8 @@ use an installed-package workflow and want to avoid also passing the per-run
 extension flag, keep using the opt-out variable:
 
 ```bash
-pi-env-bwrap install -l "$PI_ENV_ROLE_MANAGER_PACKAGE"
-PI_ENV_ROLE_MANAGER_AUTO=0 pi-env
+pi-en-bwrap install -l "$PI_EN_ROLE_MANAGER_PACKAGE"
+PI_EN_ROLE_MANAGER_AUTO=0 pi-en
 ```
 
 Role merge order is base package roles, global agent roles, common agent
@@ -79,5 +79,5 @@ extension updates the footer status and terminal title. `/role-cycle` includes
 the role's one-cycle checklist in the kickoff prompt instead of keeping a
 persistent checklist above later prompts. `/role-clear` removes active role UI
 decorations. While a role is active, the
-extension also exports `PI_ENV_COORD_ROLE` to Pi subprocesses using the role's
+extension also exports `PI_EN_COORD_ROLE` to Pi subprocesses using the role's
 `coordCommitter` value, or the role name when `coordCommitter` is omitted.

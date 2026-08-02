@@ -5,17 +5,17 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$repo_root"
 
 scripts=(
-  tests/pi-env-coord-blackbox.sh
-  tests/pi-env-coord-concurrency.sh
-  tests/pi-env-coord-lint.sh
-  tests/pi-env-coord-root-layout.sh
-  tests/pi-env-coord-repo.sh
-  tests/pi-env-coord-generate-requirements.sh
-  tests/pi-env-coord-generate-requirements-coverage.sh
+  tests/pi-en-coord-blackbox.sh
+  tests/pi-en-coord-concurrency.sh
+  tests/pi-en-coord-lint.sh
+  tests/pi-en-coord-root-layout.sh
+  tests/pi-en-coord-repo.sh
+  tests/pi-en-coord-generate-requirements.sh
+  tests/pi-en-coord-generate-requirements-coverage.sh
   tests/flake-package-boundary.sh
   tests/design-covers.sh
-  tests/pi-env-install-non-nix.sh
-  tests/pienv-dispatcher.sh
+  tests/pi-en-install-non-nix.sh
+  tests/pien-dispatcher.sh
   tests/coordination-items-closed-or-done.sh
   tests/role-manager-package.sh
   tests/role-manager-schema.sh

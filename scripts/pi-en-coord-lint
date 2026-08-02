@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-lint - lint coordination items and item-matched tests
+pi-en-coord-lint - lint coordination items and item-matched tests
 
 Usage:
-  pi-env-coord-lint [options]
+  pi-en-coord-lint [options]
 
 Options:
-  --coord-dir DIR            Coordination clone; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --coord-dir DIR            Coordination clone; default: PI_EN_COORD_DIR or .pi-en/coordination
   --project-root DIR         Project repo containing tests/items; default: parent of coord dir
   --repo-id ID               Repo whose repo-scoped issue tests are available
   --all-repos                Validate all repo-scoped items structurally; do not require
@@ -53,11 +53,11 @@ tests mirror the root item type directory:
 
 When repos/<repo_id>/issues are present, lint defaults item-matched issue test
 checks to the current implementation repo resolved from --repo-id,
-PI_ENV_COORD_REPO_ID, .pi-env-coordination.yaml, or Git remote registry data. --all-repos
+PI_EN_COORD_REPO_ID, .pi-en-coordination.yaml, or Git remote registry data. --all-repos
 validates every repo structurally but skips repo-scoped issue test requirements
 for repos whose implementation checkout is not selected by --repo-id. Root
 issues/ paths are allowed during migration with a warning; set
-PI_ENV_COORD_LINT_ROOT_ISSUES=fail to reject them.
+PI_EN_COORD_LINT_ROOT_ISSUES=fail to reject them.
 USAGE
 }
 
@@ -119,7 +119,7 @@ repo_err=""
 if [ -n "$repo_id_opt" ]; then
   resolved_repo_id="$(coord_registry_canonical_repo_id "$repo_id_opt" "$coord_dir")"
 else
-  repo_err="$(mktemp "${TMPDIR:-/tmp}/pi-env-coord-lint-repo.XXXXXX")" || coord_die "failed to create temporary file"
+  repo_err="$(mktemp "${TMPDIR:-/tmp}/pi-en-coord-lint-repo.XXXXXX")" || coord_die "failed to create temporary file"
   if resolved_repo_id="$(cd "$project_root" && coord_resolve_repo_id "" "$coord_dir" 2>"$repo_err")"; then
     :
   else
@@ -136,12 +136,12 @@ items_seen=0
 item_identity_seen=$'\n'
 
 lint_fail() {
-  printf 'pi-env-coord-lint: FAIL: %s\n' "$*" >&2
+  printf 'pi-en-coord-lint: FAIL: %s\n' "$*" >&2
   failures=$((failures + 1))
 }
 
 lint_warn() {
-  printf 'pi-env-coord-lint: WARN: %s\n' "$*" >&2
+  printf 'pi-en-coord-lint: WARN: %s\n' "$*" >&2
   warnings=$((warnings + 1))
 }
 
@@ -447,7 +447,7 @@ while IFS= read -r file; do
     else
       case "$file" in
         issues/*)
-          if [ "${PI_ENV_COORD_LINT_ROOT_ISSUES:-warn}" = "fail" ]; then
+          if [ "${PI_EN_COORD_LINT_ROOT_ISSUES:-warn}" = "fail" ]; then
             lint_fail "$file uses root issues/ during repo-scope migration"
           else
             lint_warn "$file uses root issues/ during repo-scope migration"
@@ -529,9 +529,9 @@ if [ -d "$items_tests_dir" ]; then
   done < <(find "$items_tests_dir" -type f -name '*.sh' 2>/dev/null | sort)
 fi
 
-coverage_generator="$project_root/scripts/pi-env-coord-generate-requirements-coverage"
+coverage_generator="$project_root/scripts/pi-en-coord-generate-requirements-coverage"
 if [ ! -x "$coverage_generator" ]; then
-  coverage_generator="$(command -v pi-env-coord-generate-requirements-coverage || true)"
+  coverage_generator="$(command -v pi-en-coord-generate-requirements-coverage || true)"
 fi
 if [ -n "$coverage_generator" ] && [ -x "$coverage_generator" ] && [ -d "$project_root/designs" ]; then
   coverage_output="$("$coverage_generator" \
@@ -552,10 +552,10 @@ EOF
 fi
 
 if [ "$failures" -gt 0 ]; then
-  printf 'pi-env-coord-lint: %d failure(s), %d warning(s), %d item(s) checked\n' \
+  printf 'pi-en-coord-lint: %d failure(s), %d warning(s), %d item(s) checked\n' \
     "$failures" "$warnings" "$items_seen" >&2
   exit 1
 fi
 
-printf 'pi-env-coord-lint: ok (%d item(s), %d warning(s))\n' \
+printf 'pi-en-coord-lint: ok (%d item(s), %d warning(s))\n' \
   "$items_seen" "$warnings"

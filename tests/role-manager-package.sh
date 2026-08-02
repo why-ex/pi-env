@@ -26,7 +26,7 @@ const expectedRoleTools = new Map([
 ]);
 const manifest = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
 
-assert.equal(manifest.name, "pi-env-role-manager");
+assert.equal(manifest.name, "pi-en-role-manager");
 assert.ok(manifest.keywords.includes("pi-package"), "package is not tagged as a Pi package");
 assert.deepEqual(manifest.pi.extensions, ["./extensions/role-manager.ts"]);
 assert.ok(existsSync(join(packageRoot, "extensions", "role-manager.ts")));
@@ -34,10 +34,10 @@ assert.ok(existsSync(join(packageRoot, "lib", "role-loader.mjs")));
 assert.ok(existsSync(join(packageRoot, "roles", "architect.md")));
 
 const flake = readFileSync(join(repoRoot, "flake.nix"), "utf8");
-const piBwrap = readFileSync(join(repoRoot, "scripts", "pi-env-bwrap"), "utf8");
+const piBwrap = readFileSync(join(repoRoot, "scripts", "pi-en-bwrap"), "utf8");
 assert.match(flake, /mkRoleManagerPackage/);
 assert.match(flake, /pi-role-manager = roleManagerPackage/);
-assert.match(flake, /PI_ENV_ROLE_MANAGER_PACKAGE/);
+assert.match(flake, /PI_EN_ROLE_MANAGER_PACKAGE/);
 assert.match(piBwrap, /for common_dir_name in skills prompts roles; do/);
 
 const exampleProject = join(repoRoot, "examples", "project-role-override");

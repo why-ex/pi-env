@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-clone - clone a coordination repository
+pi-en-coord-clone - clone a coordination repository
 
 Usage:
-  pi-env-coord-clone [options] [remote]
+  pi-en-coord-clone [options] [remote]
 
 Options:
-  --root DIR       Bare remote parent; default: .pi-env/agent-remotes
-  --remote REMOTE  Coordination Git remote URL or local bare path; default: PI_ENV_COORD_REMOTE
-  --project ID     Coordination project; default: PI_ENV_COORD_PROJECT or cwd name
-  --dir DIR        Clone target; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --root DIR       Bare remote parent; default: .pi-en/agent-remotes
+  --remote REMOTE  Coordination Git remote URL or local bare path; default: PI_EN_COORD_REMOTE
+  --project ID     Coordination project; default: PI_EN_COORD_PROJECT or cwd name
+  --dir DIR        Clone target; default: PI_EN_COORD_DIR or .pi-en/coordination
   -h, --help       Show this help
 
 Remote precedence is explicit --remote or positional remote, then
-PI_ENV_COORD_REMOTE, then .pi-env-coordination.yaml coordination_remote, then:
+PI_EN_COORD_REMOTE, then .pi-en-coordination.yaml coordination_remote, then:
   <root>/<project>-coordination.git
 USAGE
 }
@@ -42,7 +42,7 @@ coord_set_or_add_origin_url() {
 }
 
 root="$(coord_default_root)"
-project="${PI_ENV_COORD_PROJECT:-}"
+project="${PI_EN_COORD_PROJECT:-}"
 coord_dir="$(coord_default_dir)"
 remote="$(coord_env_coordination_remote 2>/dev/null || true)"
 remote_set=0

@@ -23,7 +23,7 @@ const ROLE_CYCLE_DONE_TOOL_NAME = "role_cycle_done";
 const ROLE_UI_STATUS_KEY = "role-manager";
 const ROLE_CYCLE_WIDGET_KEY = "role-manager-cycle";
 const ROLE_CYCLE_SECTION_TITLE = "One-cycle workflow";
-const PI_ENV_COORD_ROLE_ENV = "PI_ENV_COORD_ROLE";
+const PI_EN_COORD_ROLE_ENV = "PI_EN_COORD_ROLE";
 const ROLE_CYCLE_AUTO_SHUTDOWN_ENV = "PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE";
 
 const ROLE_CYCLE_DONE_PARAMETERS = {
@@ -711,7 +711,7 @@ export default function roleManager(pi: ExtensionAPI) {
 
   function captureOriginalCoordRole() {
     if (originalCoordRoleCaptured) return;
-    originalCoordRoleValue = process.env[PI_ENV_COORD_ROLE_ENV];
+    originalCoordRoleValue = process.env[PI_EN_COORD_ROLE_ENV];
     originalCoordRoleCaptured = true;
   }
 
@@ -719,16 +719,16 @@ export default function roleManager(pi: ExtensionAPI) {
     const coordRole = coordinationRoleNameFor(role);
     if (!coordRole) return;
     captureOriginalCoordRole();
-    process.env[PI_ENV_COORD_ROLE_ENV] = coordRole;
+    process.env[PI_EN_COORD_ROLE_ENV] = coordRole;
   }
 
   function restoreOriginalCoordRole() {
     if (!originalCoordRoleCaptured) return;
 
     if (originalCoordRoleValue === undefined) {
-      delete process.env[PI_ENV_COORD_ROLE_ENV];
+      delete process.env[PI_EN_COORD_ROLE_ENV];
     } else {
-      process.env[PI_ENV_COORD_ROLE_ENV] = originalCoordRoleValue;
+      process.env[PI_EN_COORD_ROLE_ENV] = originalCoordRoleValue;
     }
 
     originalCoordRoleValue = undefined;

@@ -3,32 +3,32 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-bootstrap-coordination - initialize coordination with inferred defaults
+pi-en-bootstrap-coordination - initialize coordination with inferred defaults
 
 Usage:
-  pi-env-bootstrap-coordination [options]
+  pi-en-bootstrap-coordination [options]
 
 Options:
   --project-root DIR  Project directory to inspect; default: current directory
-  --root DIR          Bare remote parent; default: .pi-env/agent-remotes
+  --root DIR          Bare remote parent; default: .pi-en/agent-remotes
   --remote REMOTE     Coordination repository Git remote URL or local bare path;
-                     default: PI_ENV_COORD_REMOTE
-  --project NAME      Coordination domain project name; default: PI_ENV_COORD_PROJECT
+                     default: PI_EN_COORD_REMOTE
+  --project NAME      Coordination domain project name; default: PI_EN_COORD_PROJECT
                      or inferred domain name
   --project-key KEY   Domain-level item ID prefix stored in root PROJECT.md;
-                     default: PI_ENV_COORD_PROJECT_KEY or derived from domain
+                     default: PI_EN_COORD_PROJECT_KEY or derived from domain
   --repo-id ID        Implementation repo namespace to attach/register; default:
-                     PI_ENV_COORD_REPO_ID, .pi-env-coordination.yaml repo_id,
+                     PI_EN_COORD_REPO_ID, .pi-en-coordination.yaml repo_id,
                      or Git origin name
   --register-repo     Register a missing --repo-id in the coordination registry
   --implementation-remote URL
@@ -42,26 +42,26 @@ Options:
   --generated-requirements-docs
                      Convenience alias for --domain-generated-file REQUIREMENTS.md
                      and --domain-generated-file REQUIREMENTS_COVERAGE.md
-  --dir DIR           Working clone dir; default: PI_ENV_COORD_DIR or .pi-env/coordination
-  --agent-id ID       Agent identity; default: PI_ENV_COORD_AGENT_ID or USER
+  --dir DIR           Working clone dir; default: PI_EN_COORD_DIR or .pi-en/coordination
+  --agent-id ID       Agent identity; default: PI_EN_COORD_AGENT_ID or USER
   --bare-only         Only create the bare remote
   --print-only        Print suggested settings and command; do not initialize or restore
   --dry-run           Alias for --print-only
-  --no-status         Do not run pi-env-coord-status after initialization/existing clone detection
+  --no-status         Do not run pi-en-coord-status after initialization/existing clone detection
   -h, --help          Show this help
 
-The command prints suggested PI_ENV_COORD_* settings, then calls
-pi-env-coord-init with those explicit values. It is a generic bootstrapper:
-when PI_ENV_COORD_* values are unset, it infers the project name from
-PI_ENV_COORD_PROJECT, the Git origin repository name, the Git root basename, or
-the current directory basename, in that order. PI_ENV_COORD_WORKSPACE and
---workspace have been removed; set PI_ENV_COORD_PROJECT or pass --project. With
+The command prints suggested PI_EN_COORD_* settings, then calls
+pi-en-coord-init with those explicit values. It is a generic bootstrapper:
+when PI_EN_COORD_* values are unset, it infers the project name from
+PI_EN_COORD_PROJECT, the Git origin repository name, the Git root basename, or
+the current directory basename, in that order. PI_EN_COORD_WORKSPACE and
+--workspace have been removed; set PI_EN_COORD_PROJECT or pass --project. With
 --project-root, target project/dir/key defaults are inferred from that
-directory instead of inherited PI_ENV_COORD_DIR, PI_ENV_COORD_PROJECT, and
-PI_ENV_COORD_PROJECT_KEY values; pass explicit options to override them. If a
+directory instead of inherited PI_EN_COORD_DIR, PI_EN_COORD_PROJECT, and
+PI_EN_COORD_PROJECT_KEY values; pass explicit options to override them. If a
 coordination clone already exists but the planned local bare remote is missing
 or empty, the remote is restored from the clone's committed history. Remote precedence is
-explicit --remote, then PI_ENV_COORD_REMOTE, then .pi-env-coordination.yaml
+explicit --remote, then PI_EN_COORD_REMOTE, then .pi-en-coordination.yaml
 coordination_remote, then the local bare remote path.
 USAGE
 }
@@ -94,8 +94,8 @@ bootstrap_infer_project_name() {
   local use_context_env remote name root base
   use_context_env="${1:-1}"
 
-  if [ "$use_context_env" = "1" ] && [ -n "${PI_ENV_COORD_PROJECT:-}" ]; then
-    printf '%s\n' "$PI_ENV_COORD_PROJECT"
+  if [ "$use_context_env" = "1" ] && [ -n "${PI_EN_COORD_PROJECT:-}" ]; then
+    printf '%s\n' "$PI_EN_COORD_PROJECT"
     return
   fi
 
@@ -128,7 +128,7 @@ bootstrap_shell_quote() {
 
 bootstrap_print_plan() {
   local init_command registration_required
-  init_command="pi-env-coord-init --remote $(bootstrap_shell_quote "$remote")"
+  init_command="pi-en-coord-init --remote $(bootstrap_shell_quote "$remote")"
   init_command="$init_command --project $(bootstrap_shell_quote "$project") --project-key $(bootstrap_shell_quote "$project_item_key") --dir $(bootstrap_shell_quote "$coord_dir_abs") --agent-id $(bootstrap_shell_quote "$agent_id")"
   if [ "$bare_only" = "1" ]; then
     init_command="$init_command --bare-only"
@@ -161,11 +161,11 @@ Suggested coordination settings:
   Registration required:       $registration_required
 
 Suggested environment for future runs:
-  export PI_ENV_COORD_REMOTE=$(bootstrap_shell_quote "$config_remote")
-  export PI_ENV_COORD_PROJECT=$(bootstrap_shell_quote "$project")
-  export PI_ENV_COORD_PROJECT_KEY=$(bootstrap_shell_quote "$project_item_key")
-  export PI_ENV_COORD_DIR=$(bootstrap_shell_quote "$coord_dir_abs")
-  export PI_ENV_COORD_AGENT_ID=$(bootstrap_shell_quote "$agent_id")
+  export PI_EN_COORD_REMOTE=$(bootstrap_shell_quote "$config_remote")
+  export PI_EN_COORD_PROJECT=$(bootstrap_shell_quote "$project")
+  export PI_EN_COORD_PROJECT_KEY=$(bootstrap_shell_quote "$project_item_key")
+  export PI_EN_COORD_DIR=$(bootstrap_shell_quote "$coord_dir_abs")
+  export PI_EN_COORD_AGENT_ID=$(bootstrap_shell_quote "$agent_id")
 
 Initialization command:
   $init_command
@@ -412,11 +412,11 @@ bootstrap_register_or_report_repo() {
   fi
 
   if [ "$register_repo" != "1" ]; then
-    coord_note "implementation repo '$implementation_repo_id' is not registered; rerun bootstrap with --register-repo or run 'pienv coord repo add $implementation_repo_id' manually"
+    coord_note "implementation repo '$implementation_repo_id' is not registered; rerun bootstrap with --register-repo or run 'pien coord repo add $implementation_repo_id' manually"
     return 0
   fi
 
-  repo_tool="$(bootstrap_script_path pi-env-coord-repo)"
+  repo_tool="$(bootstrap_script_path pi-en-coord-repo)"
   add_args=(--coord-dir "$coord_dir_abs" add "$implementation_repo_id")
   for remote in "${implementation_remotes[@]}"; do
     add_args+=(--remote "$remote")
@@ -634,8 +634,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -n "${PI_ENV_COORD_WORKSPACE:-}" ]; then
-  coord_die "PI_ENV_COORD_WORKSPACE has been removed; use PI_ENV_COORD_PROJECT"
+if [ -n "${PI_EN_COORD_WORKSPACE:-}" ]; then
+  coord_die "PI_EN_COORD_WORKSPACE has been removed; use PI_EN_COORD_PROJECT"
 fi
 
 use_context_env=1
@@ -681,8 +681,8 @@ fi
 
 if [ -n "$project_arg" ]; then
   project="$project_arg"
-elif [ "$use_context_env" = "1" ] && [ -n "${PI_ENV_COORD_PROJECT:-}" ]; then
-  project="$PI_ENV_COORD_PROJECT"
+elif [ "$use_context_env" = "1" ] && [ -n "${PI_EN_COORD_PROJECT:-}" ]; then
+  project="$PI_EN_COORD_PROJECT"
 elif [ -n "$inferred_project" ]; then
   project="$inferred_project"
 else
@@ -691,8 +691,8 @@ fi
 
 if [ -n "$project_key_arg" ]; then
   project_item_key="$(coord_project_id_prefix "$project_key_arg")"
-elif [ "$use_context_env" = "1" ] && [ -n "${PI_ENV_COORD_PROJECT_KEY:-}" ]; then
-  project_item_key="$(coord_project_id_prefix "$PI_ENV_COORD_PROJECT_KEY")"
+elif [ "$use_context_env" = "1" ] && [ -n "${PI_EN_COORD_PROJECT_KEY:-}" ]; then
+  project_item_key="$(coord_project_id_prefix "$PI_EN_COORD_PROJECT_KEY")"
 else
   project_item_key="$(coord_project_id_prefix "$project")"
 fi
@@ -703,7 +703,7 @@ fi
 
 implementation_repo_id="$repo_id_arg"
 if [ -z "$implementation_repo_id" ]; then
-  implementation_repo_id="${PI_ENV_COORD_REPO_ID:-}"
+  implementation_repo_id="${PI_EN_COORD_REPO_ID:-}"
 fi
 if [ -z "$implementation_repo_id" ]; then
   implementation_repo_id="$(coord_impl_config_value repo_id 2>/dev/null || true)"
@@ -751,8 +751,8 @@ if [ "$bare_only" != "1" ]; then
   bootstrap_warn_git_identity
 fi
 
-agent_coord_init="$(bootstrap_script_path pi-env-coord-init)"
-agent_coord_status="$(bootstrap_script_path pi-env-coord-status)"
+agent_coord_init="$(bootstrap_script_path pi-en-coord-init)"
+agent_coord_status="$(bootstrap_script_path pi-en-coord-status)"
 
 if [ "$bare_only" != "1" ] \
   && [ -e "$coord_dir_abs" ] \

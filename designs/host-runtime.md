@@ -1,6 +1,6 @@
 # Host Runtime Design
 
-Host runtime mode lets direct `pi-env` users run Pi inside the Bubblewrap
+Host runtime mode lets direct `pi-en` users run Pi inside the Bubblewrap
 workspace sandbox without first entering Nix. The design keeps the isolation
 layer as the product default while making reproducible Nix tool pinning an
 explicit opt-in for users and teams that want it.
@@ -9,17 +9,17 @@ explicit opt-in for users and teams that want it.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-025 | PIENV-FRQ-20260701-110508-001 |
-| RUNTIME-004 | PIENV-FRQ-20260701-110510-001 |
-| RUNTIME-005 | PIENV-FRQ-20260701-110512-001 |
-| INSTALL-001 | PIENV-FRQ-20260701-182129-001 |
-| INSTALL-002 | PIENV-FRQ-20260702-064100-001 |
-| PATH-006 | PIENV-FRQ-20260701-110514-001 |
-| FS-011 | PIENV-FRQ-20260701-110516-001 |
-| AGENT-017 | PIENV-FRQ-20260701-110518-001 |
-| CRQ-014 | PIENV-CRQ-20260701-110520-001 |
-| TEST-033 | PIENV-QRQ-20260701-110522-001 |
-| DOC-004 | PIENV-QRQ-20260701-110524-001 |
+| UC-025 | PIEN-FRQ-20260701-110508-001 |
+| RUNTIME-004 | PIEN-FRQ-20260701-110510-001 |
+| RUNTIME-005 | PIEN-FRQ-20260701-110512-001 |
+| INSTALL-001 | PIEN-FRQ-20260701-182129-001 |
+| INSTALL-002 | PIEN-FRQ-20260702-064100-001 |
+| PATH-006 | PIEN-FRQ-20260701-110514-001 |
+| FS-011 | PIEN-FRQ-20260701-110516-001 |
+| AGENT-017 | PIEN-FRQ-20260701-110518-001 |
+| CRQ-014 | PIEN-CRQ-20260701-110520-001 |
+| TEST-033 | PIEN-QRQ-20260701-110522-001 |
+| DOC-004 | PIEN-QRQ-20260701-110524-001 |
 
 ## 1. Runtime modes
 
@@ -42,7 +42,7 @@ as `/usr/local/bin`, `/usr/bin`, and `/bin` when present. Additional host tool
 paths need explicit opt-in, canonicalization, existence checks, and read-only
 mounts.
 
-The Nix-mode extra path contract remains separate: `PI_ENV_BWRAP_EXTRA_PATH` stays
+The Nix-mode extra path contract remains separate: `PI_EN_BWRAP_EXTRA_PATH` stays
 constrained to validated `/nix/store` paths unless a future change deliberately
 renames or splits the host-mode interface. This prevents host runtime support
 from weakening Nix-mode safety guarantees.
@@ -62,14 +62,14 @@ being passed to Pi.
 
 ## 4. Non-Nix installation
 
-The first non-Nix installation path should package pi-env files rather than a
+The first non-Nix installation path should package Pi-en files rather than a
 runtime toolchain. It should install command wrappers to a conventional prefix
 such as `~/.local` or `/usr/local`, install shared support files under a stable
-data directory such as `$PREFIX/share/pi-env`, and make installed wrappers
+data directory such as `$PREFIX/share/pi-en`, and make installed wrappers
 resolve the same support paths Nix currently injects for coordination helpers,
 templates, and role-manager package data.
 
-End-user installation should not require cloning the full pi-env repository.
+End-user installation should not require cloning the full Pi-en repository.
 Direct checkout installation can remain available for contributors, but the
 normal non-Nix path should work from a published release archive, downloaded
 installer, or equivalent artifact. The installer may operate as a bootstrapper:
@@ -85,7 +85,7 @@ access, or temporary downloaded artifact.
 
 This keeps the adoption path lightweight while preserving a clear boundary:
 non-Nix installs use host-provided tools and are not reproducible or pinned by
-pi-env. Nix remains the pinned runtime for teams that need reproducibility.
+Pi-en. Nix remains the pinned runtime for teams that need reproducibility.
 
 ## 5. Documentation and verification
 

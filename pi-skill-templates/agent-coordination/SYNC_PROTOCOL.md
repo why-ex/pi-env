@@ -64,16 +64,16 @@ git config rebase.autoStash true
 
 ## Recommended lint checks
 
-When the project provides the pi-env helper, run:
+When the project provides the Pi-en helper, run:
 
 ```bash
-pi-env-coord-lint --coord-dir coordination --project-root .
+pi-en-coord-lint --coord-dir coordination --project-root .
 ```
 
 For release or handoff gates that require no active issue work, run:
 
 ```bash
-pi-env-coord-lint --coord-dir coordination --project-root . \
+pi-en-coord-lint --coord-dir coordination --project-root . \
   --require-done-or-closed
 ```
 

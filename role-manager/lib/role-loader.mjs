@@ -84,7 +84,7 @@ export function discoverRoleSources(options = {}) {
     optional: true,
   });
 
-  const commonAgentDir = options.commonAgentDir ?? env.PI_ENV_BWRAP_COMMON_AGENT_DIR;
+  const commonAgentDir = options.commonAgentDir ?? env.PI_EN_BWRAP_COMMON_AGENT_DIR;
   if (commonAgentDir) {
     addSource(sources, seenRoleDirs, {
       kind: ROLE_SOURCE_KINDS.COMMON,
@@ -95,7 +95,7 @@ export function discoverRoleSources(options = {}) {
     });
   }
 
-  const coordinationDir = options.coordinationDir ?? env.PI_ENV_COORD_DIR;
+  const coordinationDir = options.coordinationDir ?? env.PI_EN_COORD_DIR;
   if (coordinationDir) {
     addSource(sources, seenRoleDirs, {
       kind: ROLE_SOURCE_KINDS.COORDINATION,
@@ -279,7 +279,7 @@ export function formatActiveRoleSystemPrompt(role) {
 The current session has the \`${role.name}\` role active. Follow this role
 for the current turn. Do not assume instructions from inactive roles.
 When running coordination helper commands, preserve the active role by using
-\`--role ${coordinationRole}\` or the role manager's \`PI_ENV_COORD_ROLE\`
+\`--role ${coordinationRole}\` or the role manager's \`PI_EN_COORD_ROLE\`
 environment value. This affects coordination helper commits only; do not use
 role-specific Git identity for project repository commits unless explicitly
 requested.

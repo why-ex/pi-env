@@ -6,76 +6,76 @@ repo_root="$(cd "$script_dir/.." 2>/dev/null && pwd -P || printf '%s' "$script_d
 
 usage() {
   cat <<'USAGE'
-pienv - pi-env command namespace
+pien - pi-en command namespace
 
 Usage:
-  pienv [launcher options] [pi args...]
-  pienv [launcher options] -- [pi args...]
-  pienv run [launcher options] [pi args...]
-  pienv [launcher options] --raw -- [pi args...]
-  pienv raw -- [pi args...]
-  pienv shell [launcher options] [shell args...]
-  pienv sandbox [pi args...]
-  pienv sandbox shell [shell args...]
-  pienv coord <command> [args...]
-  pienv roles serial [args...]
-  pienv recipe flake-agent-shell
-  pienv install [args...]
-  pienv uninstall [args...]
-  pienv completion bash
-  pienv diagnostics
-  pienv version
-  pienv help [command...]
+  pien [launcher options] [pi args...]
+  pien [launcher options] -- [pi args...]
+  pien run [launcher options] [pi args...]
+  pien [launcher options] --raw -- [pi args...]
+  pien raw -- [pi args...]
+  pien shell [launcher options] [shell args...]
+  pien sandbox [pi args...]
+  pien sandbox shell [shell args...]
+  pien coord <command> [args...]
+  pien roles serial [args...]
+  pien recipe flake-agent-shell
+  pien install [args...]
+  pien uninstall [args...]
+  pien completion bash
+  pien diagnostics
+  pien version
+  pien help [command...]
 
 Commands:
-  run                 Run pi-env (existing command: pi-env)
-  raw                 Run pi-env with --raw (existing command: pi-env --raw)
-  shell               Run a pi-env shell (existing command: pi-env-shell)
-  sandbox             Run the sandbox helper (existing command: pi-env-bwrap)
-  coord               Coordination helpers (existing commands: pi-env-coord-*)
-  roles serial        Serial role orchestrator (existing command: pi-env-serial-roles)
+  run                 Run pi-en (existing command: pi-en)
+  raw                 Run pi-en with --raw (existing command: pi-en --raw)
+  shell               Run a pi-en shell (existing command: pi-en-shell)
+  sandbox             Run the sandbox helper (existing command: pi-en-bwrap)
+  coord               Coordination helpers (existing commands: pi-en-coord-*)
+  roles serial        Serial role orchestrator (existing command: pi-en-serial-roles)
   recipe              Print non-mutating integration recipes
-  install             Non-Nix installer (existing command: pi-env-install-non-nix)
-  uninstall           Non-Nix uninstaller (existing command: pi-env-uninstall)
-  completion bash     Print Bash completion for pienv
+  install             Non-Nix installer (existing command: pi-en-install-non-nix)
+  uninstall           Non-Nix uninstaller (existing command: pi-en-uninstall)
+  completion bash     Print Bash completion for pien
   diagnostics         Print sandbox/runtime diagnostics without launching Pi
-  version             Print pi-env version information
-  help                Show help for pienv commands
+  version             Print pi-en version information
+  help                Show help for pien commands
 
-Launcher options for the default, run, shell, and pi-env --raw forms:
+Launcher options for the default, run, shell, and pi-en --raw forms:
   --runtime host|nix|auto  Select host tools, Nix-backed runtime, or auto.
   --flake REF              Select the Nix flake used by --runtime nix|auto.
   --devshell NAME          Select the Nix devShell name for --runtime nix|auto.
 
-Environment variables provide the same defaults: PI_ENV_RUNTIME, PI_ENV_FLAKE,
-and PI_ENV_NIX_DEVSHELL. CLI options win over environment values. These
-launcher options are passed to pi-env or pi-env-shell. For raw mode, put
-launcher options before --raw (for example, 'pienv --runtime host --raw -- ...');
-the 'pienv raw' namespace remains a thin 'pi-env --raw' dispatcher. Coordination,
+Environment variables provide the same defaults: PI_EN_RUNTIME, PI_EN_FLAKE,
+and PI_EN_NIX_DEVSHELL. CLI options win over environment values. These
+launcher options are passed to pi-en or pi-en-shell. For raw mode, put
+launcher options before --raw (for example, 'pien --runtime host --raw -- ...');
+the 'pien raw' namespace remains a thin 'pi-en --raw' dispatcher. Coordination,
 recipe, install, uninstall, and sandbox commands have separate option sets.
 
-Use 'pienv -- ...' to pass a first Pi argument that would otherwise be
-parsed as a pienv subcommand.
+Use 'pien -- ...' to pass a first Pi argument that would otherwise be
+parsed as a pien subcommand.
 USAGE
 }
 
 version_output() {
-  if [ -n "${PI_ENV_VERSION:-}" ]; then
-    printf 'pienv %s\n' "$PI_ENV_VERSION"
+  if [ -n "${PI_EN_VERSION:-}" ]; then
+    printf 'pien %s\n' "$PI_EN_VERSION"
   else
-    printf 'pienv (pi-env checkout)\n'
+    printf 'pien (pi-en checkout)\n'
   fi
 }
 
 diagnostics_output() {
-  printf 'PI_ENV_INSIDE_SANDBOX=%s\n' "${PI_ENV_INSIDE_SANDBOX:-0}"
-  printf 'PI_ENV_COORD_DIR=%s\n' "${PI_ENV_COORD_DIR:-}"
-  printf 'PI_ENV_COORD_REMOTE=%s\n' "${PI_ENV_COORD_REMOTE:-}"
-  printf 'PI_ENV_NIX_SANDBOX_COMMAND_PATH=%s\n' "${PI_ENV_NIX_SANDBOX_COMMAND_PATH:-}"
-  if command -v pienv >/dev/null 2>&1; then
-    printf 'pienv=%s\n' "$(command -v pienv)"
+  printf 'PI_EN_INSIDE_SANDBOX=%s\n' "${PI_EN_INSIDE_SANDBOX:-0}"
+  printf 'PI_EN_COORD_DIR=%s\n' "${PI_EN_COORD_DIR:-}"
+  printf 'PI_EN_COORD_REMOTE=%s\n' "${PI_EN_COORD_REMOTE:-}"
+  printf 'PI_EN_NIX_SANDBOX_COMMAND_PATH=%s\n' "${PI_EN_NIX_SANDBOX_COMMAND_PATH:-}"
+  if command -v pien >/dev/null 2>&1; then
+    printf 'pien=%s\n' "$(command -v pien)"
   fi
-  if command -v pi-env-coord-status >/dev/null 2>&1; then
+  if command -v pi-en-coord-status >/dev/null 2>&1; then
     printf 'coordination_helpers=available\n'
   else
     printf 'coordination_helpers=unavailable\n'
@@ -83,91 +83,91 @@ diagnostics_output() {
 }
 
 sandbox_outer_only() {
-  echo "pienv: '$*' must be run from the outer terminal, not from inside Pi's sandbox." >&2
-  echo "pienv: inside the sandbox, use 'pienv help', 'pienv diagnostics', 'pienv recipe ...', or 'pienv coord ...'." >&2
+  echo "pien: '$*' must be run from the outer terminal, not from inside Pi's sandbox." >&2
+  echo "pien: inside the sandbox, use 'pien help', 'pien diagnostics', 'pien recipe ...', or 'pien coord ...'." >&2
   exit 2
 }
 
 coord_help() {
   cat <<'USAGE'
-pienv coord - coordination command namespace
+pien coord - coordination command namespace
 
 Usage:
-  pienv coord <command> [args...]
-  pienv coord rules upgrade [args...]
-  pienv coord requirements generate [args...]
-  pienv coord requirements coverage [args...]
+  pien coord <command> [args...]
+  pien coord rules upgrade [args...]
+  pien coord requirements generate [args...]
+  pien coord requirements coverage [args...]
 
 Commands:
-  bootstrap              Existing command: pi-env-bootstrap-coordination
-  init                   Existing command: pi-env-coord-init
-  clone                  Existing command: pi-env-coord-clone
-  status                 Existing command: pi-env-coord-status
-  list                   Existing command: pi-env-coord-list
-  show                   Existing command: pi-env-coord-cat
-  new                    Existing command: pi-env-coord-new
-  claim                  Existing command: pi-env-coord-claim
-  done                   Existing command: pi-env-coord-done
-  review                 Existing command: pi-env-coord-review
-  verify                 Existing command: pi-env-coord-verify
-  close                  Existing command: pi-env-coord-close
-  pull                   Existing command: pi-env-coord-pull
-  push                   Existing command: pi-env-coord-push
-  lint                   Existing command: pi-env-coord-lint
-  repo                   Existing command: pi-env-coord-repo
-  rules upgrade          Existing command: pi-env-coord-upgrade-rules
-  requirements generate  Existing command: pi-env-coord-generate-requirements
-  requirements coverage  Existing command: pi-env-coord-generate-requirements-coverage
+  bootstrap              Existing command: pi-en-bootstrap-coordination
+  init                   Existing command: pi-en-coord-init
+  clone                  Existing command: pi-en-coord-clone
+  status                 Existing command: pi-en-coord-status
+  list                   Existing command: pi-en-coord-list
+  show                   Existing command: pi-en-coord-cat
+  new                    Existing command: pi-en-coord-new
+  claim                  Existing command: pi-en-coord-claim
+  done                   Existing command: pi-en-coord-done
+  review                 Existing command: pi-en-coord-review
+  verify                 Existing command: pi-en-coord-verify
+  close                  Existing command: pi-en-coord-close
+  pull                   Existing command: pi-en-coord-pull
+  push                   Existing command: pi-en-coord-push
+  lint                   Existing command: pi-en-coord-lint
+  repo                   Existing command: pi-en-coord-repo
+  rules upgrade          Existing command: pi-en-coord-upgrade-rules
+  requirements generate  Existing command: pi-en-coord-generate-requirements
+  requirements coverage  Existing command: pi-en-coord-generate-requirements-coverage
 
-Use 'pienv help coord <command>' or 'pienv coord <command> --help' for
+Use 'pien help coord <command>' or 'pien coord <command> --help' for
 leaf command help.
 USAGE
 }
 
 coord_rules_help() {
   cat <<'USAGE'
-pienv coord rules - coordination rules commands
+pien coord rules - coordination rules commands
 
 Usage:
-  pienv coord rules upgrade [args...]
+  pien coord rules upgrade [args...]
 
 Commands:
-  upgrade  Upgrade coordination rules (existing command: pi-env-coord-upgrade-rules)
+  upgrade  Upgrade coordination rules (existing command: pi-en-coord-upgrade-rules)
 USAGE
 }
 
 coord_requirements_help() {
   cat <<'USAGE'
-pienv coord requirements - coordination requirements commands
+pien coord requirements - coordination requirements commands
 
 Usage:
-  pienv coord requirements generate [args...]
-  pienv coord requirements coverage [args...]
+  pien coord requirements generate [args...]
+  pien coord requirements coverage [args...]
 
 Commands:
-  generate  Generate requirements from designs (existing command: pi-env-coord-generate-requirements)
-  coverage  Generate requirements coverage report (existing command: pi-env-coord-generate-requirements-coverage)
+  generate  Generate requirements from designs (existing command: pi-en-coord-generate-requirements)
+  coverage  Generate requirements coverage report (existing command: pi-en-coord-generate-requirements-coverage)
 USAGE
 }
 
 roles_help() {
   cat <<'USAGE'
-pienv roles - role orchestration commands
+pien roles - role orchestration commands
 
 Usage:
-  pienv roles serial [args...]
+  pien roles serial [args...]
 
 Commands:
-  serial  Run serial role orchestration (existing command: pi-env-serial-roles)
+  serial  Run serial role orchestration (existing command: pi-en-serial-roles)
 USAGE
 }
 
 recipe_help() {
   cat <<'USAGE'
-pienv recipe - copyable pi-env integration recipes
+pien recipe - copyable pi-en integration recipes
 
 Usage:
-  pienv recipe flake-agent-shell
+  pien recipe flake-agent-shell
 
 Commands:
   flake-agent-shell  Print the canonical non-mutating flake .#agent shell recipe
@@ -178,36 +178,36 @@ USAGE
 
 flake_agent_shell_recipe() {
   cat <<'RECIPE'
-# pienv recipe flake-agent-shell
+# pien recipe flake-agent-shell
 
-Purpose: make `nix develop .#agent` the pi-env-aware agent entrypoint for
+Purpose: make `nix develop .#agent` the pi-en-aware agent entrypoint for
 an existing flake without replacing project devShells, packages, FHS shells,
-containers, or project-specific shell policy. Pi-env-integrated projects should
+containers, or project-specific shell policy. Pi-en-integrated projects should
 always expose devShells.<system>.agent; it can be a dedicated mkPiShell shell or
-an alias when the default shell is already pi-env-aware. This command is
+an alias when the default shell is already pi-en-aware. This command is
 informational only and does not read, edit, or write project files.
 
-1. Add the pi-env input next to existing inputs:
+1. Add the pi-en input next to existing inputs:
 
 ```nix
 inputs = {
   # existing inputs...
 
-  # Local checkout for active pi-env development:
-  pi-env.url = "git+file:///home/me/src/pi-env";
+  # Local checkout for active pi-en development:
+  pi-en.url = "git+file:///home/me/src/pi-en";
   # Shared/pinned alternative:
-  # pi-env.url = "github:u2up/pi-env";
+  # pi-en.url = "github:u2up/pi-en";
 
   # Follow the project's pins when those inputs exist.
-  pi-env.inputs.nixpkgs.follows = "nixpkgs";
-  pi-env.inputs.flake-utils.follows = "flake-utils";
+  pi-en.inputs.nixpkgs.follows = "nixpkgs";
+  pi-en.inputs.flake-utils.follows = "flake-utils";
 };
 ```
 
-2. Include `pi-env` in the outputs argument set:
+2. Include `pi-en` in the outputs argument set:
 
 ```nix
-outputs = { self, nixpkgs, flake-utils, pi-env, ... }:
+outputs = { self, nixpkgs, flake-utils, pi-en, ... }:
   # existing outputs...
 ```
 
@@ -226,11 +226,11 @@ in {
   devShells.${system} = {
     # default = pkgs.mkShell { ...existing project shell...; };
   } // {
-    agent = pi-env.lib.mkPiShell {
+    agent = pi-en.lib.mkPiShell {
       inherit pkgs;
 
       # Set to true, or omit because true is the default, when this project
-      # uses pi-env-bootstrap-coordination or pi-env-coord-* helpers.
+      # uses pi-en-bootstrap-coordination or pi-en-coord-* helpers.
       includeCoordinationHelpers = false;
 
       extraPackages = with pkgs; [
@@ -241,20 +241,20 @@ in {
       ];
 
       shellHook = ''
-        echo "Pi agent shell loaded. Use 'pienv' or 'pienv shell'."
+        echo "Pi agent shell loaded. Use 'pien' or 'pien shell'."
       '';
     };
   };
 }
 ```
 
-Alias pattern when the default shell is already pi-env-aware:
+Alias pattern when the default shell is already pi-en-aware:
 
 ```nix
 let
   pkgs = import nixpkgs { inherit system; };
   existingDevShells = {
-    default = pi-env.lib.mkPiShell {
+    default = pi-en.lib.mkPiShell {
       inherit pkgs;
       includeCoordinationHelpers = true;
       extraPackages = with pkgs; [ ];
@@ -270,23 +270,23 @@ in {
 
 For flakes that already construct `devShells.${system}` with mapAttrs, an FHS
 builder, flake-parts, devenv, or a container output, keep that structure and
-append only the dedicated `// { agent = pi-env.lib.mkPiShell { ... }; }` merge
+append only the dedicated `// { agent = pi-en.lib.mkPiShell { ... }; }` merge
 or alias `// { agent = existingDevShells.default; }` at the smallest safe point.
 Do not create a project-native shell that only happens to be named `agent`; a
-pi-env-aware shell must expose `pienv` and the pi-env runtime through
-`pi-env.lib.mkPiShell` or equivalent pi-env packages.
+pi-en-aware shell must expose `pien` and the pi-en runtime through
+`pi-en.lib.mkPiShell` or equivalent pi-en packages.
 
 Coordination variants:
-- `includeCoordinationHelpers = true;` includes `pienv coord ...`,
-  pi-env-bootstrap-coordination, pi-env-coord-*, and role orchestration helpers.
+- `includeCoordinationHelpers = true;` includes `pien coord ...`,
+  pi-en-bootstrap-coordination, pi-en-coord-*, and role orchestration helpers.
 - `includeCoordinationHelpers = false;` keeps a smaller runtime shell when the
   project does not use Git-backed coordination.
 
 Suggested prompt when asking Pi to modify an external complex flake:
 
 ```text
-Use the pi-env-flake-integration skill. Modify flake.nix to add
-devShells.${system}.agent using pi-env.lib.mkPiShell. Add pi-env as a
+Use the pi-en-flake-integration skill. Modify flake.nix to add
+devShells.${system}.agent using pi-en.lib.mkPiShell. Add pi-en as a
 flake input, add it to outputs, preserve existing devShells and package
 outputs, and do not create a project-native agentProfile unless I
 explicitly ask for one.
@@ -295,28 +295,28 @@ explicitly ask for one.
 After editing manually, run:
 
 ```bash
-nix flake lock --update-input pi-env
+nix flake lock --update-input pi-en
 nix develop .#agent
-pienv --help
+pien --help
 ```
 RECIPE
 }
 
 completion_help() {
   cat <<'USAGE'
-pienv completion - shell completion commands
+pien completion - shell completion commands
 
 Usage:
-  pienv completion bash
+  pien completion bash
 
 Commands:
-  bash  Print a sourceable Bash completion script for pienv
+  bash  Print a sourceable Bash completion script for pien
 USAGE
 }
 
 bash_completion() {
   cat <<'COMPLETION'
-_pienv() {
+_pien() {
   local cur prev words cword command_path option_words path_options launcher_options raw_marker_seen i
   COMPREPLY=()
   if declare -F _init_completion >/dev/null 2>&1; then
@@ -328,7 +328,7 @@ _pienv() {
     cword=$COMP_CWORD
   fi
 
-  _pienv_comp_words() {
+  _pien_comp_words() {
     compgen -W "$1" -- "$cur"
   }
 
@@ -376,7 +376,7 @@ _pienv() {
   if [ "$prev" = "--runtime" ]; then
     if ! $raw_marker_seen; then
       case "$command_path" in
-        run|shell|"") COMPREPLY=( $(_pienv_comp_words "host nix auto") ) ;;
+        run|shell|"") COMPREPLY=( $(_pien_comp_words "host nix auto") ) ;;
       esac
     fi
     return 0
@@ -411,59 +411,59 @@ _pienv() {
       uninstall) option_words="--prefix --help -h" ;;
       *) option_words="--help -h" ;;
     esac
-    COMPREPLY=( $(_pienv_comp_words "$option_words") )
+    COMPREPLY=( $(_pien_comp_words "$option_words") )
     return 0
   fi
 
   case "$cword" in
-    1) COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version help completion") ); return 0 ;;
+    1) COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version help completion") ); return 0 ;;
   esac
 
   case "${words[1]:-}" in
     sandbox)
-      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "shell") )
+      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "shell") )
       ;;
     coord)
       case "${words[2]:-}" in
-        rules) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "upgrade") ) ;;
-        requirements) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "generate coverage") ) ;;
-        *) [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
+        rules) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "upgrade") ) ;;
+        requirements) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "generate coverage") ) ;;
+        *) [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
       esac
       ;;
     roles)
-      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "serial") )
+      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "serial") )
       ;;
     recipe)
-      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "flake-agent-shell") )
+      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "flake-agent-shell") )
       ;;
     completion)
-      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "bash") )
+      [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "bash") )
       ;;
     help)
       case "${words[2]:-}" in
-        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pienv_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version completion") ) ;;
+        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version completion") ) ;;
         coord)
           case "${words[3]:-}" in
-            "") [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
-            rules) [ "$cword" -eq 4 ] && COMPREPLY=( $(_pienv_comp_words "upgrade") ) ;;
-            requirements) [ "$cword" -eq 4 ] && COMPREPLY=( $(_pienv_comp_words "generate coverage") ) ;;
+            "") [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
+            rules) [ "$cword" -eq 4 ] && COMPREPLY=( $(_pien_comp_words "upgrade") ) ;;
+            requirements) [ "$cword" -eq 4 ] && COMPREPLY=( $(_pien_comp_words "generate coverage") ) ;;
           esac
           ;;
-        roles) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "serial") ) ;;
-        recipe) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "flake-agent-shell") ) ;;
-        completion) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pienv_comp_words "bash") ) ;;
+        roles) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "serial") ) ;;
+        recipe) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "flake-agent-shell") ) ;;
+        completion) [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "bash") ) ;;
       esac
       ;;
   esac
 }
-complete -F _pienv pienv
+complete -F _pien pien
 COMPLETION
 }
 
 resolve_command() {
   local name="$1"
   case "$name" in
-    pi-env|pi-env-shell)
+    pi-en|pi-en-shell)
       if [ -x "$repo_root/$name" ]; then
         printf '%s\n' "$repo_root/$name"
         return 0
@@ -478,7 +478,7 @@ resolve_command() {
     command -v "$name"
     return 0
   fi
-  echo "pienv: required command not found: $name" >&2
+  echo "pien: required command not found: $name" >&2
   return 127
 }
 
@@ -500,9 +500,9 @@ run_command_help() {
 
 coord_leaf_command_name() {
   case "$1" in
-    bootstrap) printf '%s\n' pi-env-bootstrap-coordination ;;
-    init|clone|status|list|new|claim|done|review|verify|close|pull|push|lint|repo) printf 'pi-env-coord-%s\n' "$1" ;;
-    show) printf '%s\n' pi-env-coord-cat ;;
+    bootstrap) printf '%s\n' pi-en-bootstrap-coordination ;;
+    init|clone|status|list|new|claim|done|review|verify|close|pull|push|lint|repo) printf 'pi-en-coord-%s\n' "$1" ;;
+    show) printf '%s\n' pi-en-coord-cat ;;
     *) return 1 ;;
   esac
 }
@@ -518,7 +518,7 @@ help_dispatch() {
           shift
           case "${1:-}" in
             ""|-h|--help) coord_rules_help ;;
-            upgrade) run_command_help pi-env-coord-upgrade-rules ;;
+            upgrade) run_command_help pi-en-coord-upgrade-rules ;;
             *) unknown help coord rules "$1" ;;
           esac
           ;;
@@ -526,8 +526,8 @@ help_dispatch() {
           shift
           case "${1:-}" in
             ""|-h|--help) coord_requirements_help ;;
-            generate) run_command_help pi-env-coord-generate-requirements ;;
-            coverage) run_command_help pi-env-coord-generate-requirements-coverage ;;
+            generate) run_command_help pi-en-coord-generate-requirements ;;
+            coverage) run_command_help pi-en-coord-generate-requirements-coverage ;;
             *) unknown help coord requirements "$1" ;;
           esac
           ;;
@@ -545,7 +545,7 @@ help_dispatch() {
       shift
       case "${1:-}" in
         ""|-h|--help) roles_help ;;
-        serial) run_command_help pi-env-serial-roles ;;
+        serial) run_command_help pi-en-serial-roles ;;
         *) unknown help roles "$1" ;;
       esac
       ;;
@@ -565,18 +565,18 @@ help_dispatch() {
         *) unknown help completion "$1" ;;
       esac
       ;;
-    run) run_command_help pi-env ;;
-    raw) run_command_help pi-env ;;
-    shell) run_command_help pi-env-shell ;;
-    sandbox) run_command_help pi-env-bwrap ;;
-    install) run_command_help pi-env-install-non-nix ;;
+    run) run_command_help pi-en ;;
+    raw) run_command_help pi-en ;;
+    shell) run_command_help pi-en-shell ;;
+    sandbox) run_command_help pi-en-bwrap ;;
+    install) run_command_help pi-en-install-non-nix ;;
     diagnostics) diagnostics_output ;;
     version) version_output ;;
     uninstall)
-      if command -v pi-env-uninstall >/dev/null 2>&1; then
-        run_command_help pi-env-uninstall
+      if command -v pi-en-uninstall >/dev/null 2>&1; then
+        run_command_help pi-en-uninstall
       else
-        run_command_help pi-env-install-non-nix
+        run_command_help pi-en-install-non-nix
       fi
       ;;
     *) unknown help "$1" ;;
@@ -584,16 +584,16 @@ help_dispatch() {
 }
 
 unknown() {
-  echo "pienv: unknown command: $*" >&2
-  echo "Try 'pienv help'." >&2
+  echo "pien: unknown command: $*" >&2
+  echo "Try 'pien help'." >&2
   exit 2
 }
 
 if [ "$#" -eq 0 ]; then
-  if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+  if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
     sandbox_outer_only run
   fi
-  exec_command pi-env
+  exec_command pi-en
 fi
 
 case "${1:-}" in
@@ -610,10 +610,10 @@ case "${1:-}" in
     exit 0
     ;;
   --runtime|--runtime=*|--flake|--flake=*|--devshell|--devshell=*|--raw)
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only "$@"
     fi
-    exec_command pi-env "$@"
+    exec_command pi-en "$@"
     ;;
   help)
     shift
@@ -621,63 +621,63 @@ case "${1:-}" in
     exit 0
     ;;
   --)
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only "$@"
     fi
     shift
-    exec_command pi-env "$@"
+    exec_command pi-en "$@"
     ;;
   run)
     shift
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only run "$@"
     fi
-    exec_command pi-env "$@"
+    exec_command pi-en "$@"
     ;;
   raw)
     shift
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only raw "$@"
     fi
-    exec_command pi-env --raw "$@"
+    exec_command pi-en --raw "$@"
     ;;
   shell)
     shift
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only shell "$@"
     fi
-    exec_command pi-env-shell "$@"
+    exec_command pi-en-shell "$@"
     ;;
   sandbox)
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only sandbox "${@:2}"
     fi
     shift
     case "${1:-}" in
-      -h|--help) run_command_help pi-env-bwrap; exit 0 ;;
+      -h|--help) run_command_help pi-en-bwrap; exit 0 ;;
       shell)
         shift
-        exec_command pi-env-bwrap --shell "$@"
+        exec_command pi-en-bwrap --shell "$@"
         ;;
     esac
-    exec_command pi-env-bwrap "$@"
+    exec_command pi-en-bwrap "$@"
     ;;
   coord)
     shift
     case "${1:-}" in
       ""|-h|--help) coord_help; exit 0 ;;
-      bootstrap) shift; exec_command pi-env-bootstrap-coordination "$@" ;;
+      bootstrap) shift; exec_command pi-en-bootstrap-coordination "$@" ;;
       init|clone|status|list|new|claim|done|review|verify|close|pull|push|lint|repo)
         subcommand="$1"
         shift
-        exec_command "pi-env-coord-$subcommand" "$@"
+        exec_command "pi-en-coord-$subcommand" "$@"
         ;;
-      show) shift; exec_command pi-env-coord-cat "$@" ;;
+      show) shift; exec_command pi-en-coord-cat "$@" ;;
       rules)
         shift
         case "${1:-}" in
           ""|-h|--help) coord_rules_help; exit 0 ;;
-          upgrade) shift; exec_command pi-env-coord-upgrade-rules "$@" ;;
+          upgrade) shift; exec_command pi-en-coord-upgrade-rules "$@" ;;
           *) unknown coord rules "${1:-}" ;;
         esac
         ;;
@@ -685,8 +685,8 @@ case "${1:-}" in
         shift
         case "${1:-}" in
           ""|-h|--help) coord_requirements_help; exit 0 ;;
-          generate) shift; exec_command pi-env-coord-generate-requirements "$@" ;;
-          coverage) shift; exec_command pi-env-coord-generate-requirements-coverage "$@" ;;
+          generate) shift; exec_command pi-en-coord-generate-requirements "$@" ;;
+          coverage) shift; exec_command pi-en-coord-generate-requirements-coverage "$@" ;;
           *) unknown coord requirements "${1:-}" ;;
         esac
         ;;
@@ -699,13 +699,13 @@ case "${1:-}" in
       ""|-h|--help) roles_help; exit 0 ;;
       serial)
         shift
-        if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+        if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
           case "${1:-}" in
-            -h|--help) run_command_help pi-env-serial-roles; exit 0 ;;
+            -h|--help) run_command_help pi-en-serial-roles; exit 0 ;;
             *) sandbox_outer_only roles serial "$@" ;;
           esac
         fi
-        exec_command pi-env-serial-roles "$@"
+        exec_command pi-en-serial-roles "$@"
         ;;
       *) unknown roles "${1:-}" ;;
     esac
@@ -727,20 +727,20 @@ case "${1:-}" in
     ;;
   install)
     shift
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only install "$@"
     fi
-    exec_command pi-env-install-non-nix "$@"
+    exec_command pi-en-install-non-nix "$@"
     ;;
   uninstall)
     shift
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only uninstall "$@"
     fi
-    if command -v pi-env-uninstall >/dev/null 2>&1; then
-      exec_command pi-env-uninstall "$@"
+    if command -v pi-en-uninstall >/dev/null 2>&1; then
+      exec_command pi-en-uninstall "$@"
     fi
-    exec_command pi-env-install-non-nix --uninstall "$@"
+    exec_command pi-en-install-non-nix --uninstall "$@"
     ;;
   completion)
     shift
@@ -755,9 +755,9 @@ case "${1:-}" in
     esac
     ;;
   *)
-    if [ "${PI_ENV_INSIDE_SANDBOX:-0}" = "1" ]; then
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only "$@"
     fi
-    exec_command pi-env "$@"
+    exec_command pi-en "$@"
     ;;
 esac

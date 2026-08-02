@@ -1,6 +1,6 @@
 # Launcher Layering Design
 
-`pi-env` exposes a small launcher stack that separates environment setup,
+`pi-en` exposes a small launcher stack that separates environment setup,
 interactive agent startup, and sandbox execution. The boundary keeps each
 entrypoint understandable and limits privileged or host-sensitive behavior to
 the layer that needs it.
@@ -9,45 +9,45 @@ the layer that needs it.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| UC-001 | PIENV-FRQ-20260612-210000-001 |
-| UC-002 | PIENV-FRQ-20260612-210000-002 |
-| UC-014 | PIENV-FRQ-20260612-210000-014 |
-| UC-016 | PIENV-FRQ-20260612-210000-016 |
-| CRQ-011 | PIENV-CRQ-20260613-183419-001 |
-| CMD-001 | PIENV-FRQ-20260612-210000-032 |
-| CMD-002 | PIENV-FRQ-20260612-210000-033 |
-| CMD-003 | PIENV-FRQ-20260612-210000-034 |
-| CMD-004 | PIENV-FRQ-20260612-210000-035 |
-| CMD-005 | PIENV-FRQ-20260612-210000-036 |
-| CMD-006 | PIENV-FRQ-20260612-210000-037 |
-| CMD-007 | PIENV-FRQ-20260612-210000-038 |
-| CMD-008 | PIENV-FRQ-20260612-210000-039 |
-| CMD-018 | PIENV-FRQ-20260613-183404-001 |
-| CMD-019 | PIENV-FRQ-20260613-183411-001 |
-| CMD-021 | PIENV-FRQ-20260706-202632-001 |
-| CMD-022 | PIENV-FRQ-20260706-202634-001 |
+| UC-001 | PIEN-FRQ-20260612-210000-001 |
+| UC-002 | PIEN-FRQ-20260612-210000-002 |
+| UC-014 | PIEN-FRQ-20260612-210000-014 |
+| UC-016 | PIEN-FRQ-20260612-210000-016 |
+| CRQ-011 | PIEN-CRQ-20260613-183419-001 |
+| CMD-001 | PIEN-FRQ-20260612-210000-032 |
+| CMD-002 | PIEN-FRQ-20260612-210000-033 |
+| CMD-003 | PIEN-FRQ-20260612-210000-034 |
+| CMD-004 | PIEN-FRQ-20260612-210000-035 |
+| CMD-005 | PIEN-FRQ-20260612-210000-036 |
+| CMD-006 | PIEN-FRQ-20260612-210000-037 |
+| CMD-007 | PIEN-FRQ-20260612-210000-038 |
+| CMD-008 | PIEN-FRQ-20260612-210000-039 |
+| CMD-018 | PIEN-FRQ-20260613-183404-001 |
+| CMD-019 | PIEN-FRQ-20260613-183411-001 |
+| CMD-021 | PIEN-FRQ-20260706-202632-001 |
+| CMD-022 | PIEN-FRQ-20260706-202634-001 |
 
 ## 1. Layer responsibilities
 
-`pi-env` is the outer entrypoint. It prepares paths, validates one selected
+`pi-en` is the outer entrypoint. It prepares paths, validates one selected
 project root, and chooses whether the user wants a shell, a command, or an
 agent launch. It owns argument compatibility for the command families covered
 by `CMD-001` through `CMD-008`. The selected project root is the only primary
-project for the run and is later mounted at `/workspace`; pi-env does not manage
+project for the run and is later mounted at `/workspace`; Pi-en does not manage
 a host-side collection of projects.
 
-`pi-env-shell` is the shell-oriented outer entrypoint. It should share the
-same runtime-selection and flake bootstrap logic as `pi-env`, then pass an
+`pi-en-shell` is the shell-oriented outer entrypoint. It should share the
+same runtime-selection and flake bootstrap logic as `pi-en`, then pass an
 explicit shell intent to the sandbox layer rather than constructing its own
 Bubblewrap command.
 
-Default `pi-env` startup is the agent-facing startup layer. After runtime
-selection, `pi-env` translates the prepared workspace into the final `pi`
+Default `pi-en` startup is the agent-facing startup layer. After runtime
+selection, `pi-en` translates the prepared workspace into the final `pi`
 invocation policy: default tool allowlist, `--continue`, role-manager package
 loading, and caller-supplied Pi arguments. This keeps startup ergonomics in the
 user-facing command while still keeping sandbox construction separate.
 
-`pi-env-bwrap` is the sandbox construction layer. It builds the Bubblewrap command
+`pi-en-bwrap` is the sandbox construction layer. It builds the Bubblewrap command
 line and is the only layer that should assemble mount, environment, network,
 and home-state isolation flags. Shell mode belongs here as a final-payload
 switch: the sandbox setup remains identical, while the final process changes
@@ -56,10 +56,10 @@ from `pi` to Bash.
 ## 2. Command flow
 
 The launchers pass structured intent downward rather than sharing hidden global
-state. `pi-env` resolves the single project root and runtime inputs, applies the
-default `UC-001` agent startup policy itself, then calls `pi-env-bwrap`. For the
-custom-argument `UC-002` path, `pi-env --raw` calls `pi-env-bwrap` directly.
-`pi-env-shell` resolves the same runtime inputs, then calls `pi-env-bwrap` shell
+state. `pi-en` resolves the single project root and runtime inputs, applies the
+default `UC-001` agent startup policy itself, then calls `pi-en-bwrap`. For the
+custom-argument `UC-002` path, `pi-en --raw` calls `pi-en-bwrap` directly.
+`pi-en-shell` resolves the same runtime inputs, then calls `pi-en-bwrap` shell
 mode.
 
 This shape lets `CMD-018` and the launcher-facing part of `CMD-019` add role
@@ -79,6 +79,6 @@ or sandbox settings.
 The layering intentionally removes `pi-start` as a user-visible command because
 this project has no known external users and the command adds unnecessary
 surface area. The same early-stage policy permits hard-renaming the sandbox
-layer to `pi-env-bwrap` without old-name shims. Command semantics should remain
+layer to `pi-en-bwrap` without old-name shims. Command semantics should remain
 stable while implementation detail moves between scripts as long as the
 ownership boundaries above are maintained.

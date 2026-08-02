@@ -41,119 +41,119 @@
           runtimePackages = mkRuntime pkgs;
           runtimePath = pkgs.lib.makeBinPath runtimePackages;
         in
-        pkgs.writeShellScriptBin "pi-env-bwrap" ''
+        pkgs.writeShellScriptBin "pi-en-bwrap" ''
           set -euo pipefail
-          export PI_ENV_RUNTIME_PATH="${runtimePath}"
-          export PI_ENV_BWRAP_COMPILED_DEFAULT_TOOLS="${defaultTools}"
-          export PI_ENV_BWRAP_BASH="${pkgs.bash}/bin/bash"
-          export PI_ENV_BWRAP_ENV="${pkgs.coreutils}/bin/env"
-          export PI_ENV_BWRAP_CA_BUNDLE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-          export PI_ENV_BWRAP_BWRAP="${pkgs.bubblewrap}/bin/bwrap"
-          exec ${pkgs.bash}/bin/bash ${./scripts/pi-env-bwrap} "$@"
+          export PI_EN_RUNTIME_PATH="${runtimePath}"
+          export PI_EN_BWRAP_COMPILED_DEFAULT_TOOLS="${defaultTools}"
+          export PI_EN_BWRAP_BASH="${pkgs.bash}/bin/bash"
+          export PI_EN_BWRAP_ENV="${pkgs.coreutils}/bin/env"
+          export PI_EN_BWRAP_CA_BUNDLE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+          export PI_EN_BWRAP_BWRAP="${pkgs.bubblewrap}/bin/bwrap"
+          exec ${pkgs.bash}/bin/bash ${./scripts/pi-en-bwrap} "$@"
         '';
 
-      mkPiEnv = pkgs:
+      mkPiEn = pkgs:
         let
           piBwrap = mkPiBwrap pkgs;
           roleManagerPackage = mkRoleManagerPackage pkgs;
           runtimePath = pkgs.lib.makeBinPath (mkRuntime pkgs);
         in
-        pkgs.writeShellScriptBin "pi-env" ''
+        pkgs.writeShellScriptBin "pi-en" ''
           set -euo pipefail
           export PATH="${runtimePath}:''${PATH:-}"
-          export PI_ENV_BWRAP_COMPILED_DEFAULT_TOOLS="${defaultTools}"
-          export PI_ENV_ROLE_MANAGER_PACKAGE="''${PI_ENV_ROLE_MANAGER_PACKAGE:-${roleManagerPackage}}"
-          export PI_ENV_PI_ENV_BWRAP="${piBwrap}/bin/pi-env-bwrap"
-          exec -a pi-env ${pkgs.bash}/bin/bash ${./scripts/pi-env-launcher} "$@"
+          export PI_EN_BWRAP_COMPILED_DEFAULT_TOOLS="${defaultTools}"
+          export PI_EN_ROLE_MANAGER_PACKAGE="''${PI_EN_ROLE_MANAGER_PACKAGE:-${roleManagerPackage}}"
+          export PI_EN_PI_EN_BWRAP="${piBwrap}/bin/pi-en-bwrap"
+          exec -a pi-en ${pkgs.bash}/bin/bash ${./scripts/pi-en-launcher} "$@"
         '';
 
-      mkPiEnvShell = pkgs:
+      mkPiEnShell = pkgs:
         let
           piBwrap = mkPiBwrap pkgs;
           runtimePath = pkgs.lib.makeBinPath (mkRuntime pkgs);
         in
-        pkgs.writeShellScriptBin "pi-env-shell" ''
+        pkgs.writeShellScriptBin "pi-en-shell" ''
           set -euo pipefail
           export PATH="${runtimePath}:''${PATH:-}"
-          export PI_ENV_SHELL_MODE=1
-          export PI_ENV_PI_ENV_BWRAP="${piBwrap}/bin/pi-env-bwrap"
-          exec -a pi-env-shell ${pkgs.bash}/bin/bash ${./scripts/pi-env-launcher} "$@"
+          export PI_EN_SHELL_MODE=1
+          export PI_EN_PI_EN_BWRAP="${piBwrap}/bin/pi-en-bwrap"
+          exec -a pi-en-shell ${pkgs.bash}/bin/bash ${./scripts/pi-en-launcher} "$@"
         '';
 
-      mkPienv = pkgs: { includeCoordinationHelpers ? true }:
+      mkPien = pkgs: { includeCoordinationHelpers ? true }:
         let
           coordinationCommands = if includeCoordinationHelpers then builtins.attrValues (mkAgentCoordCommands pkgs) else [ ];
           installCommands = builtins.attrValues (mkInstallNonNixCommands pkgs);
           runtimePath = pkgs.lib.makeBinPath ((mkRuntime pkgs) ++ [
-            (mkPiEnv pkgs)
-            (mkPiEnvShell pkgs)
+            (mkPiEn pkgs)
+            (mkPiEnShell pkgs)
             (mkPiBwrap pkgs)
           ] ++ installCommands ++ coordinationCommands);
-          pienvBin = pkgs.writeShellScriptBin "pienv" ''
+          pienBin = pkgs.writeShellScriptBin "pien" ''
             set -euo pipefail
             export PATH="${runtimePath}:''${PATH:-}"
-            exec -a pienv ${pkgs.bash}/bin/bash ${./scripts/pienv} "$@"
+            exec -a pien ${pkgs.bash}/bin/bash ${./scripts/pien} "$@"
           '';
         in
-        pkgs.runCommand "pienv" { } ''
+        pkgs.runCommand "pien" { } ''
           mkdir -p "$out/bin" "$out/share/bash-completion/completions"
-          ln -s ${pienvBin}/bin/pienv "$out/bin/pienv"
-          ${pkgs.bash}/bin/bash ${./scripts/pienv} completion bash > "$out/share/bash-completion/completions/pienv"
+          ln -s ${pienBin}/bin/pien "$out/bin/pien"
+          ${pkgs.bash}/bin/bash ${./scripts/pien} completion bash > "$out/share/bash-completion/completions/pien"
         '';
 
       agentCoordCommandNames = [
-        "pi-env-bootstrap-coordination"
-        "pi-env-coord-init"
-        "pi-env-coord-clone"
-        "pi-env-coord-status"
-        "pi-env-coord-list"
-        "pi-env-coord-cat"
-        "pi-env-coord-pull"
-        "pi-env-coord-push"
-        "pi-env-coord-new"
-        "pi-env-coord-repo"
-        "pi-env-coord-claim"
-        "pi-env-coord-done"
-        "pi-env-coord-review"
-        "pi-env-coord-verify"
-        "pi-env-coord-close"
-        "pi-env-coord-lint"
-        "pi-env-coord-generate-requirements"
-        "pi-env-coord-generate-requirements-coverage"
-        "pi-env-coord-upgrade-rules"
-        "pi-env-serial-roles"
+        "pi-en-bootstrap-coordination"
+        "pi-en-coord-init"
+        "pi-en-coord-clone"
+        "pi-en-coord-status"
+        "pi-en-coord-list"
+        "pi-en-coord-cat"
+        "pi-en-coord-pull"
+        "pi-en-coord-push"
+        "pi-en-coord-new"
+        "pi-en-coord-repo"
+        "pi-en-coord-claim"
+        "pi-en-coord-done"
+        "pi-en-coord-review"
+        "pi-en-coord-verify"
+        "pi-en-coord-close"
+        "pi-en-coord-lint"
+        "pi-en-coord-generate-requirements"
+        "pi-en-coord-generate-requirements-coverage"
+        "pi-en-coord-upgrade-rules"
+        "pi-en-serial-roles"
       ];
 
       mkAgentCoordSupport = pkgs:
-        pkgs.runCommand "pi-env-agent-coordination-support" { } ''
-          mkdir -p "$out/share/pi-env"
-          cp -R ${./pi-skill-templates} "$out/share/pi-env/pi-skill-templates"
-          cp -R ${./role-manager} "$out/share/pi-env/role-manager"
-          cp -R ${./scripts} "$out/share/pi-env/scripts"
-          chmod +x "$out/share/pi-env/scripts"/pi-env-coord-* \
-            "$out/share/pi-env/scripts/pi-env-bootstrap-coordination" \
-            "$out/share/pi-env/scripts/pi-env-serial-roles" \
-            "$out/share/pi-env/scripts/pienv" \
-            "$out/share/pi-env/scripts/pi-env-install-non-nix"
+        pkgs.runCommand "pi-en-agent-coordination-support" { } ''
+          mkdir -p "$out/share/pi-en"
+          cp -R ${./pi-skill-templates} "$out/share/pi-en/pi-skill-templates"
+          cp -R ${./role-manager} "$out/share/pi-en/role-manager"
+          cp -R ${./scripts} "$out/share/pi-en/scripts"
+          chmod +x "$out/share/pi-en/scripts"/pi-en-coord-* \
+            "$out/share/pi-en/scripts/pi-en-bootstrap-coordination" \
+            "$out/share/pi-en/scripts/pi-en-serial-roles" \
+            "$out/share/pi-en/scripts/pien" \
+            "$out/share/pi-en/scripts/pi-en-install-non-nix"
         '';
 
       mkInstallNonNixCommands = pkgs:
         let
           runtimePath = pkgs.lib.makeBinPath (mkRuntime pkgs);
           support = mkAgentCoordSupport pkgs;
-          installNonNix = pkgs.writeShellScriptBin "pi-env-install-non-nix" ''
+          installNonNix = pkgs.writeShellScriptBin "pi-en-install-non-nix" ''
             set -euo pipefail
             export PATH="${runtimePath}:''${PATH:-}"
-            exec ${pkgs.bash}/bin/bash "${support}/share/pi-env/scripts/pi-env-install-non-nix" "$@"
+            exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/pi-en-install-non-nix" "$@"
           '';
-          piEnvUninstall = pkgs.writeShellScriptBin "pi-env-uninstall" ''
+          piEnUninstall = pkgs.writeShellScriptBin "pi-en-uninstall" ''
             set -euo pipefail
             export PATH="${runtimePath}:''${PATH:-}"
-            exec ${pkgs.bash}/bin/bash "${support}/share/pi-env/scripts/pi-env-install-non-nix" --uninstall "$@"
+            exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/pi-en-install-non-nix" --uninstall "$@"
           '';
         in
         {
-          inherit installNonNix piEnvUninstall;
+          inherit installNonNix piEnUninstall;
         };
 
       mkAgentCoordCommand = pkgs: name:
@@ -165,10 +165,10 @@
         pkgs.writeShellScriptBin name ''
           set -euo pipefail
           export PATH="${runtimePath}:''${PATH:-}"
-          export PI_ENV_COORD_TEMPLATE_DIR="${support}/share/pi-env/pi-skill-templates/agent-coordination"
-          export PI_ENV_COORD_LIB="${support}/share/pi-env/scripts/pi-env-coord-lib.sh"
-          export PI_ENV_ROLE_MANAGER_PACKAGE="''${PI_ENV_ROLE_MANAGER_PACKAGE:-${roleManagerPackage}}"
-          exec ${pkgs.bash}/bin/bash "${support}/share/pi-env/scripts/${name}" "$@"
+          export PI_EN_COORD_TEMPLATE_DIR="${support}/share/pi-en/pi-skill-templates/agent-coordination"
+          export PI_EN_COORD_LIB="${support}/share/pi-en/scripts/pi-en-coord-lib.sh"
+          export PI_EN_ROLE_MANAGER_PACKAGE="''${PI_EN_ROLE_MANAGER_PACKAGE:-${roleManagerPackage}}"
+          exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/${name}" "$@"
         '';
 
       mkAgentCoordCommands = pkgs:
@@ -178,7 +178,7 @@
         }) agentCoordCommandNames);
 
       mkRoleManagerPackage = pkgs:
-        pkgs.runCommand "pi-env-role-manager" { } ''
+        pkgs.runCommand "pi-en-role-manager" { } ''
           mkdir -p "$out"
           cp -R ${./role-manager}/. "$out/"
         '';
@@ -191,47 +191,47 @@
         }:
         let
           piBwrap = mkPiBwrap pkgs;
-          piEnv = mkPiEnv pkgs;
-          piEnvShell = mkPiEnvShell pkgs;
-          pienv = mkPienv pkgs { inherit includeCoordinationHelpers; };
+          piEn = mkPiEn pkgs;
+          piEnShell = mkPiEnShell pkgs;
+          pien = mkPien pkgs { inherit includeCoordinationHelpers; };
           agentCoordCommands = builtins.attrValues (mkAgentCoordCommands pkgs);
           coordinationPackages = if includeCoordinationHelpers then agentCoordCommands else [ ];
           roleManagerPackage = mkRoleManagerPackage pkgs;
           # Only expose sandbox-aware commands inside Pi.  The outer runtime
           # launchers remain available in the dev shell itself, but are kept
-          # off PI_ENV_BWRAP_EXTRA_PATH so they cannot be invoked directly from
+          # off PI_EN_BWRAP_EXTRA_PATH so they cannot be invoked directly from
           # inside the Bubblewrap sandbox.
           piSandboxCommandPath = pkgs.lib.makeBinPath ([
-            pienv
+            pien
           ] ++ coordinationPackages);
           extraPackagePath = pkgs.lib.makeBinPath (extraPackages ++ [
-            pienv
+            pien
           ] ++ coordinationPackages);
         in
         pkgs.mkShell {
           packages = (mkRuntime pkgs) ++ (mkDevShellTools pkgs) ++ [
             piBwrap
-            piEnv
-            piEnvShell
-            pienv
+            piEn
+            piEnShell
+            pien
           ] ++ coordinationPackages ++ extraPackages;
 
           shellHook = ''
             export PS1="(nix-dev) \u@\h:\w$ "
-            export PI_ENV_DEV_SHELL_PS1="$PS1"
-            export PI_ENV_ROLE_MANAGER_PACKAGE="${roleManagerPackage}"
-            export PI_ENV_NIX_PROJECT_BWRAP="${piBwrap}/bin/pi-env-bwrap"
-            export PI_ENV_NIX_SANDBOX_COMMAND_PATH="${piSandboxCommandPath}"
+            export PI_EN_DEV_SHELL_PS1="$PS1"
+            export PI_EN_ROLE_MANAGER_PACKAGE="${roleManagerPackage}"
+            export PI_EN_NIX_PROJECT_BWRAP="${piBwrap}/bin/pi-en-bwrap"
+            export PI_EN_NIX_SANDBOX_COMMAND_PATH="${piSandboxCommandPath}"
             if [ -n "${extraPackagePath}" ]; then
-              if [ -n "''${PI_ENV_BWRAP_EXTRA_PATH:-}" ]; then
-                export PI_ENV_BWRAP_EXTRA_PATH="${extraPackagePath}:$PI_ENV_BWRAP_EXTRA_PATH"
+              if [ -n "''${PI_EN_BWRAP_EXTRA_PATH:-}" ]; then
+                export PI_EN_BWRAP_EXTRA_PATH="${extraPackagePath}:$PI_EN_BWRAP_EXTRA_PATH"
               else
-                export PI_ENV_BWRAP_EXTRA_PATH="${extraPackagePath}"
+                export PI_EN_BWRAP_EXTRA_PATH="${extraPackagePath}"
               fi
             fi
-            if [ -z "''${PI_ENV_QUIET:-}" ]; then
+            if [ -z "''${PI_EN_QUIET:-}" ]; then
               echo "Pi agent runtime loaded"
-              echo "Use 'pienv' for default startup, 'pienv shell' for a sandbox shell, or 'pienv raw -- <pi args>' for custom runs."
+              echo "Use 'pien' for default startup, 'pien shell' for a sandbox shell, or 'pien raw -- <pi args>' for custom runs."
             fi
           '' + shellHook;
         };
@@ -243,9 +243,9 @@
           mkRuntime
           mkDevShellTools
           mkPiBwrap
-          mkPiEnv
-          mkPiEnvShell
-          mkPienv
+          mkPiEn
+          mkPiEnShell
+          mkPien
           mkInstallNonNixCommands
           agentCoordCommandNames
           mkAgentCoordSupport
@@ -259,29 +259,29 @@
       let
         pkgs = import nixpkgs { inherit system; };
         piBwrap = mkPiBwrap pkgs;
-        piEnv = mkPiEnv pkgs;
-        piEnvShell = mkPiEnvShell pkgs;
-        pienv = mkPienv pkgs { };
+        piEn = mkPiEn pkgs;
+        piEnShell = mkPiEnShell pkgs;
+        pien = mkPien pkgs { };
         agentCoordCommands = mkAgentCoordCommands pkgs;
         agentCoordCommandPackages = builtins.attrValues agentCoordCommands;
         roleManagerPackage = mkRoleManagerPackage pkgs;
-        piCorePienv = mkPienv pkgs { includeCoordinationHelpers = false; };
+        piCorePien = mkPien pkgs { includeCoordinationHelpers = false; };
         coreRuntimePaths = (mkRuntime pkgs) ++ [
           piBwrap
-          piEnv
-          piEnvShell
-          piCorePienv
+          piEn
+          piEnShell
+          piCorePien
         ];
         piCore = pkgs.buildEnv {
-          name = "pi-env-core";
+          name = "pi-en-core";
           paths = coreRuntimePaths;
         };
         piCoordination = pkgs.buildEnv {
-          name = "pi-env-coordination";
+          name = "pi-en-coordination";
           paths = agentCoordCommandPackages;
         };
         piRuntime = pkgs.buildEnv {
-          name = "pi-env-runtime";
+          name = "pi-en-runtime";
           paths = coreRuntimePaths ++ agentCoordCommandPackages;
         };
         smokeCheck = name: nativeBuildInputs: script:
@@ -293,45 +293,45 @@
       in
       {
         packages = {
-          default = piEnv;
-          pi-env = piEnv;
-          pienv = pienv;
-          pi-env-shell = piEnvShell;
-          pi-env-bwrap = piBwrap;
+          default = piEn;
+          pi-en = piEn;
+          pien = pien;
+          pi-en-shell = piEnShell;
+          pi-en-bwrap = piBwrap;
           pi-core = piCore;
           pi-runtime = piRuntime;
-          pi-env-coordination = piCoordination;
+          pi-en-coordination = piCoordination;
           pi-role-manager = roleManagerPackage;
         } // agentCoordCommands;
 
         apps = {
           default = {
             type = "app";
-            program = "${piEnv}/bin/pi-env";
+            program = "${piEn}/bin/pi-en";
           };
-          pi-env = {
+          pi-en = {
             type = "app";
-            program = "${piEnv}/bin/pi-env";
+            program = "${piEn}/bin/pi-en";
           };
-          pienv = {
+          pien = {
             type = "app";
-            program = "${pienv}/bin/pienv";
+            program = "${pien}/bin/pien";
           };
-          pi-env-shell = {
+          pi-en-shell = {
             type = "app";
-            program = "${piEnvShell}/bin/pi-env-shell";
+            program = "${piEnShell}/bin/pi-en-shell";
           };
-          pi-env-bwrap = {
+          pi-en-bwrap = {
             type = "app";
-            program = "${piBwrap}/bin/pi-env-bwrap";
+            program = "${piBwrap}/bin/pi-en-bwrap";
           };
         };
 
         checks = {
-          pi-core-smoke = smokeCheck "pi-env-core-smoke" [ piCore ] ''
-            command -v pi-env >/dev/null
-            command -v pienv >/dev/null
-            command -v pi-env-shell >/dev/null
+          pi-core-smoke = smokeCheck "pi-en-core-smoke" [ piCore ] ''
+            command -v pi-en >/dev/null
+            command -v pien >/dev/null
+            command -v pi-en-shell >/dev/null
             if command -v pi-start >/dev/null 2>&1; then
               echo "pi-start leaked into pi-core" >&2
               exit 1
@@ -342,33 +342,33 @@
                 exit 1
               fi
             done
-            command -v pi-env-bwrap >/dev/null
-            pi-env --help >/dev/null
-            pienv help >/dev/null
-            pienv help run >/dev/null
-            pienv help raw >/dev/null
-            pienv help shell >/dev/null
-            pienv help sandbox >/dev/null
-            pienv sandbox --help >/dev/null
-            pienv completion bash >/dev/null
-            pienv install --help >/dev/null
-            pienv uninstall --help >/dev/null
-            if pienv coord status --help >/dev/null 2>&1; then
-              echo "pienv coord leaked into pi-core" >&2
+            command -v pi-en-bwrap >/dev/null
+            pi-en --help >/dev/null
+            pien help >/dev/null
+            pien help run >/dev/null
+            pien help raw >/dev/null
+            pien help shell >/dev/null
+            pien help sandbox >/dev/null
+            pien sandbox --help >/dev/null
+            pien completion bash >/dev/null
+            pien install --help >/dev/null
+            pien uninstall --help >/dev/null
+            if pien coord status --help >/dev/null 2>&1; then
+              echo "pien coord leaked into pi-core" >&2
               exit 1
             fi
-            pi-env-shell --help >/dev/null
-            pi-env-bwrap --help >/dev/null
-            if command -v pi-env-coord-status >/dev/null 2>&1; then
+            pi-en-shell --help >/dev/null
+            pi-en-bwrap --help >/dev/null
+            if command -v pi-en-coord-status >/dev/null 2>&1; then
               echo "agent coordination helpers leaked into pi-core" >&2
               exit 1
             fi
           '';
 
-          pi-runtime-compat-smoke = smokeCheck "pi-env-runtime-compat-smoke" [ piRuntime ] ''
-            command -v pi-env >/dev/null
-            command -v pienv >/dev/null
-            command -v pi-env-shell >/dev/null
+          pi-runtime-compat-smoke = smokeCheck "pi-en-runtime-compat-smoke" [ piRuntime ] ''
+            command -v pi-en >/dev/null
+            command -v pien >/dev/null
+            command -v pi-en-shell >/dev/null
             if command -v pi-start >/dev/null 2>&1; then
               echo "pi-start leaked into pi-runtime" >&2
               exit 1
@@ -379,35 +379,35 @@
                 exit 1
               fi
             done
-            command -v pi-env-bwrap >/dev/null
-            command -v pi-env-coord-status >/dev/null
-            command -v pi-env-bootstrap-coordination >/dev/null
-            pi-env --help >/dev/null
-            pienv help >/dev/null
-            pienv help run >/dev/null
-            pienv help raw >/dev/null
-            pienv help shell >/dev/null
-            pienv help sandbox >/dev/null
-            pienv sandbox --help >/dev/null
-            pienv coord status --help >/dev/null
-            pienv help coord status >/dev/null
-            pienv coord requirements coverage --help >/dev/null
-            pienv help coord requirements generate >/dev/null
-            pienv roles serial --help >/dev/null
-            pienv completion bash >/dev/null
-            pienv install --help >/dev/null
-            pienv uninstall --help >/dev/null
-            pi-env-shell --help >/dev/null
-            pi-env-coord-status --help >/dev/null
+            command -v pi-en-bwrap >/dev/null
+            command -v pi-en-coord-status >/dev/null
+            command -v pi-en-bootstrap-coordination >/dev/null
+            pi-en --help >/dev/null
+            pien help >/dev/null
+            pien help run >/dev/null
+            pien help raw >/dev/null
+            pien help shell >/dev/null
+            pien help sandbox >/dev/null
+            pien sandbox --help >/dev/null
+            pien coord status --help >/dev/null
+            pien help coord status >/dev/null
+            pien coord requirements coverage --help >/dev/null
+            pien help coord requirements generate >/dev/null
+            pien roles serial --help >/dev/null
+            pien completion bash >/dev/null
+            pien install --help >/dev/null
+            pien uninstall --help >/dev/null
+            pi-en-shell --help >/dev/null
+            pi-en-coord-status --help >/dev/null
           '';
 
-          pi-env-coordination-smoke = smokeCheck "pi-env-coordination-smoke" [ piCoordination ] ''
-            command -v pi-env-coord-status >/dev/null
-            command -v pi-env-coord-repo >/dev/null
-            command -v pi-env-coord-lint >/dev/null
-            command -v pi-env-bootstrap-coordination >/dev/null
-            pi-env-coord-lint --help >/dev/null
-            pi-env-bootstrap-coordination --help >/dev/null
+          pi-en-coordination-smoke = smokeCheck "pi-en-coordination-smoke" [ piCoordination ] ''
+            command -v pi-en-coord-status >/dev/null
+            command -v pi-en-coord-repo >/dev/null
+            command -v pi-en-coord-lint >/dev/null
+            command -v pi-en-bootstrap-coordination >/dev/null
+            pi-en-coord-lint --help >/dev/null
+            pi-en-bootstrap-coordination --help >/dev/null
           '';
         };
 

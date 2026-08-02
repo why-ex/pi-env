@@ -16,8 +16,8 @@ New items use ID-only filenames. The filename stem must match the YAML `id`:
 Examples:
 
 ```text
-PIENV-ISS-20260607-204155-001.yaml
-PIENV-FRQ-20260607-204155-002.yaml
+PIEN-ISS-20260607-204155-001.yaml
+PIEN-FRQ-20260607-204155-002.yaml
 ```
 
 `PROJECTKEY` is uppercase alphanumeric text. Project item keys are stored in top-level `PROJECT.md` as `item_key`.
@@ -37,7 +37,7 @@ custom type. The timestamp is UTC. `NNN` is a three-digit collision/order
 suffix for that exact timestamp and starts at `001`. It is not a global
 sequence number.
 
-When `pi-env-coord-new` needs to derive a project key, it uppercases the source
+When `pi-en-coord-new` needs to derive a project key, it uppercases the source
 name and removes delimiters, whitespace, slashes, backslashes, pipes, and other
 non-alphanumeric characters. Domain-common items derive from the coordination domain or project metadata.
 Repo-scoped issue items derive from the owning repo's `repos/{repo_id}/REPO.md`
@@ -56,11 +56,11 @@ linked to events.
 
 ```yaml
 schema: coordination-item/v1
-id: PIENV-ISS-20260607-204155-001
+id: PIEN-ISS-20260607-204155-001
 type: issue
 category: bug
 status: open
-project: pi-env
+project: pi-en
 title: Document pi config behavior
 owner: null
 priority: medium
@@ -97,7 +97,7 @@ messages:
       ## Acceptance criteria
 
       - [ ] README explains host `pi config`.
-      - [ ] README explains sandbox `pi-env-bwrap -- config`.
+      - [ ] README explains sandbox `pi-en-bwrap -- config`.
 ```
 
 Requirement items are specification records rather than workflow history
@@ -106,10 +106,10 @@ and a single renderable body:
 
 ```yaml
 schema: coordination-item/v1
-id: PIENV-FRQ-20260607-204155-002
+id: PIEN-FRQ-20260607-204155-002
 type: functional-requirement
 status: active
-project: pi-env
+project: pi-en
 title: Example requirement
 requirement_key: CMD-004
 requirement_class: functional
@@ -227,11 +227,11 @@ tests/items/todos/<item-id>.sh
 Examples:
 
 ```text
-.pi-env/coordination/repos/pi-env/issues/closed/PIENV-ISS-20260607-204155-001.yaml
-tests/items/issues/PIENV-ISS-20260607-204155-001.sh
+.pi-en/coordination/repos/pi-en/issues/closed/PIEN-ISS-20260607-204155-001.yaml
+tests/items/issues/PIEN-ISS-20260607-204155-001.sh
 
-.pi-env/coordination/requirements/PIENV-FRQ-20260607-204155-001.yaml
-tests/items/requirements/PIENV-FRQ-20260607-204155-001.sh
+.pi-en/coordination/requirements/PIEN-FRQ-20260607-204155-001.yaml
+tests/items/requirements/PIEN-FRQ-20260607-204155-001.sh
 ```
 
 A verification event should record the exact test command(s) and result. The
@@ -349,7 +349,7 @@ Done or linked events should include structured implementation references:
 
 ```yaml
 implementation_refs:
-  - repo: pi-env
+  - repo: pi-en
     branch: main
     commit: 32225e01ffebef26b1aeca098e7081ff913066cc
 ```

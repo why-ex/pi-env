@@ -1,6 +1,6 @@
 # Role Template Architecture
 
-This document describes the optional role-template layer for `pi-env` and
+This document describes the optional role-template layer for `pi-en` and
 `pi-coding-agent` sessions.
 
 The goal is to let a user switch the active agent role, optionally start a
@@ -11,11 +11,11 @@ project-specific role extensions easy to add.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| CMD-016 | PIENV-FRQ-20260612-210000-047 |
-| CMD-017 | PIENV-FRQ-20260613-090608-001 |
-| CMD-019 | PIENV-FRQ-20260613-183411-001 |
-| DOC-002 | PIENV-QRQ-20260613-183457-001 |
-| TEST-031 | PIENV-QRQ-20260612-210000-033 |
+| CMD-016 | PIEN-FRQ-20260612-210000-047 |
+| CMD-017 | PIEN-FRQ-20260613-090608-001 |
+| CMD-019 | PIEN-FRQ-20260613-183411-001 |
+| DOC-002 | PIEN-QRQ-20260613-183457-001 |
+| TEST-031 | PIEN-QRQ-20260612-210000-033 |
 
 ## Summary
 
@@ -45,12 +45,12 @@ interactive UI.
 
 ## Non-goals
 
-- Do not make default `pi-env` startup automatically claim, mark done, review,
+- Do not make default `pi-en` startup automatically claim, mark done, review,
   verify, close, commit, push, or otherwise mutate coordination state.
 - Do not make every role always visible in the model context.
 - Do not change the project repository Git committer identity just because a
   role is active.
-- Do not hard-code project-specific roles into `pi-env` itself.
+- Do not hard-code project-specific roles into `pi-en` itself.
 
 ## Role definition format
 
@@ -115,7 +115,7 @@ Suggested merge order, with later entries overriding earlier entries by
 
 1. base package roles shipped with the role-manager package;
 2. common/global roles, for example `~/.pi/agent/roles`;
-3. common roles imported through `PI_ENV_BWRAP_COMMON_AGENT_DIR/roles`;
+3. common roles imported through `PI_EN_BWRAP_COMMON_AGENT_DIR/roles`;
 4. optional workspace roles in a coordination repo, for example
    `coordination/roles`;
 5. project roles in `.pi/roles`.
@@ -192,13 +192,13 @@ role is active.
 ## Coordination identity
 
 Coordination state remains plain Git and Markdown. Role support should not make
-default `pi-env` startup mutate coordination automatically.
+default `pi-en` startup mutate coordination automatically.
 
 When a role is active and coordination helper commands commit coordination
 state, those commits should be attributable to the role. The implemented
 behavior is:
 
-- coordination helpers accept `--role ROLE` and read `PI_ENV_COORD_ROLE`;
+- coordination helpers accept `--role ROLE` and read `PI_EN_COORD_ROLE`;
 - coordination item events store actor ID and role explicitly, and helper
   commits may use an effective actor such as `pi/architect`;
 - coordination commits use a role-specific Git identity through per-command
@@ -211,7 +211,7 @@ behavior is:
   ```
 
 The role manager propagates the active role to coordination commands by setting
-`PI_ENV_COORD_ROLE` for Pi subprocesses to the role's `coordCommitter` value, or the
+`PI_EN_COORD_ROLE` for Pi subprocesses to the role's `coordCommitter` value, or the
 role name when that field is omitted. Project repository commits continue to use
 the normal imported Git identity unless the user explicitly requests a role
 identity there too.
@@ -228,9 +228,9 @@ Initial built-in roles should be small and composable:
 | `tester` | Reproduction, tests, verification, coverage gaps. | `read`, `grep`, `find`, `ls`, `bash`, `edit`, `write` |
 | `reviewer` | Diff review, risk review, security and maintainability feedback. | `read`, `grep`, `find`, `ls`, `bash` |
 
-## pi-env integration
+## Pi-en integration
 
-The role-template layer should remain optional. `pi-env` should provide the
+The role-template layer should remain optional. `pi-en` should provide the
 runtime support needed to use it across projects:
 
 - ship the role-manager as a Pi package whose extension discovers its bundled
@@ -240,11 +240,11 @@ runtime support needed to use it across projects:
 - keep project-local `.pi/roles` available through the `/workspace` mount;
 - document required extra tools if a role-manager extension registers custom
   tools such as `role_cycle_done`;
-- keep default `pi-env` startup behavior predictable unless the user enables the
+- keep default `pi-en` startup behavior predictable unless the user enables the
   role package or extension.
 
 ## Implementation roadmap
 
-The coordination repository tracked PIENV role-template items that split this
+The coordination repository tracked PIEN role-template items that split this
 design into implementable work. The current implementation follows this
 architecture while keeping role support optional.

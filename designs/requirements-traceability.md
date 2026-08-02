@@ -8,10 +8,10 @@ manual backlinks in every requirement item.
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| DOC-000 | PIENV-QRQ-20260612-210000-001 |
-| DOC-001 | PIENV-QRQ-20260612-210000-002 |
-| DOC-003 | PIENV-QRQ-20260614-180310-001 |
-| CRQ-010 | PIENV-CRQ-20260613-090617-001 |
+| DOC-000 | PIEN-QRQ-20260612-210000-001 |
+| DOC-001 | PIEN-QRQ-20260612-210000-002 |
+| DOC-003 | PIEN-QRQ-20260614-180310-001 |
+| CRQ-010 | PIEN-CRQ-20260613-090617-001 |
 
 ## 1. Sources of truth
 

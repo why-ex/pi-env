@@ -2,8 +2,8 @@
 
 Use this skill when working in a project that contains a Git-backed agent
 coordination repository, when asked to find, claim, or update work, or before
-making changes that affect shared agent state. Pi-env coordination is
-attached at `.pi-env/coordination` by default. A coordination domain may span
+making changes that affect shared agent state. Pi-en coordination is
+attached at `.pi-en/coordination` by default. A coordination domain may span
 multiple implementation repositories, but each pi session works in one
 implementation repository.
 
@@ -15,21 +15,21 @@ TODO, and coordination state in its domain. Issues are repo-scoped under
 remain shared at the domain root. Domain-wide generated files that are committed
 to an implementation repo are declared in that repo's `repos/{repo_id}/REPO.md`
 under `domain_generated_files`; ask before regenerating them when no matching
-path is declared. For fresh pi-env projects, find the clone at
-`.pi-env/coordination` unless `PI_ENV_COORD_DIR`, the user, or project coordination
+path is declared. For fresh Pi-en projects, find the clone at
+`.pi-en/coordination` unless `PI_EN_COORD_DIR`, the user, or project coordination
 rules say otherwise.
 
 ## Required protocol
 
-1. `cd "${PI_ENV_COORD_DIR:-.pi-env/coordination}" && git pull --rebase` before
-   reading or modifying coordination state, or use the `pi-env-coord-*` helpers
+1. `cd "${PI_EN_COORD_DIR:-.pi-en/coordination}" && git pull --rebase` before
+   reading or modifying coordination state, or use the `pi-en-coord-*` helpers
    with their default coordination directory resolution.
 2. Inspect open, claimed, blocked, and done YAML issue items in the current
    repo namespace. Also inspect related requirement or decision items when
    they affect acceptance criteria.
 3. Claim at most one issue item unless instructed otherwise.
 4. When an active role is in effect, preserve it for coordination helpers with
-   `--role ROLE` or `PI_ENV_COORD_ROLE=ROLE`; item events should store the actor ID
+   `--role ROLE` or `PI_EN_COORD_ROLE=ROLE`; item events should store the actor ID
    and role explicitly.
 5. Commit and push immediately after claiming or changing status.
 6. Do project work in the project repository.
@@ -43,8 +43,8 @@ rules say otherwise.
 
 ## Repo namespaces, item keys, and IDs
 
-Resolve the current repo id from `--repo-id`, `PI_ENV_COORD_REPO_ID`, the
-implementation root's `.pi-env-coordination.yaml`, or registry remote data.
+Resolve the current repo id from `--repo-id`, `PI_EN_COORD_REPO_ID`, the
+implementation root's `.pi-en-coordination.yaml`, or registry remote data.
 The attachment file is a hint only; `repos/{repo_id}/REPO.md` and compatible
 registry data are authoritative. Alias use should warn so callers update to the
 canonical repo id. Cross-repo work should be split into one issue per repo and
@@ -59,7 +59,7 @@ coordination_remote: git@example.com:org/my-product-coordination.git
 repo_id: backend-api
 ```
 
-Use `pi-env-coord-repo add`, `rename`, and `retire` for repo-id lifecycle
+Use `pi-en-coord-repo add`, `rename`, and `retire` for repo-id lifecycle
 changes. Add creates the manifest and issue status directories, rename moves
 the namespace and records old ids as aliases, and retire preserves history
 while blocking new issue creation by default.
@@ -82,8 +82,8 @@ suffix starts at
 `001` for each UTC timestamp. Historical items may keep legacy IDs; do not
 rename, renumber, rewrite, or move them unless explicitly directed.
 
-`pi-env-coord-list notes` and `pi-env-coord-list todos` report note and TODO
-items by their YAML `status` values. `pi-env-coord-list requirements` reports
+`pi-en-coord-list notes` and `pi-en-coord-list todos` report note and TODO
+items by their YAML `status` values. `pi-en-coord-list requirements` reports
 functional, quality, and constraint requirement items. Use `functional`,
 `quality`, or `constraint` for class-specific listings.
 
@@ -104,7 +104,7 @@ For developer-completed work, prefer structured implementation refs on the
 
 ```yaml
 implementation_refs:
-  - repo: pi-env
+  - repo: pi-en
     branch: main
     commit: 32225e01ffebef26b1aeca098e7081ff913066cc
 ```
@@ -129,7 +129,7 @@ Verification messages should record exact commands and results. When available,
 run this from the project root to check item metadata and test linkage:
 
 ```bash
-pi-env-coord-lint --coord-dir "${PI_ENV_COORD_DIR:-.pi-env/coordination}" --project-root .
+pi-en-coord-lint --coord-dir "${PI_EN_COORD_DIR:-.pi-en/coordination}" --project-root .
 ```
 
 Use `--require-done-or-closed` for release gates that require all issue items
@@ -148,5 +148,5 @@ to be done or closed.
   verification.
 - Ask the user when ownership, stale claims, or conflicts are ambiguous.
 
-This skill complements, but does not replace, `.pi-env/coordination/AGENTS.md`. If
+This skill complements, but does not replace, `.pi-en/coordination/AGENTS.md`. If
 these files differ, the checked-in coordination repository rules win.

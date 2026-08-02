@@ -8,11 +8,11 @@ node <<'JS'
 const fs = require('fs');
 const path = require('path');
 
-const coordRoots = ['.pi-env/coordination', 'coordination']
+const coordRoots = ['.pi-en/coordination', 'coordination']
   .filter((dir) => fs.existsSync(dir));
 const reqDirs = coordRoots.flatMap((root) => [
   path.join(root, 'requirements'),
-  path.join(root, 'projects', 'pi-env', 'requirements'),
+  path.join(root, 'projects', 'pi-en', 'requirements'),
 ]).filter((dir) => fs.existsSync(dir));
 const designsDir = 'designs';
 const reqByKey = new Map();
@@ -34,7 +34,7 @@ for (const reqDir of reqDirs) {
   }
 }
 
-const itemIdPattern = /\bPIENV-(?:ISS|FRQ|QRQ|CRQ|REQ|DEC|NOTE)-\d{8}-\d{6}-\d{3}\b/;
+const itemIdPattern = /\bPIEN-(?:ISS|FRQ|QRQ|CRQ|REQ|DEC|NOTE)-\d{8}-\d{6}-\d{3}\b/;
 const rowPattern = /^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|$/;
 const designFiles = fs.readdirSync(designsDir)
   .filter((name) => name.endsWith('.md'))

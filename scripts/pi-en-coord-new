@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-new - create a templated coordination item
+pi-en-coord-new - create a templated coordination item
 
 Usage:
-  pi-env-coord-new [options] "Item title"
+  pi-en-coord-new [options] "Item title"
 
 Options:
-  --coord-dir DIR          Coordination clone; default: PI_ENV_COORD_DIR or .pi-env/coordination
+  --coord-dir DIR          Coordination clone; default: PI_EN_COORD_DIR or .pi-en/coordination
   --project KEY            Removed legacy option; use --project-key for ID prefixes
   --project-key KEY        Project key portion of generated IDs
   --repo-id ID             Create the item under repos/{repo_id}
@@ -28,8 +28,8 @@ Options:
   --status STATUS          Initial status; default: open for issues, active otherwise
   --priority VALUE         Priority value; default: medium
   --owner ID               Initial owner; default: empty
-  --agent-id ID            Event actor's agent ID; default: PI_ENV_COORD_AGENT_ID or USER
-  --role ROLE              Coordination role; default: PI_ENV_COORD_ROLE
+  --agent-id ID            Event actor's agent ID; default: PI_EN_COORD_AGENT_ID or USER
+  --role ROLE              Coordination role; default: PI_EN_COORD_ROLE
   --testable yes|no        Whether an item-matched test is required; default: yes
   --testability-note TEXT  Required rationale when --testable no
   --id ID                  Explicit item ID; default: timestamp ID with type code
@@ -37,26 +37,26 @@ Options:
 
 Issue items in a shared coordination domain are created under
 repos/{repo_id}/issues/open/ and require a resolvable active repo id. Pass
---repo-id explicitly, set PI_ENV_COORD_REPO_ID, or run from a registered
+--repo-id explicitly, set PI_EN_COORD_REPO_ID, or run from a registered
 implementation repo. Domain-level items such as requirements, todos,
 decisions, and notes remain in root folders. Legacy root-layout domains
 without repos/ continue to create issues/open/.
 
 The item key is resolved from --project-key, repo or project metadata,
-PI_ENV_COORD_PROJECT_KEY, or a derived project name. It is uppercased and all
+PI_EN_COORD_PROJECT_KEY, or a derived project name. It is uppercased and all
 non-alphanumeric characters are removed for item IDs.
 
 Generated IDs use:
   <PROJECTKEY>-<TYPECODE>-<YYYYMMDD-HHMMSS>-<NNN>
 
 The NNN collision/order suffix starts at 001 for each timestamp. Filenames
-use the item ID only, for example PIENV-ISS-20260607-204155-001.yaml.
+use the item ID only, for example PIEN-ISS-20260607-204155-001.yaml.
 USAGE
 }
 
 coord_dir_opt=""
 project_id_key_arg=""
-project_id_key_env="${PI_ENV_COORD_PROJECT_KEY:-}"
+project_id_key_env="${PI_EN_COORD_PROJECT_KEY:-}"
 repo_id_arg=""
 item_type="issue"
 category=""
@@ -221,7 +221,7 @@ title="${title_parts[*]}"
 coord_dir="$(coord_resolve_dir "$coord_dir_opt")"
 repo_id=""
 if coord_item_type_uses_issue_status_dirs "$item_type" && [ -d "$coord_dir/repos" ]; then
-  repo_err="$(mktemp "${TMPDIR:-/tmp}/pi-env-coord-new-repo.XXXXXX")" || coord_die "failed to create temporary file"
+  repo_err="$(mktemp "${TMPDIR:-/tmp}/pi-en-coord-new-repo.XXXXXX")" || coord_die "failed to create temporary file"
   if ! repo_id="$(coord_resolve_repo_id "$repo_id_arg" "$coord_dir" 2>"$repo_err")"; then
     cat "$repo_err" >&2
     rm -f "$repo_err"
@@ -242,7 +242,7 @@ elif [ -n "$repo_id_arg" ]; then
   [ -f "$metadata_file" ] || coord_die "repo manifest missing: $metadata_file"
   item_root="repos/$repo_id/$type_dir"
 elif ! coord_write_root_items_by_default; then
-  coord_die "no supported coordination layout found; initialize with pi-env-coord-init and create repo-scoped or root item directories"
+  coord_die "no supported coordination layout found; initialize with pi-en-coord-init and create repo-scoped or root item directories"
 fi
 
 created="$(coord_timestamp_iso)"

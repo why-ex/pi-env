@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for bash-based pi-env tests.
+# Shared helpers for bash-based pi-en tests.
 # Source this file from tests that want small assertion helpers while keeping
 # every test script executable on its own.
 

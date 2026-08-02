@@ -60,7 +60,7 @@ function writeRole(dir, filename, role) {
   writeFileSync(join(dir, filename), roleMarkdown(role));
 }
 
-const tmp = mkdtempSync(join(tmpdir(), "pi-env-role-loader-"));
+const tmp = mkdtempSync(join(tmpdir(), "pi-en-role-loader-"));
 const baseRoles = join(tmp, "base", "roles");
 const globalAgent = join(tmp, "global-agent");
 const commonAgent = join(tmp, "common-agent");

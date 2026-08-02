@@ -2,7 +2,7 @@
 
 Executable scripts under this directory verify coordination items by filename
 stem. The script name, without `.sh`, should match the coordination item `id`.
-Use the canonical project-local `.pi-env/coordination` layout in fixtures.
+Use the canonical project-local `.pi-en/coordination` layout in fixtures.
 
 Issue tests live under:
 

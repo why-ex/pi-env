@@ -3,11 +3,11 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-generate-requirements - render REQUIREMENTS.md from coordination items
+pi-en-coord-generate-requirements - render REQUIREMENTS.md from coordination items
 
 Usage:
-  pi-env-coord-generate-requirements [--project NAME] [--coordination-dir DIR] [--output PATH]
-  pi-env-coord-generate-requirements --help
+  pi-en-coord-generate-requirements [--project NAME] [--coordination-dir DIR] [--output PATH]
+  pi-en-coord-generate-requirements --help
 
 Renders active requirement items from the coordination repository's root
 requirements directory as a deterministic Markdown requirements document.
@@ -16,8 +16,8 @@ key is read from requirement_key metadata.
 USAGE
 }
 
-project="${PI_ENV_COORD_PROJECT:-pi-env}"
-coord_dir="${PI_ENV_COORD_DIR:-}"
+project="${PI_EN_COORD_PROJECT:-pi-en}"
+coord_dir="${PI_EN_COORD_DIR:-}"
 output=""
 
 while [ "$#" -gt 0 ]; do
@@ -50,7 +50,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ -z "$coord_dir" ]; then
-  coord_dir=".pi-env/coordination"
+  coord_dir=".pi-en/coordination"
 fi
 
 requirements_dirs=()
@@ -151,7 +151,7 @@ function renderBody(markdown) {
     .replace(/\s+$/, '') + '\n';
 }
 function print(s='') { process.stdout.write(s + '\n'); }
-print('# pi-env Requirements');
+print('# Pi-en Requirements');
 print();
 print('This document is generated reference output for requirements that have active coordination requirement items. Requirement coordination items are the preferred source of truth when present; update them first, then regenerate `REQUIREMENTS.md`. `REQUIREMENTS.md` is a secondary fallback source only for project or requirement areas that do not yet have coordination items.');
 print();
@@ -159,9 +159,9 @@ print('Each rendered requirement has a stable public key such as `UC-001`, `CMD-
 print();
 print('## 1. Product scope');
 print();
-print('`pi-env` provides a reusable Nix development shell and Bubblewrap launcher for `pi-coding-agent`. Each run operates on one selected project root, and that root is mounted read-write at `/workspace` inside the sandbox. `/workspace` is the sandbox path name, not a host-side multi-project workspace manager.');
+print('`pi-en` provides a reusable Nix development shell and Bubblewrap launcher for `pi-coding-agent`. Each run operates on one selected project root, and that root is mounted read-write at `/workspace` inside the sandbox. `/workspace` is the sandbox path name, not a host-side multi-project workspace manager.');
 print();
-print('Coordination support must be implemented as an opt-in layer. It must not make default `pi-env` startup create, claim, mark done, review, verify, close, commit, push, or otherwise mutate coordination state automatically. Any coordination helper that changes shared state must be explicit, inspectable, and backed by normal Git commits.');
+print('Coordination support must be implemented as an opt-in layer. It must not make default `pi-en` startup create, claim, mark done, review, verify, close, commit, push, or otherwise mutate coordination state automatically. Any coordination helper that changes shared state must be explicit, inspectable, and backed by normal Git commits.');
 print();
 print('The project must keep two responsibilities separate:');
 print();
@@ -179,7 +179,7 @@ print('4. The runtime became self-contained and no longer depends on a local `co
 print('5. Bubblewrap isolation became the primary runtime boundary.');
 print('6. Project-specific Pi sessions were intentionally exposed inside the sandbox, but only for the active project/path.');
 print('7. The flake is intended for reuse by other projects through `lib.mkPiShell` or packages.');
-print('8. Common Pi rules/skills/prompts/roles are imported from an external user-controlled directory, not shipped by `pi-env`.');
+print('8. Common Pi rules/skills/prompts/roles are imported from an external user-controlled directory, not shipped by `pi-en`.');
 print('9. Host Git configuration is copied into the sandbox by default, but credentials, SSH keys, and host home are not mounted.');
 print();
 const topFor = cls => cls === 'quality' ? '## 4. Quality requirements' : cls === 'constraint' ? '## 5. Constraint requirements' : '## 3. Functional requirements';
@@ -209,14 +209,14 @@ print('Required fields for functional, quality, and constraint requirement items
 print();
 print('```yaml');
 print('schema: coordination-item/v1');
-print('id: PIENV-FRQ-YYYYMMDD-HHMMSS-NNN');
+print('id: PIEN-FRQ-YYYYMMDD-HHMMSS-NNN');
 print('type: functional-requirement');
 print('requirement_key: CMD-004');
 print('requirement_kind: detailed-behavior');
 print('domain: commands');
 print('status: active');
-print('project: pi-env');
-print('title: "`pi-env-bwrap` default invocation"');
+print('project: pi-en');
+print('title: "`pi-en-bwrap` default invocation"');
 print('source_refs:');
 print('  - "REQUIREMENTS.md#CMD-004"');
 print('related_workflows:');

@@ -2,26 +2,26 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-serial-roles - run serial developer/reviewer/tester Pi role jobs
+pi-en-serial-roles - run serial developer/reviewer/tester Pi role jobs
 
 Usage:
-  pi-env-serial-roles [options]
+  pi-en-serial-roles [options]
 
 Options:
   --project-root DIR      Project checkout to operate on; default: Git root or $PWD
-  --coord-dir DIR         Coordination checkout; default: PI_ENV_COORD_DIR, .pi-env/coordination, or legacy ./coordination
+  --coord-dir DIR         Coordination checkout; default: PI_EN_COORD_DIR, .pi-en/coordination, or legacy ./coordination
                           relative to the project root
-  --agent-id ID           Coordination agent identity; default: PI_ENV_COORD_AGENT_ID or USER
+  --agent-id ID           Coordination agent identity; default: PI_EN_COORD_AGENT_ID or USER
   --issue ID              Limit this run to one explicit coordination issue ID;
                           repeat this option for an ordered issue batch
   --sleep SECONDS         Idle poll sleep interval; default: 30
@@ -38,11 +38,11 @@ Options:
                           structured event stream, and none runs a
                           non-interactive print job
   --lock-file PATH        Local lock path; default:
-                          .pi-env/locks/pi-env-serial-roles.lock relative to
+                          .pi-en/locks/pi-en-serial-roles.lock relative to
                           the project root
-  --pi-env COMMAND        pi-env launcher; default: pi-env on PATH or this checkout
+  --pi-en COMMAND        pi-en launcher; default: pi-en on PATH or this checkout
   --role-manager PATH     Role-manager package/path for raw Pi jobs; default:
-                          PI_ENV_ROLE_MANAGER_PACKAGE or this checkout's role-manager
+                          PI_EN_ROLE_MANAGER_PACKAGE or this checkout's role-manager
   --tools LIST            Tool allowlist for Pi; role_cycle_done is appended
                           when absent. Default:
                           read,bash,edit,write,grep,find,ls,role_cycle_done
@@ -53,16 +53,16 @@ Work priority:
   2. reviewer: done issues with reviewed:false
   3. developer: open issues, claimed before Pi is invoked
 
-Each job starts a fresh pi-env raw session and does not pass --continue.
+Each job starts a fresh pi-en raw session and does not pass --continue.
 USAGE
 }
 
 note() {
-  printf 'pi-env-serial-roles: %s\n' "$*" >&2
+  printf 'pi-en-serial-roles: %s\n' "$*" >&2
 }
 
 die() {
-  printf 'pi-env-serial-roles: %s\n' "$*" >&2
+  printf 'pi-en-serial-roles: %s\n' "$*" >&2
   exit 1
 }
 
@@ -76,12 +76,12 @@ once=0
 dry_run=0
 ui_mode="interactive"
 lock_file_opt=""
-pi_env_cmd_opt=""
+pi_en_cmd_opt=""
 role_manager_opt=""
 coord_helper_pi_dir=""
 coord_helper_extra_path=""
 coord_helper_host_ro_path=""
-tools="${PI_ENV_BWRAP_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
+tools="${PI_EN_BWRAP_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
 role_cycle_done_tool="role_cycle_done"
 requested_issue_ids=()
 
@@ -175,9 +175,9 @@ while [ "$#" -gt 0 ]; do
       lock_file_opt="$2"
       shift 2
       ;;
-    --pi-env)
+    --pi-en)
       require_value "$1" "${2:-}"
-      pi_env_cmd_opt="$2"
+      pi_en_cmd_opt="$2"
       shift 2
       ;;
     --role-manager)
@@ -246,14 +246,14 @@ resolve_coord_dir() {
   project_root="$1"
   if [ -n "$coord_dir_opt" ]; then
     candidate="$coord_dir_opt"
-  elif [ -n "${PI_ENV_COORD_DIR:-}" ]; then
-    candidate="$PI_ENV_COORD_DIR"
-  elif [ -d "$project_root/.pi-env/coordination" ]; then
-    candidate=".pi-env/coordination"
+  elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
+    candidate="$PI_EN_COORD_DIR"
+  elif [ -d "$project_root/.pi-en/coordination" ]; then
+    candidate=".pi-en/coordination"
   elif [ -d "$project_root/coordination" ]; then
     candidate="coordination"
   else
-    candidate=".pi-env/coordination"
+    candidate=".pi-en/coordination"
   fi
   coord_dir="$(resolve_relative_to_project "$candidate" "$project_root")"
   [ -d "$coord_dir" ] || die "coordination dir not found: $coord_dir"
@@ -279,15 +279,15 @@ resolve_command() {
   esac
 }
 
-resolve_pi_env_cmd() {
-  if [ -n "$pi_env_cmd_opt" ]; then
-    resolve_command "$pi_env_cmd_opt"
-  elif command -v pi-env >/dev/null 2>&1; then
-    command -v pi-env
-  elif [ -x "$script_dir/../pi-env" ]; then
-    realpath -m "$script_dir/../pi-env"
+resolve_pi_en_cmd() {
+  if [ -n "$pi_en_cmd_opt" ]; then
+    resolve_command "$pi_en_cmd_opt"
+  elif command -v pi-en >/dev/null 2>&1; then
+    command -v pi-en
+  elif [ -x "$script_dir/../pi-en" ]; then
+    realpath -m "$script_dir/../pi-en"
   else
-    die "pi-env was not found; pass --pi-env or run inside the pi-env devshell"
+    die "pi-en was not found; pass --pi-en or run inside the pi-en devshell"
   fi
 }
 
@@ -295,12 +295,12 @@ resolve_role_manager() {
   local candidate
   if [ -n "$role_manager_opt" ]; then
     candidate="$role_manager_opt"
-  elif [ -n "${PI_ENV_ROLE_MANAGER_PACKAGE:-}" ]; then
-    candidate="$PI_ENV_ROLE_MANAGER_PACKAGE"
+  elif [ -n "${PI_EN_ROLE_MANAGER_PACKAGE:-}" ]; then
+    candidate="$PI_EN_ROLE_MANAGER_PACKAGE"
   elif [ -e "$script_dir/../role-manager" ]; then
     candidate="$script_dir/../role-manager"
   else
-    die "role-manager package not found; set PI_ENV_ROLE_MANAGER_PACKAGE or pass --role-manager"
+    die "role-manager package not found; set PI_EN_ROLE_MANAGER_PACKAGE or pass --role-manager"
   fi
   candidate="$(realpath -m "$candidate")"
   [ -e "$candidate" ] || die "role-manager path does not exist: $candidate"
@@ -322,9 +322,9 @@ role_manager_arg_for_pi() {
       printf '/workspace%s\n' "${candidate#"$project_root"}"
       ;;
     *)
-      # pi-env-bwrap rewrites and read-only binds external package paths passed
+      # pi-en-bwrap rewrites and read-only binds external package paths passed
       # with -e/--package.  Allow installed non-Nix role-manager packages here
-      # instead of rejecting them before pi-env-bwrap can make them available.
+      # instead of rejecting them before pi-en-bwrap can make them available.
       printf '%s\n' "$candidate"
       ;;
   esac
@@ -382,7 +382,7 @@ ensure_clean_git() {
   label="$2"
   status="$(git_worktree_status "$dir" "$label")"
   if [ -n "$status" ]; then
-    printf 'pi-env-serial-roles: unexpected dirty %s working tree: %s\n' "$label" "$dir" >&2
+    printf 'pi-en-serial-roles: unexpected dirty %s working tree: %s\n' "$label" "$dir" >&2
     printf '%s\n' "$status" >&2
     exit 1
   fi
@@ -439,7 +439,7 @@ release_lock() {
 pull_coordination() {
   local pull_cmd
   ensure_clean_git "$coord_dir" "coordination"
-  pull_cmd="$(coord_helper pi-env-coord-pull)"
+  pull_cmd="$(coord_helper pi-en-coord-pull)"
   "$pull_cmd" --coord-dir "$coord_dir" >&2
   ensure_clean_git "$coord_dir" "coordination"
 }
@@ -478,7 +478,7 @@ requested_issue_file_in_coord() {
     die "requested issue not found: $requested_id"
   fi
   if [ "$match_count" != "1" ]; then
-    printf 'pi-env-serial-roles: requested issue ID is ambiguous: %s\n%s' \
+    printf 'pi-en-serial-roles: requested issue ID is ambiguous: %s\n%s' \
       "$requested_id" "$matches" >&2
     exit 1
   fi
@@ -616,18 +616,18 @@ role_prompt() {
   ui="$3"
   case "$role" in
     developer)
-      claim_helper="$(coord_helper_prompt_cmd pi-env-coord-claim)"
-      done_helper="$(coord_helper_prompt_cmd pi-env-coord-done)"
+      claim_helper="$(coord_helper_prompt_cmd pi-en-coord-claim)"
+      done_helper="$(coord_helper_prompt_cmd pi-en-coord-done)"
       goal="Implement coordination issue $item only."
       helper_text="The serial orchestrator selected this item and claims it before launch; if coordination shows it unclaimed, run $claim_helper for this item only before code changes. Commit project changes, mark the item done with $done_helper and structured implementation refs, then stop."
       ;;
     reviewer)
-      review_helper="$(coord_helper_prompt_cmd pi-env-coord-review)"
+      review_helper="$(coord_helper_prompt_cmd pi-en-coord-review)"
       goal="Review coordination issue $item only."
       helper_text="Review the committed project state for this done item, then run $review_helper --pass or $review_helper --fail for this item and stop."
       ;;
     tester)
-      verify_helper="$(coord_helper_prompt_cmd pi-env-coord-verify)"
+      verify_helper="$(coord_helper_prompt_cmd pi-en-coord-verify)"
       goal="Verify coordination issue $item only."
       helper_text="Run item-appropriate checks for this reviewed done item, then run $verify_helper --pass or $verify_helper --fail for this item and stop without closing other work."
       ;;
@@ -699,7 +699,7 @@ tools_with_role_cycle_done() {
 
 merged_pass_env() {
   local value
-  value="${PI_ENV_BWRAP_PASS_ENV:-}"
+  value="${PI_EN_BWRAP_PASS_ENV:-}"
   value="${value:+$value }PI_ACTIVE_ROLE PI_ROLE_MANAGER_ACTIVE_ROLE"
   if [ "$ui_mode" = "interactive" ]; then
     value="$value PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE"
@@ -709,7 +709,7 @@ merged_pass_env() {
 
 merged_extra_path() {
   local value helper_dir
-  value="${PI_ENV_BWRAP_EXTRA_PATH:-}"
+  value="${PI_EN_BWRAP_EXTRA_PATH:-}"
   helper_dir="${coord_helper_extra_path:-}"
   if [ -n "$helper_dir" ]; then
     case ":$value:" in
@@ -722,7 +722,7 @@ merged_extra_path() {
 
 merged_host_ro_paths() {
   local value helper_dir
-  value="${PI_ENV_BWRAP_HOST_RO_PATHS:-}"
+  value="${PI_EN_BWRAP_HOST_RO_PATHS:-}"
   helper_dir="${coord_helper_host_ro_path:-}"
   if [ -n "$helper_dir" ]; then
     case ":$value:" in
@@ -761,7 +761,7 @@ print_dry_run() {
   if [ "$role" = "developer" ]; then
     printf 'would-claim: '
     shell_quote_command \
-      "$(coord_helper pi-env-coord-claim)" \
+      "$(coord_helper pi-en-coord-claim)" \
       --coord-dir "$coord_dir" \
       --agent-id "$agent_id" \
       --role developer \
@@ -774,15 +774,15 @@ print_dry_run() {
         env \
         "PI_ACTIVE_ROLE=$role" \
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-        "PI_ENV_COORD_ROLE=$role" \
-        "PI_ENV_COORD_AGENT_ID=$agent_id" \
-        "PI_ENV_COORD_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-        "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-        "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-        "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-        "$pi_env_cmd" \
+        "PI_EN_COORD_ROLE=$role" \
+        "PI_EN_COORD_AGENT_ID=$agent_id" \
+        "PI_EN_COORD_DIR=$coord_dir" \
+        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+        "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+        "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+        "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+        "$pi_en_cmd" \
         --raw -- \
         -e "$role_manager_pi_arg" \
         --tools "$pi_tools" \
@@ -793,15 +793,15 @@ print_dry_run() {
         env \
         "PI_ACTIVE_ROLE=$role" \
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-        "PI_ENV_COORD_ROLE=$role" \
-        "PI_ENV_COORD_AGENT_ID=$agent_id" \
-        "PI_ENV_COORD_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-        "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-        "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-        "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-        "$pi_env_cmd" \
+        "PI_EN_COORD_ROLE=$role" \
+        "PI_EN_COORD_AGENT_ID=$agent_id" \
+        "PI_EN_COORD_DIR=$coord_dir" \
+        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+        "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+        "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+        "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+        "$pi_en_cmd" \
         --raw -- \
         -e "$role_manager_pi_arg" \
         --tools "$pi_tools" \
@@ -813,15 +813,15 @@ print_dry_run() {
         "PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE=1" \
         "PI_ACTIVE_ROLE=$role" \
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-        "PI_ENV_COORD_ROLE=$role" \
-        "PI_ENV_COORD_AGENT_ID=$agent_id" \
-        "PI_ENV_COORD_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-        "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-        "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-        "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-        "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-        "$pi_env_cmd" \
+        "PI_EN_COORD_ROLE=$role" \
+        "PI_EN_COORD_AGENT_ID=$agent_id" \
+        "PI_EN_COORD_DIR=$coord_dir" \
+        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+        "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+        "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+        "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+        "$pi_en_cmd" \
         --raw -- \
         -e "$role_manager_pi_arg" \
         --tools "$pi_tools" \
@@ -836,7 +836,7 @@ print_dry_run() {
 claim_developer_item() {
   local item claim_cmd
   item="$1"
-  claim_cmd="$(coord_helper pi-env-coord-claim)"
+  claim_cmd="$(coord_helper pi-en-coord-claim)"
   "$claim_cmd" \
     --coord-dir "$coord_dir" \
     --agent-id "$agent_id" \
@@ -870,15 +870,15 @@ run_pi_job() {
         env \
           "PI_ACTIVE_ROLE=$role" \
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-          "PI_ENV_COORD_ROLE=$role" \
-          "PI_ENV_COORD_AGENT_ID=$agent_id" \
-          "PI_ENV_COORD_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-          "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-          "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-          "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-          "$pi_env_cmd" \
+          "PI_EN_COORD_ROLE=$role" \
+          "PI_EN_COORD_AGENT_ID=$agent_id" \
+          "PI_EN_COORD_DIR=$coord_dir" \
+          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+          "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+          "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+          "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+          "$pi_en_cmd" \
           --raw -- \
           -e "$role_manager_pi_arg" \
           --tools "$pi_tools" \
@@ -888,15 +888,15 @@ run_pi_job() {
         env \
           "PI_ACTIVE_ROLE=$role" \
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-          "PI_ENV_COORD_ROLE=$role" \
-          "PI_ENV_COORD_AGENT_ID=$agent_id" \
-          "PI_ENV_COORD_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-          "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-          "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-          "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-          "$pi_env_cmd" \
+          "PI_EN_COORD_ROLE=$role" \
+          "PI_EN_COORD_AGENT_ID=$agent_id" \
+          "PI_EN_COORD_DIR=$coord_dir" \
+          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+          "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+          "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+          "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+          "$pi_en_cmd" \
           --raw -- \
           -e "$role_manager_pi_arg" \
           --tools "$pi_tools" \
@@ -907,15 +907,15 @@ run_pi_job() {
           "PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE=1" \
           "PI_ACTIVE_ROLE=$role" \
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
-          "PI_ENV_COORD_ROLE=$role" \
-          "PI_ENV_COORD_AGENT_ID=$agent_id" \
-          "PI_ENV_COORD_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_COORDINATION_DIR=$coord_dir" \
-          "PI_ENV_BWRAP_PROJECT_ROOT=$project_root" \
-          "PI_ENV_BWRAP_PASS_ENV=$pass_env" \
-          "PI_ENV_BWRAP_EXTRA_PATH=$extra_path" \
-          "PI_ENV_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
-          "$pi_env_cmd" \
+          "PI_EN_COORD_ROLE=$role" \
+          "PI_EN_COORD_AGENT_ID=$agent_id" \
+          "PI_EN_COORD_DIR=$coord_dir" \
+          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
+          "PI_EN_BWRAP_PASS_ENV=$pass_env" \
+          "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
+          "PI_EN_BWRAP_HOST_RO_PATHS=$host_ro_paths" \
+          "$pi_en_cmd" \
           --raw -- \
           -e "$role_manager_pi_arg" \
           --tools "$pi_tools" \
@@ -930,7 +930,7 @@ run_pi_job() {
 
 project_root="$(resolve_project_root)"
 coord_dir="$(resolve_coord_dir "$project_root")"
-pi_env_cmd="$(resolve_pi_env_cmd)"
+pi_en_cmd="$(resolve_pi_en_cmd)"
 role_manager_package="$(resolve_role_manager)"
 role_manager_pi_arg="$(role_manager_arg_for_pi "$role_manager_package" "$project_root")"
 coord_helper_pi_dir="$(coord_helper_dir_for_pi "$script_dir" "$project_root")"
@@ -952,7 +952,7 @@ esac
 if [ -n "$lock_file_opt" ]; then
   lock_file="$(resolve_relative_to_project "$lock_file_opt" "$project_root")"
 else
-  lock_file="$(realpath -m "$project_root/.pi-env/locks/pi-env-serial-roles.lock")"
+  lock_file="$(realpath -m "$project_root/.pi-en/locks/pi-en-serial-roles.lock")"
 fi
 
 (

@@ -1,0 +1,4 @@
+version: 1
+coordination_domain: pi-en
+coordination_remote: .pi-en/agent-remotes/pi-en-coordination.git
+repo_id: pi-en

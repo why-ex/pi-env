@@ -94,7 +94,7 @@ assert.ok(
   invalidTools.warnings.map(formatRoleWarning).join("\n"),
 );
 
-const tmp = mkdtempSync(join(tmpdir(), "pi-env-roles-"));
+const tmp = mkdtempSync(join(tmpdir(), "pi-en-roles-"));
 writeFileSync(
   join(tmp, "invalid.md"),
   `---\nname: invalid\n---\n# Invalid\n`,

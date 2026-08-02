@@ -21,22 +21,22 @@ prepend_path_entry() {
   fi
 }
 
-if [ -n "${PI_ENV_RUNTIME_PATH:-}" ]; then
-  export PATH="$(prepend_path_entry "$PI_ENV_RUNTIME_PATH" "${PATH:-}")"
+if [ -n "${PI_EN_RUNTIME_PATH:-}" ]; then
+  export PATH="$(prepend_path_entry "$PI_EN_RUNTIME_PATH" "${PATH:-}")"
 fi
-DEFAULT_PI_TOOLS="${PI_ENV_BWRAP_COMPILED_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
-if [ -n "${PI_ENV_BWRAP_DEFAULT_TOOLS:-}" ]; then
-  DEFAULT_PI_TOOLS="$PI_ENV_BWRAP_DEFAULT_TOOLS"
+DEFAULT_PI_TOOLS="${PI_EN_BWRAP_COMPILED_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
+if [ -n "${PI_EN_BWRAP_DEFAULT_TOOLS:-}" ]; then
+  DEFAULT_PI_TOOLS="$PI_EN_BWRAP_DEFAULT_TOOLS"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-bwrap - run pi-coding-agent inside a rootless bubblewrap sandbox
+pi-en-bwrap - run pi-coding-agent inside a rootless bubblewrap sandbox
 
 Usage:
-  pi-env-bwrap [pi args...]
-  pi-env-bwrap -- [pi args...]
-  pi-env-bwrap --shell [--] [bash args...]
+  pi-en-bwrap [pi args...]
+  pi-en-bwrap -- [pi args...]
+  pi-en-bwrap --shell [--] [bash args...]
 
 Defaults when no pi args are given:
   pi --tools read,bash,edit,write,grep,find,ls --continue
@@ -44,8 +44,8 @@ Defaults when no pi args are given:
 Shell mode enters the same sandbox but execs Bash instead of Pi. With no Bash
 arguments it starts an interactive login shell and therefore requires both stdin
 and stdout to be TTYs. Use explicit non-interactive Bash arguments such as
--- -lc 'pwd' for non-TTY command evaluation. Use pi-env-shell for normal runtime
-selection; use pi-env-bwrap --shell only when the runtime is already selected.
+-- -lc 'pwd' for non-TTY command evaluation. Use pi-en-shell for normal runtime
+selection; use pi-en-bwrap --shell only when the runtime is already selected.
 
 Security model:
   - mounts the detected project root read-write at /workspace
@@ -61,38 +61,38 @@ Security model:
   - clears the environment, then passes terminal basics and selected LLM provider vars
 
 Environment knobs:
-  PI_ENV_BWRAP_PROJECT_ROOT=/path   Project to mount; default: git root, else $PWD
-  PI_ENV_BWRAP_USE_GIT_ROOT=0       Use $PWD instead of auto git-root detection
-  PI_ENV_BWRAP_STATE_DIR=/path      Persistent sandbox home/config; default: XDG state per project
-                                 Use $PWD/.pi-env/state only as explicit project-local opt-in
-  PI_ENV_BWRAP_EPHEMERAL_HOME=1     Use a temporary sandbox home/config for this run
-  PI_ENV_BWRAP_IMPORT_AUTH=0        Do not import host ~/.pi/agent auth files
-  PI_ENV_BWRAP_AUTH_SYNC=missing    Copy auth only if sandbox copy is absent (default: always)
-  PI_ENV_BWRAP_IMPORT_SESSIONS=0    Do not bind project sessions from host ~/.pi/agent (default: 1, or 0 with ephemeral home)
-  PI_ENV_BWRAP_HOST_AGENT_DIR=/path Host pi agent dir (default: $PI_CODING_AGENT_DIR or ~/.pi/agent)
-  PI_ENV_BWRAP_COMMON_AGENT_DIR=/path Common rules/skills/roles dir (default: host pi agent dir)
-  PI_ENV_BWRAP_IMPORT_COMMON=0       Do not import common AGENTS/SYSTEM files, skills, prompts, or roles
-  PI_ENV_BWRAP_COMMON_SYNC=missing   Copy common files only if sandbox copy is absent (default: always)
-  PI_ENV_BWRAP_IMPORT_EXTENSIONS=0   Do not expose global Pi extensions/packages from host agent dir
-  PI_ENV_BWRAP_EXTENSIONS_SYNC=missing Copy settings.json only if sandbox copy is absent (default: always)
-  PI_ENV_BWRAP_IMPORT_GIT_CONFIG=0   Do not import host ~/.gitconfig and XDG git config
-  PI_ENV_BWRAP_GIT_CONFIG_SYNC=missing Copy git config only if sandbox copy is absent (default: always)
-  PI_ENV_BWRAP_HOST_GITCONFIG=/path  Host global git config (default: ~/.gitconfig)
-  PI_ENV_BWRAP_HOST_XDG_GIT_CONFIG=/path Host XDG git config (default: $XDG_CONFIG_HOME/git/config or ~/.config/git/config)
-  PI_ENV_BWRAP_DEFAULT_TOOLS="..."  Override default --tools list
-  PI_ENV_BWRAP_EXTRA_PATH=/nix/store/.../bin[:...] Add validated Nix-store command dirs after pi-env runtime tools
-  PI_ENV_BWRAP_HOST_EXTRA_PATH=/opt/tools/bin[:...] Host runtime only: add validated host command dirs
-  PI_ENV_BWRAP_HOST_RO_PATHS=/opt/pi-env/share/pi-env/scripts[:...]
+  PI_EN_BWRAP_PROJECT_ROOT=/path   Project to mount; default: git root, else $PWD
+  PI_EN_BWRAP_USE_GIT_ROOT=0       Use $PWD instead of auto git-root detection
+  PI_EN_BWRAP_STATE_DIR=/path      Persistent sandbox home/config; default: XDG state per project
+                                 Use $PWD/.pi-en/state only as explicit project-local opt-in
+  PI_EN_BWRAP_EPHEMERAL_HOME=1     Use a temporary sandbox home/config for this run
+  PI_EN_BWRAP_IMPORT_AUTH=0        Do not import host ~/.pi/agent auth files
+  PI_EN_BWRAP_AUTH_SYNC=missing    Copy auth only if sandbox copy is absent (default: always)
+  PI_EN_BWRAP_IMPORT_SESSIONS=0    Do not bind project sessions from host ~/.pi/agent (default: 1, or 0 with ephemeral home)
+  PI_EN_BWRAP_HOST_AGENT_DIR=/path Host pi agent dir (default: $PI_CODING_AGENT_DIR or ~/.pi/agent)
+  PI_EN_BWRAP_COMMON_AGENT_DIR=/path Common rules/skills/roles dir (default: host pi agent dir)
+  PI_EN_BWRAP_IMPORT_COMMON=0       Do not import common AGENTS/SYSTEM files, skills, prompts, or roles
+  PI_EN_BWRAP_COMMON_SYNC=missing   Copy common files only if sandbox copy is absent (default: always)
+  PI_EN_BWRAP_IMPORT_EXTENSIONS=0   Do not expose global Pi extensions/packages from host agent dir
+  PI_EN_BWRAP_EXTENSIONS_SYNC=missing Copy settings.json only if sandbox copy is absent (default: always)
+  PI_EN_BWRAP_IMPORT_GIT_CONFIG=0   Do not import host ~/.gitconfig and XDG git config
+  PI_EN_BWRAP_GIT_CONFIG_SYNC=missing Copy git config only if sandbox copy is absent (default: always)
+  PI_EN_BWRAP_HOST_GITCONFIG=/path  Host global git config (default: ~/.gitconfig)
+  PI_EN_BWRAP_HOST_XDG_GIT_CONFIG=/path Host XDG git config (default: $XDG_CONFIG_HOME/git/config or ~/.config/git/config)
+  PI_EN_BWRAP_DEFAULT_TOOLS="..."  Override default --tools list
+  PI_EN_BWRAP_EXTRA_PATH=/nix/store/.../bin[:...] Add validated Nix-store command dirs after pi-en runtime tools
+  PI_EN_BWRAP_HOST_EXTRA_PATH=/opt/tools/bin[:...] Host runtime only: add validated host command dirs
+  PI_EN_BWRAP_HOST_RO_PATHS=/opt/pi-en/share/pi-en/scripts[:...]
                                 Host runtime only: bind extra support paths read-only
-  PI_ENV_BWRAP_NET=0                Disable network namespace sharing
-  PI_ENV_BWRAP_COORDINATION_DIR=/path Bind external coordination clone at /coordination
-  PI_ENV_COORD_REMOTE=remote        Coordination Git remote URL or local bare path; project paths
+  PI_EN_BWRAP_NET=0                Disable network namespace sharing
+  PI_EN_BWRAP_COORDINATION_DIR=/path Bind external coordination clone at /coordination
+  PI_EN_COORD_REMOTE=remote        Coordination Git remote URL or local bare path; project paths
                                  stay under /workspace, external parents bind safely
-  PI_ENV_COORD_ROLE=architect       Active coordination role passed to helpers
-  PI_ENV_BWRAP_PASS_ENV="A B,C"     Extra environment variable names to pass through
+  PI_EN_COORD_ROLE=architect       Active coordination role passed to helpers
+  PI_EN_BWRAP_PASS_ENV="A B,C"     Extra environment variable names to pass through
 
 To pass pi's own -h/--help, use:
-  pi-env-bwrap -- --help
+  pi-en-bwrap -- --help
 USAGE
 }
 
@@ -115,12 +115,12 @@ pi_host_path=""
 if [ "$shell_mode" = "0" ]; then
   pi_host_path="$(command -v pi 2>/dev/null || true)"
   if [ -z "$pi_host_path" ]; then
-    echo "pi-env-bwrap: pi was not found on PATH before entering the sandbox." >&2
+    echo "pi-en-bwrap: pi was not found on PATH before entering the sandbox." >&2
     echo "Install pi globally, or enter a shell that provides it, then retry." >&2
     exit 127
   fi
   if ! pi_host_path="$(realpath -e "$pi_host_path" 2>/dev/null)"; then
-    echo "pi-env-bwrap: resolved host pi path does not exist: $(command -v pi 2>/dev/null || true)" >&2
+    echo "pi-en-bwrap: resolved host pi path does not exist: $(command -v pi 2>/dev/null || true)" >&2
     exit 127
   fi
 fi
@@ -133,28 +133,28 @@ resolve_required_tool() {
     value="$(command -v "$fallback_name" 2>/dev/null || true)"
   fi
   if [ -z "$value" ]; then
-    echo "pi-env-bwrap: required host tool was not found: $fallback_name" >&2
+    echo "pi-en-bwrap: required host tool was not found: $fallback_name" >&2
     exit 127
   fi
   case "$value" in
     /*) ;;
     *)
-      echo "pi-env-bwrap: required host tool did not resolve to an absolute path: $fallback_name -> $value" >&2
+      echo "pi-en-bwrap: required host tool did not resolve to an absolute path: $fallback_name -> $value" >&2
       exit 127
       ;;
   esac
   if ! value="$(realpath -e "$value" 2>/dev/null)"; then
-    echo "pi-env-bwrap: required host tool path does not exist: $fallback_name -> ${!env_name:-$value}" >&2
+    echo "pi-en-bwrap: required host tool path does not exist: $fallback_name -> ${!env_name:-$value}" >&2
     exit 127
   fi
   printf '%s' "$value"
 }
 
-pi_bwrap_bash="$(resolve_required_tool PI_ENV_BWRAP_BASH bash)"
-pi_bwrap_env="$(resolve_required_tool PI_ENV_BWRAP_ENV env)"
-pi_bwrap_bwrap="$(resolve_required_tool PI_ENV_BWRAP_BWRAP bwrap)"
+pi_bwrap_bash="$(resolve_required_tool PI_EN_BWRAP_BASH bash)"
+pi_bwrap_env="$(resolve_required_tool PI_EN_BWRAP_ENV env)"
+pi_bwrap_bwrap="$(resolve_required_tool PI_EN_BWRAP_BWRAP bwrap)"
 host_runtime=0
-if [ -z "${PI_ENV_RUNTIME_PATH:-}" ]; then
+if [ -z "${PI_EN_RUNTIME_PATH:-}" ]; then
   host_runtime=1
 fi
 host_home="${HOME:-}"
@@ -174,10 +174,10 @@ host_path_is_default_mounted() {
 host_path_is_under_host_extra_path() {
   local path="$1"
   local entry canonical_entry old_ifs
-  [ -n "${PI_ENV_BWRAP_HOST_EXTRA_PATH:-}" ] || return 1
+  [ -n "${PI_EN_BWRAP_HOST_EXTRA_PATH:-}" ] || return 1
   old_ifs="$IFS"
   IFS=:
-  for entry in $PI_ENV_BWRAP_HOST_EXTRA_PATH; do
+  for entry in $PI_EN_BWRAP_HOST_EXTRA_PATH; do
     IFS="$old_ifs"
     [ -n "$entry" ] || { IFS=:; continue; }
     if canonical_entry="$(realpath -e "$entry" 2>/dev/null)"; then
@@ -198,8 +198,8 @@ if [ "$host_runtime" = "1" ]; then
   for host_runtime_tool in "$pi_bwrap_bash" "$pi_bwrap_env"; do
     case "$host_runtime_tool" in
       /nix/store/*)
-        echo "pi-env-bwrap: host runtime requires host bash/env tools, but resolved a Nix-store tool: $host_runtime_tool" >&2
-        echo "pi-env-bwrap: install host runtime tools, set PI_ENV_BWRAP_BASH/PI_ENV_BWRAP_ENV to host paths, or use the Nix runtime." >&2
+        echo "pi-en-bwrap: host runtime requires host bash/env tools, but resolved a Nix-store tool: $host_runtime_tool" >&2
+        echo "pi-en-bwrap: install host runtime tools, set PI_EN_BWRAP_BASH/PI_EN_BWRAP_ENV to host paths, or use the Nix runtime." >&2
         exit 127
         ;;
     esac
@@ -208,15 +208,15 @@ if [ "$host_runtime" = "1" ]; then
   if [ "$shell_mode" = "0" ] && [ -n "$canonical_host_home" ]; then
     case "$pi_host_path" in
       "$canonical_host_home"|"$canonical_host_home"/*)
-        echo "pi-env-bwrap: host runtime resolved pi under host HOME, which is not mounted by default: $pi_host_path" >&2
-        echo "pi-env-bwrap: install pi under /usr/local/bin, /usr/bin, or /bin; provide a safe command dir with PI_ENV_BWRAP_HOST_EXTRA_PATH; or use --runtime nix." >&2
+        echo "pi-en-bwrap: host runtime resolved pi under host HOME, which is not mounted by default: $pi_host_path" >&2
+        echo "pi-en-bwrap: install pi under /usr/local/bin, /usr/bin, or /bin; provide a safe command dir with PI_EN_BWRAP_HOST_EXTRA_PATH; or use --runtime nix." >&2
         exit 127
         ;;
     esac
   fi
   if [ "$shell_mode" = "0" ] && ! host_path_is_default_mounted "$pi_host_path" && ! host_path_is_under_host_extra_path "$pi_host_path"; then
-    echo "pi-env-bwrap: host runtime resolved pi outside default sandbox mounts: $pi_host_path" >&2
-    echo "pi-env-bwrap: install pi under /usr/local/bin, /usr/bin, or /bin; add its directory with PI_ENV_BWRAP_HOST_EXTRA_PATH for a read-only bind; or use --runtime nix." >&2
+    echo "pi-en-bwrap: host runtime resolved pi outside default sandbox mounts: $pi_host_path" >&2
+    echo "pi-en-bwrap: install pi under /usr/local/bin, /usr/bin, or /bin; add its directory with PI_EN_BWRAP_HOST_EXTRA_PATH for a read-only bind; or use --runtime nix." >&2
     exit 127
   fi
 
@@ -225,14 +225,14 @@ if [ "$host_runtime" = "1" ]; then
       *'/usr/bin/env node'*)
         node_path="$(command -v node 2>/dev/null || true)"
         if [ -z "$node_path" ] || ! node_path="$(realpath -e "$node_path" 2>/dev/null)"; then
-          echo "pi-env-bwrap: host runtime pi launcher requires node, but node was not found on PATH." >&2
+          echo "pi-en-bwrap: host runtime pi launcher requires node, but node was not found on PATH." >&2
           exit 127
         fi
         case "$node_path" in
           /bin/*|/usr/bin/*|/usr/local/bin/*) ;;
           *)
-            echo "pi-env-bwrap: host runtime pi launcher requires node inside the sandbox, but node resolved outside mounted host command dirs: $node_path" >&2
-            echo "pi-env-bwrap: install node under /usr/local/bin, /usr/bin, or /bin, or use the Nix runtime." >&2
+            echo "pi-en-bwrap: host runtime pi launcher requires node inside the sandbox, but node resolved outside mounted host command dirs: $node_path" >&2
+            echo "pi-en-bwrap: install node under /usr/local/bin, /usr/bin, or /bin, or use the Nix runtime." >&2
             exit 127
             ;;
         esac
@@ -241,9 +241,9 @@ if [ "$host_runtime" = "1" ]; then
   fi
 fi
 
-project_root="${PI_ENV_BWRAP_PROJECT_ROOT:-}"
+project_root="${PI_EN_BWRAP_PROJECT_ROOT:-}"
 if [ -z "$project_root" ]; then
-  if [ "${PI_ENV_BWRAP_USE_GIT_ROOT:-1}" = "1" ] && command -v git >/dev/null 2>&1; then
+  if [ "${PI_EN_BWRAP_USE_GIT_ROOT:-1}" = "1" ] && command -v git >/dev/null 2>&1; then
     project_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
   fi
   if [ -z "$project_root" ]; then
@@ -252,7 +252,7 @@ if [ -z "$project_root" ]; then
 fi
 project_root="$(realpath -m "$project_root")"
 if [ ! -d "$project_root" ]; then
-  echo "pi-env-bwrap: project root does not exist: $project_root" >&2
+  echo "pi-en-bwrap: project root does not exist: $project_root" >&2
   exit 2
 fi
 
@@ -296,7 +296,7 @@ pi_bwrap_yaml_unquote() {
 pi_bwrap_coord_config_value() {
   local key file value
   key="$1"
-  file="$project_root/.pi-env-coordination.yaml"
+  file="$project_root/.pi-en-coordination.yaml"
   [ -f "$file" ] || return 1
   value="$(awk -v key="$key" '
     /^[[:space:]]*#/ { next }
@@ -333,14 +333,14 @@ pi_bwrap_remote_local_path() {
   return 1
 }
 
-if [ "${PI_ENV_BWRAP_EPHEMERAL_HOME:-0}" = "1" ]; then
-  state_base="$(mktemp -d "${TMPDIR:-/tmp}/pi-env-bwrap.XXXXXX")"
+if [ "${PI_EN_BWRAP_EPHEMERAL_HOME:-0}" = "1" ]; then
+  state_base="$(mktemp -d "${TMPDIR:-/tmp}/pi-en-bwrap.XXXXXX")"
   cleanup_tmp="$state_base"
   trap 'rm -rf "$cleanup_tmp"' EXIT
 else
   project_hash="$(printf '%s' "$project_root" | sha256sum | awk '{print $1}' | cut -c1-16)"
   state_parent="${XDG_STATE_HOME:-${HOME:-/tmp}/.local/state}"
-  state_base="${PI_ENV_BWRAP_STATE_DIR:-$state_parent/pi-env/$project_hash}"
+  state_base="${PI_EN_BWRAP_STATE_DIR:-$state_parent/pi-en/$project_hash}"
   state_base="$(realpath -m "$state_base")"
 fi
 
@@ -352,7 +352,7 @@ mkdir -p \
   "$state_base/cache"
 chmod 700 "$state_base" "$state_base/home" "$state_base/home/.pi" "$state_base/home/.cache" "$state_base/home/.config" "$state_base/home/.config/git" "$state_base/agent" "$state_base/agent/sessions" "$state_base/cache" 2>/dev/null || true
 
-host_agent_dir="${PI_ENV_BWRAP_HOST_AGENT_DIR:-}"
+host_agent_dir="${PI_EN_BWRAP_HOST_AGENT_DIR:-}"
 if [ -z "$host_agent_dir" ] && [ -n "${PI_CODING_AGENT_DIR:-}" ]; then
   host_agent_dir="$PI_CODING_AGENT_DIR"
 fi
@@ -363,17 +363,17 @@ if [ -n "$host_agent_dir" ]; then
   host_agent_dir="$(realpath -m "$host_agent_dir")"
 fi
 
-common_agent_dir="${PI_ENV_BWRAP_COMMON_AGENT_DIR:-$host_agent_dir}"
+common_agent_dir="${PI_EN_BWRAP_COMMON_AGENT_DIR:-$host_agent_dir}"
 if [ -n "$common_agent_dir" ]; then
   common_agent_dir="$(realpath -m "$common_agent_dir")"
 fi
 
 should_sync_common() {
   local target="$1"
-  [ "${PI_ENV_BWRAP_COMMON_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
+  [ "${PI_EN_BWRAP_COMMON_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
 }
 
-if [ "${PI_ENV_BWRAP_IMPORT_COMMON:-1}" = "1" ] && [ -n "$common_agent_dir" ] && [ -d "$common_agent_dir" ] && [ "$common_agent_dir" != "$state_base/agent" ]; then
+if [ "${PI_EN_BWRAP_IMPORT_COMMON:-1}" = "1" ] && [ -n "$common_agent_dir" ] && [ -d "$common_agent_dir" ] && [ "$common_agent_dir" != "$state_base/agent" ]; then
   for common_file in AGENTS.md CLAUDE.md SYSTEM.md APPEND_SYSTEM.md; do
     if [ -f "$common_agent_dir/$common_file" ] && should_sync_common "$state_base/agent/$common_file"; then
       cp -p "$common_agent_dir/$common_file" "$state_base/agent/$common_file"
@@ -391,11 +391,11 @@ fi
 
 should_sync_git_config() {
   local target="$1"
-  [ "${PI_ENV_BWRAP_GIT_CONFIG_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
+  [ "${PI_EN_BWRAP_GIT_CONFIG_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
 }
 
-if [ "${PI_ENV_BWRAP_IMPORT_GIT_CONFIG:-1}" = "1" ]; then
-  host_gitconfig="${PI_ENV_BWRAP_HOST_GITCONFIG:-}"
+if [ "${PI_EN_BWRAP_IMPORT_GIT_CONFIG:-1}" = "1" ]; then
+  host_gitconfig="${PI_EN_BWRAP_HOST_GITCONFIG:-}"
   if [ -z "$host_gitconfig" ] && [ -n "$host_home" ]; then
     host_gitconfig="$host_home/.gitconfig"
   fi
@@ -407,7 +407,7 @@ if [ "${PI_ENV_BWRAP_IMPORT_GIT_CONFIG:-1}" = "1" ]; then
     fi
   fi
 
-  host_xdg_git_config="${PI_ENV_BWRAP_HOST_XDG_GIT_CONFIG:-}"
+  host_xdg_git_config="${PI_EN_BWRAP_HOST_XDG_GIT_CONFIG:-}"
   if [ -z "$host_xdg_git_config" ] && [ -n "${XDG_CONFIG_HOME:-}" ]; then
     host_xdg_git_config="${XDG_CONFIG_HOME}/git/config"
   fi
@@ -424,10 +424,10 @@ if [ "${PI_ENV_BWRAP_IMPORT_GIT_CONFIG:-1}" = "1" ]; then
   fi
 fi
 
-if [ "${PI_ENV_BWRAP_IMPORT_AUTH:-1}" = "1" ] && [ -n "$host_agent_dir" ] && [ -d "$host_agent_dir" ]; then
+if [ "${PI_EN_BWRAP_IMPORT_AUTH:-1}" = "1" ] && [ -n "$host_agent_dir" ] && [ -d "$host_agent_dir" ]; then
   for auth_file in auth.json models.json; do
     if [ -f "$host_agent_dir/$auth_file" ]; then
-      if [ "${PI_ENV_BWRAP_AUTH_SYNC:-always}" = "always" ] || [ ! -e "$state_base/agent/$auth_file" ]; then
+      if [ "${PI_EN_BWRAP_AUTH_SYNC:-always}" = "always" ] || [ ! -e "$state_base/agent/$auth_file" ]; then
         cp -p "$host_agent_dir/$auth_file" "$state_base/agent/$auth_file"
         chmod 600 "$state_base/agent/$auth_file" 2>/dev/null || true
       fi
@@ -438,10 +438,10 @@ fi
 extension_bind_args=()
 should_sync_extensions() {
   local target="$1"
-  [ "${PI_ENV_BWRAP_EXTENSIONS_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
+  [ "${PI_EN_BWRAP_EXTENSIONS_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
 }
 
-if [ "${PI_ENV_BWRAP_IMPORT_EXTENSIONS:-1}" = "1" ] && [ -n "$host_agent_dir" ] && [ -d "$host_agent_dir" ] && [ "$host_agent_dir" != "$state_base/agent" ]; then
+if [ "${PI_EN_BWRAP_IMPORT_EXTENSIONS:-1}" = "1" ] && [ -n "$host_agent_dir" ] && [ -d "$host_agent_dir" ] && [ "$host_agent_dir" != "$state_base/agent" ]; then
   if [ -f "$host_agent_dir/settings.json" ] && should_sync_extensions "$state_base/agent/settings.json"; then
     cp -p "$host_agent_dir/settings.json" "$state_base/agent/settings.json"
     chmod 600 "$state_base/agent/settings.json" 2>/dev/null || true
@@ -466,11 +466,11 @@ session_dir_for_path() {
 }
 
 import_sessions_default=1
-if [ "${PI_ENV_BWRAP_EPHEMERAL_HOME:-0}" = "1" ]; then
+if [ "${PI_EN_BWRAP_EPHEMERAL_HOME:-0}" = "1" ]; then
   import_sessions_default=0
 fi
 
-if [ "${PI_ENV_BWRAP_IMPORT_SESSIONS:-$import_sessions_default}" = "1" ] && [ -n "$host_agent_dir" ]; then
+if [ "${PI_EN_BWRAP_IMPORT_SESSIONS:-$import_sessions_default}" = "1" ] && [ -n "$host_agent_dir" ]; then
   host_session_dir_name="$(session_dir_for_path "$host_cwd")"
   sandbox_session_dir_name="$(session_dir_for_path "$inside_cwd")"
   host_project_session_dir="$host_agent_dir/sessions/$host_session_dir_name"
@@ -483,7 +483,7 @@ if [ "${PI_ENV_BWRAP_IMPORT_SESSIONS:-$import_sessions_default}" = "1" ] && [ -n
     fi
     session_bind_args=(--bind "$host_project_session_dir" "/home/pi/.pi/agent/sessions/$sandbox_session_dir_name")
   else
-    echo "pi-env-bwrap: warning: could not prepare host project session dir: $host_project_session_dir" >&2
+    echo "pi-en-bwrap: warning: could not prepare host project session dir: $host_project_session_dir" >&2
   fi
 fi
 
@@ -491,8 +491,8 @@ coord_remote_bind_args=()
 sandbox_coord_remote=""
 coord_remote=""
 coord_remote_source=""
-if [ -n "${PI_ENV_COORD_REMOTE:-}" ]; then
-  coord_remote="$PI_ENV_COORD_REMOTE"
+if [ -n "${PI_EN_COORD_REMOTE:-}" ]; then
+  coord_remote="$PI_EN_COORD_REMOTE"
   coord_remote_source="env"
 else
   coord_remote="$(pi_bwrap_coord_config_value coordination_remote 2>/dev/null || true)"
@@ -528,22 +528,22 @@ if [ -n "$coord_remote" ]; then
           host_coord_remote_base="$(basename "$host_coord_remote")"
           if [ "$coord_remote_source" = "config" ]; then
             if [ -d "$host_coord_remote/objects" ] && [ -d "$host_coord_remote_parent" ] && [ "$host_coord_remote_parent" != "/" ]; then
-              coord_remote_mount_point="/workspace/.pi-env/agent-remotes"
+              coord_remote_mount_point="/workspace/.pi-en/agent-remotes"
               sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
-              coord_remote_bind_args=(--dir /workspace/.pi-env --dir "$coord_remote_mount_point" --bind "$host_coord_remote_parent" "$coord_remote_mount_point")
-              echo "pi-env-bwrap: coordination remote parent from project config available at $coord_remote_mount_point" >&2
+              coord_remote_bind_args=(--dir /workspace/.pi-en --dir "$coord_remote_mount_point" --bind "$host_coord_remote_parent" "$coord_remote_mount_point")
+              echo "pi-en-bwrap: coordination remote parent from project config available at $coord_remote_mount_point" >&2
             else
               sandbox_coord_remote="$coord_remote"
-              echo "pi-env-bwrap: warning: external coordination_remote from project config is not an existing bare Git repo and will not be mounted: $coord_remote" >&2
+              echo "pi-en-bwrap: warning: external coordination_remote from project config is not an existing bare Git repo and will not be mounted: $coord_remote" >&2
             fi
           elif [ -d "$host_coord_remote_parent" ] && [ "$host_coord_remote_parent" != "/" ]; then
             coord_remote_mount_point="/agent-remotes"
             sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
             coord_remote_bind_args=(--dir "$coord_remote_mount_point" --bind "$host_coord_remote_parent" "$coord_remote_mount_point")
-            echo "pi-env-bwrap: coordination remote parent available at $coord_remote_mount_point" >&2
+            echo "pi-en-bwrap: coordination remote parent available at $coord_remote_mount_point" >&2
           else
             sandbox_coord_remote="$coord_remote"
-            echo "pi-env-bwrap: warning: local PI_ENV_COORD_REMOTE outside project cannot be mounted: $coord_remote" >&2
+            echo "pi-en-bwrap: warning: local PI_EN_COORD_REMOTE outside project cannot be mounted: $coord_remote" >&2
           fi
         fi
         ;;
@@ -561,21 +561,21 @@ sandbox_coord_dir=""
 host_coord_dir=""
 coord_dir_explicit=0
 
-if [ -n "${PI_ENV_BWRAP_COORDINATION_DIR:-}" ]; then
-  host_coord_dir="$(realpath -m "$PI_ENV_BWRAP_COORDINATION_DIR")"
+if [ -n "${PI_EN_BWRAP_COORDINATION_DIR:-}" ]; then
+  host_coord_dir="$(realpath -m "$PI_EN_BWRAP_COORDINATION_DIR")"
   coord_dir_explicit=1
-elif [ -n "${PI_ENV_COORD_DIR:-}" ]; then
+elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
   coord_dir_explicit=1
-  case "$PI_ENV_COORD_DIR" in
+  case "$PI_EN_COORD_DIR" in
     /*)
-      host_coord_dir="$(realpath -m "$PI_ENV_COORD_DIR")"
+      host_coord_dir="$(realpath -m "$PI_EN_COORD_DIR")"
       ;;
     *)
-      host_coord_dir="$(realpath -m "$project_root/$PI_ENV_COORD_DIR")"
+      host_coord_dir="$(realpath -m "$project_root/$PI_EN_COORD_DIR")"
       ;;
   esac
-elif [ -d "$project_root/.pi-env/coordination" ]; then
-  host_coord_dir="$(realpath -m "$project_root/.pi-env/coordination")"
+elif [ -d "$project_root/.pi-en/coordination" ]; then
+  host_coord_dir="$(realpath -m "$project_root/.pi-en/coordination")"
 fi
 
 if [ -n "$host_coord_dir" ]; then
@@ -594,11 +594,11 @@ if [ -n "$host_coord_dir" ]; then
     esac
 
     if [ -d "$host_coord_dir/.git" ] || [ -f "$host_coord_dir/AGENTS.md" ]; then
-      echo "pi-env-bwrap: coordination repo available at $sandbox_coord_dir" >&2
-      echo "pi-env-bwrap: pull/rebase before changing shared state" >&2
+      echo "pi-en-bwrap: coordination repo available at $sandbox_coord_dir" >&2
+      echo "pi-en-bwrap: pull/rebase before changing shared state" >&2
     fi
   elif [ "$coord_dir_explicit" = "1" ]; then
-    echo "pi-env-bwrap: warning: coordination dir not found: $host_coord_dir" >&2
+    echo "pi-en-bwrap: warning: coordination dir not found: $host_coord_dir" >&2
   fi
 fi
 
@@ -633,8 +633,8 @@ if [ "$shell_mode" = "1" ]; then
     fi
   fi
   if [ "$shell_interactive" = "1" ] && { [ ! -t 0 ] || [ ! -t 1 ]; }; then
-    echo "pi-env-bwrap: interactive shell mode requires both stdin and stdout to be TTYs." >&2
-    echo "pi-env-bwrap: run from a terminal/PTY, or pass explicit non-interactive Bash arguments such as: -- -lc 'pwd'." >&2
+    echo "pi-en-bwrap: interactive shell mode requires both stdin and stdout to be TTYs." >&2
+    echo "pi-en-bwrap: run from a terminal/PTY, or pass explicit non-interactive Bash arguments such as: -- -lc 'pwd'." >&2
     exit 2
   fi
 elif [ "$#" -eq 0 ]; then
@@ -664,9 +664,9 @@ sandbox_path_for_host_resource() {
     return 0
   fi
   role_manager_bind_count=$((role_manager_bind_count + 1))
-  rewritten_package_path="/pi-env-resources/role-manager-$role_manager_bind_count"
+  rewritten_package_path="/pi-en-resources/role-manager-$role_manager_bind_count"
   if [ "$role_manager_resource_dir_added" = "0" ]; then
-    role_manager_bind_args+=(--dir /pi-env-resources)
+    role_manager_bind_args+=(--dir /pi-en-resources)
     role_manager_resource_dir_added=1
   fi
   role_manager_bind_args+=(--ro-bind "$host_path" "$rewritten_package_path")
@@ -735,8 +735,8 @@ copy_env FORCE_COLOR
 if [ "$shell_mode" = "1" ]; then
   if inherited_ps1="$(printenv PS1 2>/dev/null)" && [ -n "$inherited_ps1" ]; then
     set_env PS1 "$inherited_ps1"
-  elif [ -n "${PI_ENV_DEV_SHELL_PS1:-}" ]; then
-    set_env PS1 "$PI_ENV_DEV_SHELL_PS1"
+  elif [ -n "${PI_EN_DEV_SHELL_PS1:-}" ]; then
+    set_env PS1 "$PI_EN_DEV_SHELL_PS1"
   fi
   bwrap_dev_prompt_command='case "$-" in *i*) case "${PS1-}" in *"(bwrap-dev)"*) ;; *) PS1="(bwrap-dev) ${PS1-}" ;; esac ;; esac'
   if inherited_prompt_command="$(printenv PROMPT_COMMAND 2>/dev/null)" && [ -n "$inherited_prompt_command" ]; then
@@ -759,8 +759,8 @@ do
   copy_env "$name"
 done
 
-if [ -n "${PI_ENV_BWRAP_PASS_ENV:-}" ]; then
-  for name in $(printf '%s' "${PI_ENV_BWRAP_PASS_ENV}" | tr ',:' '  '); do
+if [ -n "${PI_EN_BWRAP_PASS_ENV:-}" ]; then
+  for name in $(printf '%s' "${PI_EN_BWRAP_PASS_ENV}" | tr ',:' '  '); do
     copy_env "$name"
   done
 fi
@@ -785,21 +785,21 @@ append_validated_host_extra_path() {
   fi
 }
 
-if [ -n "${PI_ENV_BWRAP_EXTRA_PATH:-}" ]; then
+if [ -n "${PI_EN_BWRAP_EXTRA_PATH:-}" ]; then
   old_ifs="$IFS"
   IFS=:
-  for extra_path_entry in $PI_ENV_BWRAP_EXTRA_PATH; do
+  for extra_path_entry in $PI_EN_BWRAP_EXTRA_PATH; do
     IFS="$old_ifs"
     [ -n "$extra_path_entry" ] || { IFS=:; continue; }
     case "$extra_path_entry" in
       /*) ;;
       *)
-        echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_EXTRA_PATH entry is not absolute: $extra_path_entry" >&2
+        echo "pi-en-bwrap: unsafe PI_EN_BWRAP_EXTRA_PATH entry is not absolute: $extra_path_entry" >&2
         exit 2
         ;;
     esac
     if [ ! -d "$extra_path_entry" ]; then
-      echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_EXTRA_PATH entry is not an existing directory: $extra_path_entry" >&2
+      echo "pi-en-bwrap: unsafe PI_EN_BWRAP_EXTRA_PATH entry is not an existing directory: $extra_path_entry" >&2
       exit 2
     fi
     canonical_extra_path="$(realpath "$extra_path_entry")"
@@ -808,7 +808,7 @@ if [ -n "${PI_ENV_BWRAP_EXTRA_PATH:-}" ]; then
         append_validated_extra_path "$canonical_extra_path"
         ;;
       *)
-        echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_EXTRA_PATH entry outside /nix/store: $extra_path_entry -> $canonical_extra_path" >&2
+        echo "pi-en-bwrap: unsafe PI_EN_BWRAP_EXTRA_PATH entry outside /nix/store: $extra_path_entry -> $canonical_extra_path" >&2
         exit 2
         ;;
     esac
@@ -817,25 +817,25 @@ if [ -n "${PI_ENV_BWRAP_EXTRA_PATH:-}" ]; then
   IFS="$old_ifs"
 fi
 
-if [ -n "${PI_ENV_BWRAP_HOST_EXTRA_PATH:-}" ]; then
+if [ -n "${PI_EN_BWRAP_HOST_EXTRA_PATH:-}" ]; then
   if [ "$host_runtime" != "1" ]; then
-    echo "pi-env-bwrap: PI_ENV_BWRAP_HOST_EXTRA_PATH is only supported in host runtime mode." >&2
+    echo "pi-en-bwrap: PI_EN_BWRAP_HOST_EXTRA_PATH is only supported in host runtime mode." >&2
     exit 2
   fi
   old_ifs="$IFS"
   IFS=:
-  for host_extra_path_entry in $PI_ENV_BWRAP_HOST_EXTRA_PATH; do
+  for host_extra_path_entry in $PI_EN_BWRAP_HOST_EXTRA_PATH; do
     IFS="$old_ifs"
     [ -n "$host_extra_path_entry" ] || { IFS=:; continue; }
     case "$host_extra_path_entry" in
       /*) ;;
       *)
-        echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_EXTRA_PATH entry is not absolute: $host_extra_path_entry" >&2
+        echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_EXTRA_PATH entry is not absolute: $host_extra_path_entry" >&2
         exit 2
         ;;
     esac
     if [ ! -d "$host_extra_path_entry" ]; then
-      echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_EXTRA_PATH entry is not an existing directory: $host_extra_path_entry" >&2
+      echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_EXTRA_PATH entry is not an existing directory: $host_extra_path_entry" >&2
       exit 2
     fi
     canonical_host_extra_path="$(realpath -e "$host_extra_path_entry")"
@@ -843,7 +843,7 @@ if [ -n "${PI_ENV_BWRAP_HOST_EXTRA_PATH:-}" ]; then
       canonical_host_home="$(realpath -m "$host_home")"
       case "$canonical_host_extra_path" in
         "$canonical_host_home"|"$canonical_host_home"/*)
-          echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_EXTRA_PATH entry under host HOME is not mounted by default: $host_extra_path_entry -> $canonical_host_extra_path" >&2
+          echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_EXTRA_PATH entry under host HOME is not mounted by default: $host_extra_path_entry -> $canonical_host_extra_path" >&2
           exit 2
           ;;
       esac
@@ -855,31 +855,31 @@ if [ -n "${PI_ENV_BWRAP_HOST_EXTRA_PATH:-}" ]; then
   IFS="$old_ifs"
 fi
 
-if [ -n "${PI_ENV_BWRAP_HOST_RO_PATHS:-}" ]; then
+if [ -n "${PI_EN_BWRAP_HOST_RO_PATHS:-}" ]; then
   if [ "$host_runtime" != "1" ]; then
-    echo "pi-env-bwrap: PI_ENV_BWRAP_HOST_RO_PATHS is only supported in host runtime mode." >&2
+    echo "pi-en-bwrap: PI_EN_BWRAP_HOST_RO_PATHS is only supported in host runtime mode." >&2
     exit 2
   fi
   old_ifs="$IFS"
   IFS=:
-  for host_ro_path_entry in $PI_ENV_BWRAP_HOST_RO_PATHS; do
+  for host_ro_path_entry in $PI_EN_BWRAP_HOST_RO_PATHS; do
     IFS="$old_ifs"
     [ -n "$host_ro_path_entry" ] || { IFS=:; continue; }
     case "$host_ro_path_entry" in
       /*) ;;
       *)
-        echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_RO_PATHS entry is not absolute: $host_ro_path_entry" >&2
+        echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_RO_PATHS entry is not absolute: $host_ro_path_entry" >&2
         exit 2
         ;;
     esac
     if [ ! -e "$host_ro_path_entry" ]; then
-      echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_RO_PATHS entry does not exist: $host_ro_path_entry" >&2
+      echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_RO_PATHS entry does not exist: $host_ro_path_entry" >&2
       exit 2
     fi
     canonical_host_ro_path="$(realpath -e "$host_ro_path_entry")"
     case "$canonical_host_ro_path" in
       /|/home|/tmp|/var|/usr|/usr/local)
-        echo "pi-env-bwrap: unsafe PI_ENV_BWRAP_HOST_RO_PATHS entry is too broad: $host_ro_path_entry -> $canonical_host_ro_path" >&2
+        echo "pi-en-bwrap: unsafe PI_EN_BWRAP_HOST_RO_PATHS entry is too broad: $host_ro_path_entry -> $canonical_host_ro_path" >&2
         exit 2
         ;;
     esac
@@ -889,7 +889,7 @@ if [ -n "${PI_ENV_BWRAP_HOST_RO_PATHS:-}" ]; then
   IFS="$old_ifs"
 fi
 
-sandbox_path="${PI_ENV_RUNTIME_PATH:-}"
+sandbox_path="${PI_EN_RUNTIME_PATH:-}"
 sandbox_path="$(append_path_entry "$validated_extra_path" "$sandbox_path")"
 if [ "$host_runtime" = "1" ]; then
   sandbox_path="$(append_path_entry "$validated_host_extra_path" "$sandbox_path")"
@@ -899,19 +899,19 @@ sandbox_path="$(append_path_entry /usr/bin "$sandbox_path")"
 sandbox_path="$(append_path_entry /bin "$sandbox_path")"
 
 if [ -n "$sandbox_coord_remote" ]; then
-  set_env PI_ENV_COORD_REMOTE "$sandbox_coord_remote"
+  set_env PI_EN_COORD_REMOTE "$sandbox_coord_remote"
 else
-  copy_env PI_ENV_COORD_REMOTE
+  copy_env PI_EN_COORD_REMOTE
 fi
-copy_env PI_ENV_COORD_PROJECT
-copy_env PI_ENV_COORD_AGENT_ID
-copy_env PI_ENV_COORD_PROJECT_KEY
-copy_env PI_ENV_COORD_ROLE
-copy_env PI_ENV_NIX_SANDBOX_COMMAND_PATH
+copy_env PI_EN_COORD_PROJECT
+copy_env PI_EN_COORD_AGENT_ID
+copy_env PI_EN_COORD_PROJECT_KEY
+copy_env PI_EN_COORD_ROLE
+copy_env PI_EN_NIX_SANDBOX_COMMAND_PATH
 if [ -n "$sandbox_coord_dir" ]; then
-  set_env PI_ENV_COORD_DIR "$sandbox_coord_dir"
+  set_env PI_EN_COORD_DIR "$sandbox_coord_dir"
 else
-  copy_env PI_ENV_COORD_DIR
+  copy_env PI_EN_COORD_DIR
 fi
 
 sandbox_bash="$pi_bwrap_bash"
@@ -922,9 +922,9 @@ runtime_shell_args=(
   --symlink "$sandbox_bash" /bin/sh
   --symlink "$sandbox_env" /usr/bin/env
 )
-if [ -z "${PI_ENV_RUNTIME_PATH:-}" ]; then
-  sandbox_bash=/pi-env-tools/bash
-  sandbox_env=/pi-env-tools/env
+if [ -z "${PI_EN_RUNTIME_PATH:-}" ]; then
+  sandbox_bash=/pi-en-tools/bash
+  sandbox_env=/pi-en-tools/env
   runtime_bind_args=(
     --ro-bind-try /lib /lib
     --ro-bind-try /lib64 /lib64
@@ -932,7 +932,7 @@ if [ -z "${PI_ENV_RUNTIME_PATH:-}" ]; then
     --ro-bind-try /usr/lib64 /usr/lib64
     --ro-bind-try /bin /bin
     --ro-bind-try /usr/bin /usr/bin
-    --dir /pi-env-tools
+    --dir /pi-en-tools
     --ro-bind-try "$pi_bwrap_bash" "$sandbox_bash"
     --ro-bind-try "$pi_bwrap_env" "$sandbox_env"
   )
@@ -1003,18 +1003,18 @@ bwrap_args+=(
   --setenv PWD "$inside_cwd"
   --setenv PI_CODING_AGENT_DIR /home/pi/.pi/agent
   --setenv PI_CODING_AGENT_SESSION_DIR /home/pi/.pi/agent/sessions
-  --setenv PI_ENV_INSIDE_SANDBOX 1
+  --setenv PI_EN_INSIDE_SANDBOX 1
   --setenv XDG_CACHE_HOME /home/pi/.cache
   --setenv TMPDIR /tmp
   --setenv PATH "$sandbox_path"
-  --setenv SSL_CERT_FILE "${PI_ENV_BWRAP_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
-  --setenv NIX_SSL_CERT_FILE "${PI_ENV_BWRAP_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
+  --setenv SSL_CERT_FILE "${PI_EN_BWRAP_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
+  --setenv NIX_SSL_CERT_FILE "${PI_EN_BWRAP_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
   --setenv GIT_CONFIG_NOSYSTEM 1
   --setenv PI_SKIP_VERSION_CHECK "${PI_SKIP_VERSION_CHECK:-1}"
   --setenv PI_TELEMETRY "${PI_TELEMETRY:-0}"
 )
 
-if [ "${PI_ENV_BWRAP_NET:-1}" = "1" ]; then
+if [ "${PI_EN_BWRAP_NET:-1}" = "1" ]; then
   bwrap_args+=(--share-net)
 fi
 

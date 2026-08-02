@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${PI_ENV_COORD_LIB:-}" ]; then
+if [ -n "${PI_EN_COORD_LIB:-}" ]; then
   # shellcheck source=/dev/null
-  . "$PI_ENV_COORD_LIB"
+  . "$PI_EN_COORD_LIB"
 else
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-  # shellcheck source=pi-env-coord-lib.sh
-  . "$script_dir/pi-env-coord-lib.sh"
+  # shellcheck source=pi-en-coord-lib.sh
+  . "$script_dir/pi-en-coord-lib.sh"
 fi
 
 usage() {
   cat <<'USAGE'
-pi-env-coord-repo - manage coordination repo registry records
+pi-en-coord-repo - manage coordination repo registry records
 
 Usage:
-  pi-env-coord-repo [--coord-dir DIR] add REPO_ID [--remote URL ...]
-  pi-env-coord-repo [--coord-dir DIR] rename OLD_ID NEW_ID
-  pi-env-coord-repo [--coord-dir DIR] retire REPO_ID [--force]
-  pi-env-coord-repo [--coord-dir DIR] migrate-root-issues REPO_ID [--remote URL ...]
-  pi-env-coord-repo [--coord-dir DIR] list [--all|--active|--retired]
-  pi-env-coord-repo [--coord-dir DIR] show REPO_ID
+  pi-en-coord-repo [--coord-dir DIR] add REPO_ID [--remote URL ...]
+  pi-en-coord-repo [--coord-dir DIR] rename OLD_ID NEW_ID
+  pi-en-coord-repo [--coord-dir DIR] retire REPO_ID [--force]
+  pi-en-coord-repo [--coord-dir DIR] migrate-root-issues REPO_ID [--remote URL ...]
+  pi-en-coord-repo [--coord-dir DIR] list [--all|--active|--retired]
+  pi-en-coord-repo [--coord-dir DIR] show REPO_ID
 
 Repo ids are lowercase path components: letters, digits, dots, underscores,
 and hyphens, starting with a letter and ending with a letter or digit.

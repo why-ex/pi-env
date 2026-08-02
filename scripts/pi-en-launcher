@@ -3,19 +3,19 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-pi-env - run Pi through the pi-env launcher
+pi-en - run Pi through the pi-en launcher
 
 Usage:
-  pi-env [--runtime host|nix|auto] [--flake REF] [--devshell NAME] [pi args...]
-  pi-env [--runtime host|nix|auto] [--flake REF] [--devshell NAME] --raw -- [pi args...]
-  pi-env-shell [--runtime host|nix|auto] [--flake REF] [--devshell NAME] [shell args...]
-  pi-env --help
-  pi-env-shell --help
+  pi-en [--runtime host|nix|auto] [--flake REF] [--devshell NAME] [pi args...]
+  pi-en [--runtime host|nix|auto] [--flake REF] [--devshell NAME] --raw -- [pi args...]
+  pi-en-shell [--runtime host|nix|auto] [--flake REF] [--devshell NAME] [shell args...]
+  pi-en --help
+  pi-en-shell --help
 
-Default pi-env mode starts Pi through pi-env-bwrap with the standard tools,
+Default pi-en mode starts Pi through pi-en-bwrap with the standard tools,
 --continue, and role-manager auto-loading policy.
-Raw pi-env mode delegates to pi-env-bwrap for fully custom Pi arguments.
-pi-env-shell selects the same runtime as pi-env, then asks pi-env-bwrap to enter
+Raw pi-en mode delegates to pi-en-bwrap for fully custom Pi arguments.
+pi-en-shell selects the same runtime as pi-en, then asks pi-en-bwrap to enter
 sandbox shell mode instead of starting Pi. With no Bash arguments it starts an
 interactive login shell and requires both stdin and stdout to be TTYs. In non-TTY
 contexts, pass explicit non-interactive Bash arguments such as -- -lc 'pwd'.
@@ -24,12 +24,12 @@ Runtime modes:
   host  Use host-installed tools inside the Bubblewrap sandbox. This is the
         default for direct checkout launches and is not Nix-pinned.
   nix   Use the reproducible Nix-backed runtime, entering nix develop when
-        the launcher is not already wired to Nix-provided pi-env commands.
-  auto  Use available pi-env commands first, then fall back to nix develop.
+        the launcher is not already wired to Nix-provided pi-en commands.
+  auto  Use available pi-en commands first, then fall back to nix develop.
 
-Select a mode with --runtime or PI_ENV_RUNTIME; the CLI option wins.
-For Nix runtime, pi-env prefers devShells.<system>.agent when the selected
-flake exposes it. Use --devshell NAME or PI_ENV_NIX_DEVSHELL=NAME to force a
+Select a mode with --runtime or PI_EN_RUNTIME; the CLI option wins.
+For Nix runtime, pi-en prefers devShells.<system>.agent when the selected
+flake exposes it. Use --devshell NAME or PI_EN_NIX_DEVSHELL=NAME to force a
 shell; --devshell wins over the environment. NAME=default preserves the
 compatible nix develop <flake> startup even when .#agent exists. Explicit or
 auto-discovered non-default shells report Nix evaluation/build errors instead
@@ -40,25 +40,25 @@ USAGE
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 command_name="${0##*/}"
 shell_mode=0
-if [ "$command_name" = "pi-env-shell" ] || [ "${PI_ENV_SHELL_MODE:-0}" = "1" ]; then
+if [ "$command_name" = "pi-en-shell" ] || [ "${PI_EN_SHELL_MODE:-0}" = "1" ]; then
   shell_mode=1
 fi
 checkout_root="$(cd "$script_dir/.." && pwd -P)"
-flake_ref="${PI_ENV_FLAKE:-$checkout_root}"
+flake_ref="${PI_EN_FLAKE:-$checkout_root}"
 flake_selector_set=0
-if [ "${PI_ENV_FLAKE+x}" = "x" ]; then
+if [ "${PI_EN_FLAKE+x}" = "x" ]; then
   flake_selector_set=1
 fi
 runtime_mode=""
 runtime_selector_set=0
 runtime_cli_set=0
-if [ "${PI_ENV_RUNTIME+x}" = "x" ]; then
-  runtime_mode="$PI_ENV_RUNTIME"
+if [ "${PI_EN_RUNTIME+x}" = "x" ]; then
+  runtime_mode="$PI_EN_RUNTIME"
   runtime_selector_set=1
 fi
-devshell_name="${PI_ENV_NIX_DEVSHELL:-}"
+devshell_name="${PI_EN_NIX_DEVSHELL:-}"
 devshell_selector_set=0
-if [ "${PI_ENV_NIX_DEVSHELL+x}" = "x" ]; then
+if [ "${PI_EN_NIX_DEVSHELL+x}" = "x" ]; then
   devshell_selector_set=1
 fi
 raw=0
@@ -81,7 +81,7 @@ while [ "$#" -gt 0 ]; do
     --flake)
       shift
       if [ "$#" -eq 0 ]; then
-        echo "pi-env: --flake requires an argument" >&2
+        echo "pi-en: --flake requires an argument" >&2
         exit 2
       fi
       flake_ref="$1"
@@ -96,7 +96,7 @@ while [ "$#" -gt 0 ]; do
     --runtime)
       shift
       if [ "$#" -eq 0 ]; then
-        echo "pi-env: --runtime requires an argument" >&2
+        echo "pi-en: --runtime requires an argument" >&2
         exit 2
       fi
       runtime_mode="$1"
@@ -113,7 +113,7 @@ while [ "$#" -gt 0 ]; do
     --devshell)
       shift
       if [ "$#" -eq 0 ]; then
-        echo "pi-env: --devshell requires an argument" >&2
+        echo "pi-en: --devshell requires an argument" >&2
         exit 2
       fi
       devshell_name="$1"
@@ -138,9 +138,9 @@ done
 args+=("$@")
 
 if [ "$runtime_selector_set" = "0" ]; then
-  if [ "${PI_ENV_HOST_RUNTIME:-0}" = "1" ]; then
+  if [ "${PI_EN_HOST_RUNTIME:-0}" = "1" ]; then
     runtime_mode="host"
-  elif [ -n "${PI_ENV_PI_ENV_BWRAP:-}" ]; then
+  elif [ -n "${PI_EN_PI_EN_BWRAP:-}" ]; then
     runtime_mode="auto"
   else
     runtime_mode="host"
@@ -151,28 +151,28 @@ case "$runtime_mode" in
   host|nix|auto) ;;
   *)
     if [ "$runtime_cli_set" = "1" ]; then
-      echo "pi-env: invalid --runtime value: $runtime_mode" >&2
+      echo "pi-en: invalid --runtime value: $runtime_mode" >&2
     else
-      echo "pi-env: invalid PI_ENV_RUNTIME value: $runtime_mode" >&2
+      echo "pi-en: invalid PI_EN_RUNTIME value: $runtime_mode" >&2
     fi
-    echo "pi-env: expected one of: host, nix, auto" >&2
+    echo "pi-en: expected one of: host, nix, auto" >&2
     exit 2
     ;;
 esac
 
 if [ "$devshell_selector_set" = "1" ] && [ -z "$devshell_name" ]; then
-  echo "pi-env: --devshell / PI_ENV_NIX_DEVSHELL requires a non-empty shell name" >&2
+  echo "pi-en: --devshell / PI_EN_NIX_DEVSHELL requires a non-empty shell name" >&2
   exit 2
 fi
 
 default_startup_args() {
-  local tools="${PI_ENV_BWRAP_COMPILED_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
-  if [ -n "${PI_ENV_BWRAP_DEFAULT_TOOLS:-}" ]; then
-    tools="$PI_ENV_BWRAP_DEFAULT_TOOLS"
+  local tools="${PI_EN_BWRAP_COMPILED_DEFAULT_TOOLS:-read,bash,edit,write,grep,find,ls}"
+  if [ -n "${PI_EN_BWRAP_DEFAULT_TOOLS:-}" ]; then
+    tools="$PI_EN_BWRAP_DEFAULT_TOOLS"
   fi
 
-  local role_manager_package="${PI_ENV_ROLE_MANAGER_PACKAGE:-}"
-  if [ "${PI_ENV_ROLE_MANAGER_AUTO:-1}" != "0" ]; then
+  local role_manager_package="${PI_EN_ROLE_MANAGER_PACKAGE:-}"
+  if [ "${PI_EN_ROLE_MANAGER_AUTO:-1}" != "0" ]; then
     if [ -z "$role_manager_package" ]; then
       local checkout_role_manager="$checkout_root/role-manager"
       if [ -e "$checkout_role_manager" ]; then
@@ -197,10 +197,10 @@ exec_pi_bwrap_default() {
 }
 
 exec_host_runtime() {
-  local host_pi_bwrap="$script_dir/pi-env-bwrap"
-  export PI_ENV_HOST_RUNTIME=1
-  unset PI_ENV_RUNTIME_PATH
-  export PI_ENV_PI_ENV_BWRAP="$host_pi_bwrap"
+  local host_pi_bwrap="$script_dir/pi-en-bwrap"
+  export PI_EN_HOST_RUNTIME=1
+  unset PI_EN_RUNTIME_PATH
+  export PI_EN_PI_EN_BWRAP="$host_pi_bwrap"
   if [ "$shell_mode" = "1" ]; then
     exec "$host_pi_bwrap" --shell -- "${args[@]}"
   elif [ "$raw" = "1" ]; then
@@ -236,9 +236,9 @@ select_default_nix_flake() {
   local project_root
   project_root="$(resolve_project_root)"
   if [ ! -f "$project_root/flake.nix" ]; then
-    echo "pi-env: runtime mode 'nix' requires a target project flake." >&2
-    echo "pi-env: expected flake.nix at: $project_root/flake.nix" >&2
-    echo "pi-env: run from a project with flake.nix or pass --flake REF / set PI_ENV_FLAKE explicitly." >&2
+    echo "pi-en: runtime mode 'nix' requires a target project flake." >&2
+    echo "pi-en: expected flake.nix at: $project_root/flake.nix" >&2
+    echo "pi-en: run from a project with flake.nix or pass --flake REF / set PI_EN_FLAKE explicitly." >&2
     exit 2
   fi
   flake_ref="$project_root"
@@ -273,13 +273,13 @@ same_canonical_path() {
 
 is_project_nix_bwrap() {
   local candidate="$1"
-  local project_bwrap="${PI_ENV_NIX_PROJECT_BWRAP:-}"
+  local project_bwrap="${PI_EN_NIX_PROJECT_BWRAP:-}"
   same_canonical_path "$candidate" "$project_bwrap"
 }
 
 is_ignored_nix_bwrap() {
   local candidate="$1"
-  local ignored="${PI_ENV_NIX_IGNORED_BWRAP:-}"
+  local ignored="${PI_EN_NIX_IGNORED_BWRAP:-}"
   if [ -z "$candidate" ] || [ -z "$ignored" ]; then
     return 1
   fi
@@ -308,12 +308,12 @@ is_ignored_nix_path_bwrap() {
     return 1
   fi
 
-  # A project flake may legitimately provide the same Nix-store pi-env-bwrap
+  # A project flake may legitimately provide the same Nix-store pi-en-bwrap
   # path as the profile-installed command.  The preferred signal is the
-  # PI_ENV_NIX_PROJECT_BWRAP marker exported by pi-env's devshell; keep the
+  # PI_EN_NIX_PROJECT_BWRAP marker exported by pi-en's devshell; keep the
   # PATH-count fallback for older test/devshell shims that prepend duplicate
   # entries rather than exporting the marker.
-  local old_path="${PI_ENV_NIX_IGNORED_PATH:-}"
+  local old_path="${PI_EN_NIX_IGNORED_PATH:-}"
   local candidate_dir
   candidate_dir="$(dirname "$candidate")"
   local old_count
@@ -363,20 +363,20 @@ selected_nix_develop_ref() {
 }
 
 exec_nix_runtime() {
-  if [ "${PI_ENV_NIX_RUNTIME_READY:-0}" = "1" ]; then
-    local ready_pi_bwrap="${PI_ENV_PI_ENV_BWRAP:-}"
+  if [ "${PI_EN_NIX_RUNTIME_READY:-0}" = "1" ]; then
+    local ready_pi_bwrap="${PI_EN_PI_EN_BWRAP:-}"
     if is_ignored_nix_bwrap "$ready_pi_bwrap"; then
       ready_pi_bwrap=""
     fi
-    if [ -z "$ready_pi_bwrap" ] && command -v pi-env-bwrap >/dev/null 2>&1; then
-      ready_pi_bwrap="$(command -v pi-env-bwrap)"
+    if [ -z "$ready_pi_bwrap" ] && command -v pi-en-bwrap >/dev/null 2>&1; then
+      ready_pi_bwrap="$(command -v pi-en-bwrap)"
       if is_ignored_nix_path_bwrap "$ready_pi_bwrap"; then
         ready_pi_bwrap=""
       fi
     fi
     if [ -z "$ready_pi_bwrap" ]; then
-      echo "pi-env: runtime mode 'nix' entered nix develop, but project pi-env-bwrap was not found." >&2
-      echo "pi-env: ensure the selected flake provides the pi-env runtime or pass a flake that does." >&2
+      echo "pi-en: runtime mode 'nix' entered nix develop, but project pi-en-bwrap was not found." >&2
+      echo "pi-en: ensure the selected flake provides the pi-en runtime or pass a flake that does." >&2
       exit 127
     fi
     if [ "$shell_mode" = "1" ]; then
@@ -390,14 +390,14 @@ exec_nix_runtime() {
   select_default_nix_flake
 
   if ! command -v nix >/dev/null 2>&1; then
-    echo "pi-env: runtime mode 'nix' requires nix, but nix was not found on PATH." >&2
-    echo "pi-env: install Nix, enter a pi-env devshell, or select --runtime host for unpinned host tools." >&2
+    echo "pi-en: runtime mode 'nix' requires nix, but nix was not found on PATH." >&2
+    echo "pi-en: install Nix, enter a pi-en devshell, or select --runtime host for unpinned host tools." >&2
     exit 127
   fi
 
-  local nix_command=pi-env
+  local nix_command=pi-en
   if [ "$shell_mode" = "1" ]; then
-    nix_command=pi-env-shell
+    nix_command=pi-en-shell
   fi
   local develop_ref
   develop_ref="$(selected_nix_develop_ref)"
@@ -405,17 +405,17 @@ exec_nix_runtime() {
   if [ "$raw" = "1" ]; then
     nix_args+=(--raw --)
   fi
-  PI_ENV_RUNTIME="$runtime_mode" \
-    PI_ENV_NIX_RUNTIME_READY=1 \
-    PI_ENV_NIX_IGNORED_BWRAP="${PI_ENV_PI_ENV_BWRAP:-}" \
-    PI_ENV_NIX_IGNORED_PATH="${PATH:-}" \
-    PI_ENV_NIX_PROJECT_BWRAP= \
+  PI_EN_RUNTIME="$runtime_mode" \
+    PI_EN_NIX_RUNTIME_READY=1 \
+    PI_EN_NIX_IGNORED_BWRAP="${PI_EN_PI_EN_BWRAP:-}" \
+    PI_EN_NIX_IGNORED_PATH="${PATH:-}" \
+    PI_EN_NIX_PROJECT_BWRAP= \
     exec nix "${nix_args[@]}" "${args[@]}"
 }
 
 exec_auto_runtime() {
-  local pi_bwrap="${PI_ENV_PI_ENV_BWRAP:-pi-env-bwrap}"
-  if [ -n "${PI_ENV_PI_ENV_BWRAP:-}" ] || command -v "$pi_bwrap" >/dev/null 2>&1; then
+  local pi_bwrap="${PI_EN_PI_EN_BWRAP:-pi-en-bwrap}"
+  if [ -n "${PI_EN_PI_EN_BWRAP:-}" ] || command -v "$pi_bwrap" >/dev/null 2>&1; then
     if [ "$shell_mode" = "1" ]; then
       exec "$pi_bwrap" --shell -- "${args[@]}"
     elif [ "$raw" = "1" ]; then
