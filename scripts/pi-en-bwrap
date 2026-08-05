@@ -570,7 +570,10 @@ if [ -n "$coord_remote" ]; then
         ;;
     esac
     if [ "$coord_remote_file_scheme" = "1" ]; then
-      sandbox_coord_remote="file://$sandbox_coord_remote"
+      case "$sandbox_coord_remote" in
+        file://*) ;;
+        *) sandbox_coord_remote="file://$sandbox_coord_remote" ;;
+      esac
     fi
   else
     sandbox_coord_remote="$coord_remote"
