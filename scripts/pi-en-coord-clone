@@ -114,6 +114,9 @@ if remote_local_path="$(coord_remote_local_path "$remote" 2>/dev/null)"; then
     /*) remote_git_dir="$(coord_abs "$remote_local_path")" ;;
     *) remote_git_dir="$(coord_abs "$(coord_project_root)/$remote_local_path")" ;;
   esac
+  if [ "$remote_set" = "1" ] && coord_external_local_remote_requires_alias "$remote_git_dir"; then
+    remote_git_dir="$(coord_ensure_external_local_coordination_remote_alias "$remote_git_dir")"
+  fi
   remote="$remote_git_dir"
   remote_is_default_local=1
 fi

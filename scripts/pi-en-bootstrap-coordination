@@ -434,15 +434,16 @@ bootstrap_register_or_report_repo() {
 }
 
 bootstrap_origin_points_to_remote() {
-  local coord_dir origin_url remote_path origin_path
+  local coord_dir origin_url remote_path remote_path_abs origin_path
   coord_dir="$1"
   origin_url="$2"
   remote_path="$3"
-  if [ "$origin_url" = "$remote_path" ]; then
+  remote_path_abs="$(coord_abs "$remote_path")"
+  if [ "$origin_url" = "$remote_path" ] || [ "$origin_url" = "$remote_path_abs" ]; then
     return 0
   fi
   origin_path="$(bootstrap_normalized_local_remote_path "$coord_dir" "$origin_url" 2>/dev/null || true)"
-  [ -n "$origin_path" ] && [ "$origin_path" = "$remote_path" ]
+  [ -n "$origin_path" ] && [ "$origin_path" = "$remote_path_abs" ]
 }
 
 bootstrap_clone_has_uncommitted_changes() {
@@ -727,10 +728,15 @@ domain_generated_files_display="$(printf '%s ' "${domain_generated_files[@]}" | 
 inspect_dir="$(pwd -P)"
 root_abs="$(coord_abs "$root")"
 coord_dir_abs="$(coord_require_project_local_coord_dir "$coord_dir" "$(coord_project_root)" "coordination working clone dir")"
+default_remote="$(coord_remote_for "$root_abs" "$project")"
 if [ -n "$remote_url" ]; then
   remote="$remote_url"
 else
-  remote="$(coord_remote_for "$root_abs" "$project")"
+  remote="$default_remote"
+fi
+explicit_coordination_remote=0
+if [ -n "$remote_url" ] && [ "$remote_url" != "$default_remote" ]; then
+  explicit_coordination_remote=1
 fi
 config_remote="$(bootstrap_config_remote_value "$inspect_dir" "$remote")"
 remote_local_path=""
@@ -745,6 +751,12 @@ bootstrap_print_plan
 
 if [ "$print_only" = "1" ]; then
   exit 0
+fi
+
+if [ "$explicit_coordination_remote" = "1" ] \
+  && [ -n "$remote_local_path" ] \
+  && coord_external_local_remote_requires_alias "$remote_local_path"; then
+  remote_local_path="$(coord_ensure_external_local_coordination_remote_alias "$remote_local_path")"
 fi
 
 if [ "$bare_only" != "1" ]; then
@@ -770,12 +782,16 @@ if [ "$bare_only" != "1" ] \
 fi
 
 init_args=(
-  --remote "$remote"
   --project "$project"
   --project-key "$project_item_key"
   --dir "$coord_dir_abs"
   --agent-id "$agent_id"
 )
+if [ "$explicit_coordination_remote" = "1" ]; then
+  init_args+=(--remote "$remote")
+else
+  init_args+=(--root "$root_abs")
+fi
 if [ -n "$implementation_repo_id" ]; then
   init_args+=(--repo-id "$implementation_repo_id")
 fi

@@ -859,10 +859,74 @@ coord_remote_for() {
   printf '%s/%s-coordination.git\n' "$root" "$workspace"
 }
 
+coord_external_local_remote_requires_alias() {
+  local remote_path project_root default_remote_dir
+  remote_path="$(coord_abs "$1")"
+  project_root="$(coord_project_root)"
+  default_remote_dir="$(coord_abs "$project_root/.pi-en/agent-remotes")"
+  case "$remote_path" in
+    "$default_remote_dir"|"$default_remote_dir"/*) return 1 ;;
+  esac
+  return 0
+}
+
+coord_external_local_remote_alias_name() {
+  local remote_path base stem safe
+  remote_path="$1"
+  base="$(basename "$remote_path")"
+  stem="${base%.git}"
+  safe="$(coord_sanitize_path_part "$stem")"
+  [ -n "$safe" ] || safe="coordination-remote"
+  printf '%s.git\n' "$safe"
+}
+
+coord_bare_git_dir_is_valid() {
+  local git_dir is_bare
+  git_dir="$1"
+  [ -d "$git_dir" ] || return 1
+  is_bare="$(git --git-dir="$git_dir" rev-parse --is-bare-repository 2>/dev/null || true)"
+  [ "$is_bare" = "true" ]
+}
+
+coord_ensure_external_local_coordination_remote_alias() {
+  local remote_path project_root alias_dir alias_name alias_path link_target link_abs
+  remote_path="$(coord_abs "$1")"
+  if ! coord_external_local_remote_requires_alias "$remote_path"; then
+    printf '%s\n' "$remote_path"
+    return
+  fi
+  coord_bare_git_dir_is_valid "$remote_path" \
+    || coord_die "external coordination remote must be an existing bare Git repo: $remote_path"
+
+  project_root="$(coord_project_root)"
+  alias_dir="$(coord_abs "$project_root/.pi-en/agent-remotes")"
+  alias_name="$(coord_external_local_remote_alias_name "$remote_path")"
+  alias_path="$alias_dir/$alias_name"
+  coord_ensure_operational_root_excluded "$alias_dir"
+  mkdir -p "$alias_dir"
+
+  if [ -L "$alias_path" ]; then
+    link_target="$(readlink "$alias_path")"
+    case "$link_target" in
+      /*) link_abs="$(coord_abs "$link_target")" ;;
+      *) link_abs="$(coord_abs "$(dirname "$alias_path")/$link_target")" ;;
+    esac
+    [ "$link_abs" = "$remote_path" ] \
+      || coord_die "coordination remote alias collision: $alias_path points to $link_abs, not $remote_path"
+    ln -sfn "$remote_path" "$alias_path"
+  elif [ -e "$alias_path" ]; then
+    coord_die "coordination remote alias collision: $alias_path already exists and is not an alias for $remote_path"
+  else
+    ln -s "$remote_path" "$alias_path"
+  fi
+
+  printf '%s\n' "$alias_path"
+}
+
 coord_local_remote_url_for_clone() {
   local coord_dir remote_path rel project_root default_coord_dir default_remote_dir remote_base
   coord_dir="$(coord_abs "$1")"
-  remote_path="$(coord_abs "$2")"
+  remote_path="$(coord_abs_lexical "$2")"
   project_root="$(coord_project_root)"
   default_coord_dir="$(coord_abs "$project_root/.pi-en/coordination")"
   default_remote_dir="$(coord_abs "$project_root/.pi-en/agent-remotes")"

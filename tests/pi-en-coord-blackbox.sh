@@ -73,6 +73,85 @@ test ! -e "$fresh_default_project/.pi-en/coordination/REPOS.md"
 test ! -e "$fresh_default_project/.pi-en/coordination/issues"
 grep -Fxq '/.pi-en/' "$fresh_default_project/.git/info/exclude"
 
+external_remote="$tmp/external/remotes/Domain-Unsafe.git"
+mkdir -p "$(dirname "$external_remote")"
+git init --bare -q "$external_remote"
+external_project="$tmp/external-project"
+mkdir -p "$external_project"
+git -C "$external_project" init -q
+cd "$external_project"
+pi-en-bootstrap-coordination \
+  --remote "$external_remote" \
+  --project external-demo \
+  --repo-id external-demo \
+  --agent-id agent-x \
+  --no-status >/dev/null
+external_alias="$external_project/.pi-en/agent-remotes/domain-unsafe.git"
+test -L "$external_alias"
+test "$(realpath -m "$external_alias")" = "$(realpath -m "$external_remote")"
+grep -Fxq "coordination_remote: $external_remote" \
+  "$external_project/.pi-en-coordination.yaml"
+test "$(git -C "$external_project/.pi-en/coordination" remote get-url origin)" = \
+  "../agent-remotes/domain-unsafe.git"
+
+printf 'local change\n' >"$external_project/.pi-en/coordination/local-change.txt"
+git -C "$external_project/.pi-en/coordination" add local-change.txt
+git -C "$external_project/.pi-en/coordination" commit -q -m 'Exercise alias push'
+git -C "$external_project/.pi-en/coordination" push -q origin main
+
+direct_clone="$tmp/direct-external-clone"
+git clone -q "$external_remote" "$direct_clone"
+printf 'remote change\n' >"$direct_clone/remote-change.txt"
+git -C "$direct_clone" add remote-change.txt
+git -C "$direct_clone" commit -q -m 'Exercise alias pull'
+git -C "$direct_clone" push -q origin main
+git -C "$external_project/.pi-en/coordination" pull -q --rebase origin main
+test -f "$external_project/.pi-en/coordination/remote-change.txt"
+
+missing_external_project="$tmp/missing-external-project"
+mkdir -p "$missing_external_project"
+git -C "$missing_external_project" init -q
+cd "$missing_external_project"
+if pi-en-coord-clone --remote "$tmp/missing/domain.git" \
+  >"$tmp/missing-external.out" 2>"$tmp/missing-external.err"; then
+  printf 'expected missing external bare remote to be rejected\n' >&2
+  exit 1
+fi
+grep -q 'external coordination remote must be an existing bare Git repo' \
+  "$tmp/missing-external.err"
+
+nonbare_external_project="$tmp/nonbare-external-project"
+nonbare_remote="$tmp/nonbare/domain.git"
+mkdir -p "$nonbare_external_project" "$nonbare_remote"
+git -C "$nonbare_external_project" init -q
+git -C "$nonbare_remote" init -q
+cd "$nonbare_external_project"
+if pi-en-coord-clone --remote "$nonbare_remote" \
+  >"$tmp/nonbare-external.out" 2>"$tmp/nonbare-external.err"; then
+  printf 'expected non-bare external remote to be rejected\n' >&2
+  exit 1
+fi
+grep -q 'external coordination remote must be an existing bare Git repo' \
+  "$tmp/nonbare-external.err"
+
+collision_project="$tmp/collision-project"
+collision_one="$tmp/collision-one/domain.git"
+collision_two="$tmp/collision-two/domain.git"
+mkdir -p "$collision_project" "$(dirname "$collision_one")" "$(dirname "$collision_two")"
+git -C "$collision_project" init -q
+git init --bare -q "$collision_one"
+git init --bare -q "$collision_two"
+cd "$collision_project"
+pi-en-coord-init --remote "$collision_one" --project collision --repo-id collision \
+  --agent-id agent-x >/dev/null
+rm -rf "$collision_project/.pi-en/coordination"
+if pi-en-coord-clone --remote "$collision_two" \
+  >"$tmp/collision.out" 2>"$tmp/collision.err"; then
+  printf 'expected external coordination alias collision to be rejected\n' >&2
+  exit 1
+fi
+grep -q 'coordination remote alias collision' "$tmp/collision.err"
+
 bootstrap_project_dir="$tmp/bootstrap-project"
 mkdir -p "$bootstrap_project_dir"
 git -C "$bootstrap_project_dir" init -q
