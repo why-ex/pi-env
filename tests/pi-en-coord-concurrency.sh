@@ -33,22 +33,33 @@ pi-en-coord-push \
   -m "Add concurrent claim test item" >/dev/null
 
 cd "$tmp"
-pi-en-coord-clone \
-  --root "$tmp/remotes" \
-  --project pi-en \
-  --dir agent-a >/dev/null
-pi-en-coord-clone \
-  --root "$tmp/remotes" \
-  --project pi-en \
-  --dir agent-b >/dev/null
+agent_a_project="$tmp/agent-a-project"
+agent_b_project="$tmp/agent-b-project"
+agent_a_coord="$agent_a_project/.pi-en/coordination"
+agent_b_coord="$agent_b_project/.pi-en/coordination"
+mkdir -p "$agent_a_project" "$agent_b_project"
+(
+  cd "$agent_a_project"
+  pi-en-coord-clone \
+    --root "$tmp/remotes" \
+    --project pi-en \
+    --dir .pi-en/coordination >/dev/null
+)
+(
+  cd "$agent_b_project"
+  pi-en-coord-clone \
+    --root "$tmp/remotes" \
+    --project pi-en \
+    --dir .pi-en/coordination >/dev/null
+)
 
 pi-en-coord-claim \
-  --coord-dir agent-a \
+  --coord-dir "$agent_a_coord" \
   --agent-id agent-a \
   "$item_id" >/dev/null
 
 if pi-en-coord-claim \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id agent-b \
   --no-pull \
   "$item_id" >/dev/null 2>&1; then
@@ -56,11 +67,11 @@ if pi-en-coord-claim \
   exit 1
 fi
 
-git -C agent-b fetch origin >/dev/null
-git -C agent-b reset --hard origin/main >/dev/null
+git -C "$agent_b_coord" fetch origin >/dev/null
+git -C "$agent_b_coord" reset --hard origin/main >/dev/null
 
 if pi-en-coord-claim \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id agent-b \
   "$item_id" >/dev/null 2>&1; then
   printf 'expected owned claim to fail\n' >&2
@@ -68,7 +79,7 @@ if pi-en-coord-claim \
 fi
 
 if pi-en-coord-done \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id agent-b \
   "$item_id" >/dev/null 2>&1; then
   printf 'expected done by non-owner to fail\n' >&2
@@ -76,17 +87,17 @@ if pi-en-coord-done \
 fi
 
 done_path="$(pi-en-coord-done \
-  --coord-dir agent-a \
+  --coord-dir "$agent_a_coord" \
   --agent-id agent-a \
   --result "Done by owning agent." \
   "$item_id" | tail -n 1)"
 
-test -f "agent-a/$done_path"
-grep -q '^status: done$' "agent-a/$done_path"
-grep -q '^owner: agent-a$' "agent-a/$done_path"
+test -f "$agent_a_coord/$done_path"
+grep -q '^status: done$' "$agent_a_coord/$done_path"
+grep -q '^owner: agent-a$' "$agent_a_coord/$done_path"
 
 if pi-en-coord-close \
-  --coord-dir agent-a \
+  --coord-dir "$agent_a_coord" \
   --agent-id agent-a \
   "$item_id" >/dev/null 2>&1; then
   printf 'expected close before review/verification to fail\n' >&2
@@ -94,46 +105,46 @@ if pi-en-coord-close \
 fi
 
 pi-en-coord-review \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id reviewer-b \
   --role reviewer \
   --pass \
   "$item_id" >/dev/null
 
 pi-en-coord-verify \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id tester-b \
   --role tester \
   --pass \
   "$item_id" >/dev/null
 
 closed_path="$(pi-en-coord-close \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   --agent-id tester-b \
   --role tester \
   --result "Closed after review and verification." \
   "$item_id" | tail -n 1)"
 
-test -f "agent-b/$closed_path"
-grep -q '^status: closed$' "agent-b/$closed_path"
-grep -q '^owner: agent-a$' "agent-b/$closed_path"
-grep -q '^reviewed: true$' "agent-b/$closed_path"
-grep -q '^verified: true$' "agent-b/$closed_path"
+test -f "$agent_b_coord/$closed_path"
+grep -q '^status: closed$' "$agent_b_coord/$closed_path"
+grep -q '^owner: agent-a$' "$agent_b_coord/$closed_path"
+grep -q '^reviewed: true$' "$agent_b_coord/$closed_path"
+grep -q '^verified: true$' "$agent_b_coord/$closed_path"
 
-pi-en-coord-pull --coord-dir agent-a >/dev/null
-test -f "agent-a/$closed_path"
-grep -q '^status: closed$' "agent-a/$closed_path"
+pi-en-coord-pull --coord-dir "$agent_a_coord" >/dev/null
+test -f "$agent_a_coord/$closed_path"
+grep -q '^status: closed$' "$agent_a_coord/$closed_path"
 
-printf 'subject length check\n' >agent-b/decisions/subject-length.md
+printf 'subject length check\n' >"$agent_b_coord/decisions/subject-length.md"
 long_subject="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 if pi-en-coord-push \
-  --coord-dir agent-b \
+  --coord-dir "$agent_b_coord" \
   -m "$long_subject" >/dev/null 2>&1; then
   printf 'expected long commit subject to fail\n' >&2
   exit 1
 fi
 
-git -C agent-b reset --hard HEAD >/dev/null
-git -C agent-b clean -fd >/dev/null
+git -C "$agent_b_coord" reset --hard HEAD >/dev/null
+git -C "$agent_b_coord" clean -fd >/dev/null
 
 printf 'agent coordination concurrency tests passed\n'

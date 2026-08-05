@@ -44,7 +44,7 @@ new_scenario() {
   name="$1"
   scenario="$tmp/$name"
   project="$scenario/project"
-  coord="$project/coordination"
+  coord="$project/.pi-en/coordination"
   remote="$scenario/coordination.git"
 
   mkdir -p "$project"
@@ -52,7 +52,7 @@ new_scenario() {
   git -C "$project" checkout -q -b main
   git -C "$project" config user.name "Serial Batch Project Test"
   git -C "$project" config user.email "project@example.invalid"
-  printf '/coordination/\n' >"$project/.gitignore"
+  printf '/.pi-en/\n' >"$project/.gitignore"
   git -C "$project" add .gitignore
   git -C "$project" commit -q -m "Seed project"
 

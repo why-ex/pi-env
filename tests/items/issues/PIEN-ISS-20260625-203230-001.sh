@@ -34,7 +34,7 @@ FAKE_PI_EN
 init_project_and_coord() {
   local project coord remote
   project="$tmp/project"
-  coord="$project/coordination"
+  coord="$project/.pi-en/coordination"
   remote="$tmp/coordination.git"
 
   mkdir -p "$project"
@@ -42,7 +42,7 @@ init_project_and_coord() {
   git -C "$project" checkout -q -b main
   git -C "$project" config user.name "Project Test"
   git -C "$project" config user.email "project@example.invalid"
-  printf '/coordination/\n' >"$project/.gitignore"
+  printf '/.pi-en/\n' >"$project/.gitignore"
   git -C "$project" add .gitignore
   git -C "$project" commit -q -m "Seed project"
 

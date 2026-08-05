@@ -45,7 +45,11 @@ capture="${SERIAL_FAKE_PI_CAPTURE:?}"
 } >>"$capture"
 
 if [ -n "${SERIAL_EXPECT_CLAIMED_ITEM:-}" ]; then
-  item_file="${PI_EN_COORD_DIR:?}/issues/open/${SERIAL_EXPECT_CLAIMED_ITEM}.yaml"
+  coord_dir="${PI_EN_COORD_DIR:?}"
+  if [ "$coord_dir" = /workspace/.pi-en/coordination ]; then
+    coord_dir="${PI_EN_BWRAP_PROJECT_ROOT:?}/.pi-en/coordination"
+  fi
+  item_file="$coord_dir/issues/open/${SERIAL_EXPECT_CLAIMED_ITEM}.yaml"
   grep -q '^status: claimed$' "$item_file"
   grep -q "^owner: ${PI_EN_COORD_AGENT_ID:?}$" "$item_file"
 fi
@@ -58,7 +62,7 @@ new_scenario() {
   name="$1"
   scenario="$tmp/$name"
   project="$scenario/project"
-  coord="$project/coordination"
+  coord="$project/.pi-en/coordination"
   remote="$scenario/coordination.git"
 
   mkdir -p "$project"
@@ -66,7 +70,7 @@ new_scenario() {
   git -C "$project" checkout -q -b main
   git -C "$project" config user.name "Serial Project Test"
   git -C "$project" config user.email "project@example.invalid"
-  printf '/coordination/\n' >"$project/.gitignore"
+  printf '/.pi-en/\n' >"$project/.gitignore"
   git -C "$project" add .gitignore
   git -C "$project" commit -q -m "Seed project"
 
