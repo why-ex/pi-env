@@ -13,6 +13,10 @@ coord_abs() {
   realpath -m "$1"
 }
 
+coord_abs_lexical() {
+  realpath -sm "$1"
+}
+
 coord_project_root() {
   local root abs_root pwd_abs project_root
 
@@ -510,7 +514,7 @@ coord_project_local_dir() {
   local project_root
   project_root="${1:-}"
   [ -n "$project_root" ] || project_root="$(coord_project_root)"
-  printf '%s\n' "$(coord_abs "$project_root/.pi-en/coordination")"
+  printf '%s\n' "$(coord_abs_lexical "$project_root/.pi-en/coordination")"
 }
 
 coord_resolve_project_path() {
@@ -519,8 +523,8 @@ coord_resolve_project_path() {
   project_root="${2:-}"
   [ -n "$project_root" ] || project_root="$(coord_project_root)"
   case "$candidate" in
-    /*) coord_abs "$candidate" ;;
-    *) coord_abs "$project_root/$candidate" ;;
+    /*) coord_abs_lexical "$candidate" ;;
+    *) coord_abs_lexical "$project_root/$candidate" ;;
   esac
 }
 
@@ -534,6 +538,9 @@ coord_require_project_local_coord_dir() {
   expected="$(coord_project_local_dir "$project_root")"
   if [ "$actual" != "$expected" ]; then
     coord_die "$source must use the project-local coordination checkout: $expected"
+  fi
+  if [ "$(coord_abs "$actual")" != "$actual" ]; then
+    coord_die "$source must be a real project-local coordination checkout, not a symlink: $expected"
   fi
   printf '%s\n' "$actual"
 }

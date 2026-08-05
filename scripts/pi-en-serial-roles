@@ -236,8 +236,8 @@ resolve_relative_to_project() {
   candidate="$1"
   project_root="$2"
   case "$candidate" in
-    /*) realpath -m "$candidate" ;;
-    *) realpath -m "$project_root/$candidate" ;;
+    /*) realpath -sm "$candidate" ;;
+    *) realpath -sm "$project_root/$candidate" ;;
   esac
 }
 
@@ -252,8 +252,9 @@ resolve_coord_dir() {
     candidate=".pi-en/coordination"
   fi
   coord_dir="$(resolve_relative_to_project "$candidate" "$project_root")"
-  expected="$(realpath -m "$project_root/.pi-en/coordination")"
+  expected="$(realpath -sm "$project_root/.pi-en/coordination")"
   [ "$coord_dir" = "$expected" ] || die "coordination checkout must be project-local: $expected"
+  [ "$(realpath -m "$coord_dir")" = "$coord_dir" ] || die "coordination checkout must be a real project-local clone, not a symlink: $expected"
   [ -d "$coord_dir" ] || die "coordination dir not found: $coord_dir"
   [ -d "$coord_dir/.git" ] || die "not a coordination Git repo: $coord_dir"
   [ -f "$coord_dir/AGENTS.md" ] || die "coordination dir is missing AGENTS.md: $coord_dir"

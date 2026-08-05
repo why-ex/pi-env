@@ -62,6 +62,30 @@ assert_rejects_project_local() {
     pi-en-serial-roles --dry-run --once --ui none
 )
 
+symlink_project="$tmp/symlink-project"
+symlink_external="$tmp/symlink-external-coordination"
+mkdir -p "$symlink_project/.pi-en" "$symlink_external"
+git -C "$symlink_project" init -q
+git -C "$symlink_external" init -q
+printf '# Coordination\n' >"$symlink_external/AGENTS.md"
+git -C "$symlink_external" add AGENTS.md
+git -C "$symlink_external" commit -qm 'Seed coordination fixture'
+ln -s "$symlink_external" "$symlink_project/.pi-en/coordination"
+(
+  project="$symlink_project"
+  cd "$symlink_project"
+  assert_rejects_project_local \
+    env PI_EN_COORD_DIR="$symlink_external" \
+    pi-en-serial-roles --dry-run --once --ui none
+)
+
+(
+  project="$symlink_project"
+  cd "$symlink_project"
+  assert_rejects_project_local \
+    pi-en-serial-roles --dry-run --once --ui none
+)
+
 grep -F 'PI_EN_BWRAP_COORDINATION_DIR' "$repo_root/scripts/pi-en-bwrap" >/dev/null
 grep -F 'must use the project-local coordination checkout' "$repo_root/scripts/pi-en-bwrap" >/dev/null
 if grep -F -- '--bind "$host_coord_dir" /coordination' "$repo_root/scripts/pi-en-bwrap" >/dev/null; then

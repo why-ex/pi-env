@@ -559,7 +559,7 @@ fi
 
 coord_bind_args=()
 sandbox_coord_dir="/workspace/.pi-en/coordination"
-host_coord_dir="$(realpath -m "$project_root/.pi-en/coordination")"
+host_coord_dir="$(realpath -sm "$project_root/.pi-en/coordination")"
 coord_dir_explicit=0
 coord_dir_source="default coordination dir"
 
@@ -567,10 +567,10 @@ resolve_project_coord_path() {
   local candidate
   candidate="$1"
   case "$candidate" in
-    /workspace) realpath -m "$project_root" ;;
-    /workspace/*) realpath -m "$project_root/${candidate#/workspace/}" ;;
-    /*) realpath -m "$candidate" ;;
-    *) realpath -m "$project_root/$candidate" ;;
+    /workspace) realpath -sm "$project_root" ;;
+    /workspace/*) realpath -sm "$project_root/${candidate#/workspace/}" ;;
+    /*) realpath -sm "$candidate" ;;
+    *) realpath -sm "$project_root/$candidate" ;;
   esac
 }
 
@@ -579,9 +579,13 @@ require_project_local_coord_dir() {
   candidate="$1"
   source="$2"
   resolved="$(resolve_project_coord_path "$candidate")"
-  expected="$(realpath -m "$project_root/.pi-en/coordination")"
+  expected="$(realpath -sm "$project_root/.pi-en/coordination")"
   if [ "$resolved" != "$expected" ]; then
     echo "pi-en-bwrap: $source must use the project-local coordination checkout: $expected" >&2
+    exit 2
+  fi
+  if [ "$(realpath -m "$resolved")" != "$resolved" ]; then
+    echo "pi-en-bwrap: $source must be a real project-local coordination checkout, not a symlink: $expected" >&2
     exit 2
   fi
   printf '%s' "$resolved"
@@ -595,6 +599,11 @@ elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
   host_coord_dir="$(require_project_local_coord_dir "$PI_EN_COORD_DIR" "PI_EN_COORD_DIR")"
   coord_dir_explicit=1
   coord_dir_source="PI_EN_COORD_DIR"
+fi
+
+if [ "$(realpath -m "$host_coord_dir")" != "$host_coord_dir" ]; then
+  echo "pi-en-bwrap: coordination checkout must be a real project-local clone, not a symlink: $project_root/.pi-en/coordination" >&2
+  exit 2
 fi
 
 if [ -d "$host_coord_dir" ]; then
