@@ -506,6 +506,38 @@ coord_default_dir_for_project() {
   printf '%s\n' "$project_root/.pi-en/coordination"
 }
 
+coord_project_local_dir() {
+  local project_root
+  project_root="${1:-}"
+  [ -n "$project_root" ] || project_root="$(coord_project_root)"
+  printf '%s\n' "$(coord_abs "$project_root/.pi-en/coordination")"
+}
+
+coord_resolve_project_path() {
+  local candidate project_root
+  candidate="$1"
+  project_root="${2:-}"
+  [ -n "$project_root" ] || project_root="$(coord_project_root)"
+  case "$candidate" in
+    /*) coord_abs "$candidate" ;;
+    *) coord_abs "$project_root/$candidate" ;;
+  esac
+}
+
+coord_require_project_local_coord_dir() {
+  local candidate project_root actual expected source
+  candidate="$1"
+  project_root="${2:-}"
+  source="${3:-coordination dir}"
+  [ -n "$project_root" ] || project_root="$(coord_project_root)"
+  actual="$(coord_resolve_project_path "$candidate" "$project_root")"
+  expected="$(coord_project_local_dir "$project_root")"
+  if [ "$actual" != "$expected" ]; then
+    coord_die "$source must use the project-local coordination checkout: $expected"
+  fi
+  printf '%s\n' "$actual"
+}
+
 coord_default_dir() {
   if [ -n "${PI_EN_COORD_DIR:-}" ]; then
     printf '%s\n' "$PI_EN_COORD_DIR"

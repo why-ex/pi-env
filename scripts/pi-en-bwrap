@@ -85,7 +85,8 @@ Environment knobs:
   PI_EN_BWRAP_HOST_RO_PATHS=/opt/pi-en/share/pi-en/scripts[:...]
                                 Host runtime only: bind extra support paths read-only
   PI_EN_BWRAP_NET=0                Disable network namespace sharing
-  PI_EN_BWRAP_COORDINATION_DIR=/path Bind external coordination clone at /coordination
+  PI_EN_BWRAP_COORDINATION_DIR=/path Coordination checkout override; automatic workflows
+                                require /path to be PROJECT/.pi-en/coordination
   PI_EN_COORD_REMOTE=remote        Coordination Git remote URL or local bare path; project paths
                                  stay under /workspace, external parents bind safely
   PI_EN_COORD_ROLE=architect       Active coordination role passed to helpers
@@ -557,49 +558,52 @@ if [ -n "$coord_remote" ]; then
 fi
 
 coord_bind_args=()
-sandbox_coord_dir=""
-host_coord_dir=""
+sandbox_coord_dir="/workspace/.pi-en/coordination"
+host_coord_dir="$(realpath -m "$project_root/.pi-en/coordination")"
 coord_dir_explicit=0
+coord_dir_source="default coordination dir"
+
+resolve_project_coord_path() {
+  local candidate
+  candidate="$1"
+  case "$candidate" in
+    /workspace) realpath -m "$project_root" ;;
+    /workspace/*) realpath -m "$project_root/${candidate#/workspace/}" ;;
+    /*) realpath -m "$candidate" ;;
+    *) realpath -m "$project_root/$candidate" ;;
+  esac
+}
+
+require_project_local_coord_dir() {
+  local candidate source resolved expected
+  candidate="$1"
+  source="$2"
+  resolved="$(resolve_project_coord_path "$candidate")"
+  expected="$(realpath -m "$project_root/.pi-en/coordination")"
+  if [ "$resolved" != "$expected" ]; then
+    echo "pi-en-bwrap: $source must use the project-local coordination checkout: $expected" >&2
+    exit 2
+  fi
+  printf '%s' "$resolved"
+}
 
 if [ -n "${PI_EN_BWRAP_COORDINATION_DIR:-}" ]; then
-  host_coord_dir="$(realpath -m "$PI_EN_BWRAP_COORDINATION_DIR")"
+  host_coord_dir="$(require_project_local_coord_dir "$PI_EN_BWRAP_COORDINATION_DIR" "PI_EN_BWRAP_COORDINATION_DIR")"
   coord_dir_explicit=1
+  coord_dir_source="PI_EN_BWRAP_COORDINATION_DIR"
 elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
+  host_coord_dir="$(require_project_local_coord_dir "$PI_EN_COORD_DIR" "PI_EN_COORD_DIR")"
   coord_dir_explicit=1
-  case "$PI_EN_COORD_DIR" in
-    /*)
-      host_coord_dir="$(realpath -m "$PI_EN_COORD_DIR")"
-      ;;
-    *)
-      host_coord_dir="$(realpath -m "$project_root/$PI_EN_COORD_DIR")"
-      ;;
-  esac
-elif [ -d "$project_root/.pi-en/coordination" ]; then
-  host_coord_dir="$(realpath -m "$project_root/.pi-en/coordination")"
+  coord_dir_source="PI_EN_COORD_DIR"
 fi
 
-if [ -n "$host_coord_dir" ]; then
-  if [ -d "$host_coord_dir" ]; then
-    case "$host_coord_dir" in
-      "$project_root")
-        sandbox_coord_dir="/workspace"
-        ;;
-      "$project_root"/*)
-        sandbox_coord_dir="/workspace${host_coord_dir#"$project_root"}"
-        ;;
-      *)
-        sandbox_coord_dir="/coordination"
-        coord_bind_args=(--dir /coordination --bind "$host_coord_dir" /coordination)
-        ;;
-    esac
-
-    if [ -d "$host_coord_dir/.git" ] || [ -f "$host_coord_dir/AGENTS.md" ]; then
-      echo "pi-en-bwrap: coordination repo available at $sandbox_coord_dir" >&2
-      echo "pi-en-bwrap: pull/rebase before changing shared state" >&2
-    fi
-  elif [ "$coord_dir_explicit" = "1" ]; then
-    echo "pi-en-bwrap: warning: coordination dir not found: $host_coord_dir" >&2
+if [ -d "$host_coord_dir" ]; then
+  if [ -d "$host_coord_dir/.git" ] || [ -f "$host_coord_dir/AGENTS.md" ]; then
+    echo "pi-en-bwrap: coordination repo available at $sandbox_coord_dir" >&2
+    echo "pi-en-bwrap: pull/rebase before changing shared state" >&2
   fi
+elif [ "$coord_dir_explicit" = "1" ]; then
+  echo "pi-en-bwrap: warning: coordination dir not found for $coord_dir_source: $host_coord_dir" >&2
 fi
 
 shell_interactive=0

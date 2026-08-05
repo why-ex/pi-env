@@ -19,8 +19,8 @@ Usage:
 
 Options:
   --project-root DIR      Project checkout to operate on; default: Git root or $PWD
-  --coord-dir DIR         Coordination checkout; default: PI_EN_COORD_DIR, .pi-en/coordination, or legacy ./coordination
-                          relative to the project root
+  --coord-dir DIR         Coordination checkout; automatic workflows require
+                          PROJECT/.pi-en/coordination
   --agent-id ID           Coordination agent identity; default: PI_EN_COORD_AGENT_ID or USER
   --issue ID              Limit this run to one explicit coordination issue ID;
                           repeat this option for an ordered issue batch
@@ -242,20 +242,18 @@ resolve_relative_to_project() {
 }
 
 resolve_coord_dir() {
-  local project_root candidate coord_dir
+  local project_root candidate coord_dir expected
   project_root="$1"
   if [ -n "$coord_dir_opt" ]; then
     candidate="$coord_dir_opt"
   elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
     candidate="$PI_EN_COORD_DIR"
-  elif [ -d "$project_root/.pi-en/coordination" ]; then
-    candidate=".pi-en/coordination"
-  elif [ -d "$project_root/coordination" ]; then
-    candidate="coordination"
   else
     candidate=".pi-en/coordination"
   fi
   coord_dir="$(resolve_relative_to_project "$candidate" "$project_root")"
+  expected="$(realpath -m "$project_root/.pi-en/coordination")"
+  [ "$coord_dir" = "$expected" ] || die "coordination checkout must be project-local: $expected"
   [ -d "$coord_dir" ] || die "coordination dir not found: $coord_dir"
   [ -d "$coord_dir/.git" ] || die "not a coordination Git repo: $coord_dir"
   [ -f "$coord_dir/AGENTS.md" ] || die "coordination dir is missing AGENTS.md: $coord_dir"
@@ -776,8 +774,7 @@ print_dry_run() {
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
         "PI_EN_COORD_ROLE=$role" \
         "PI_EN_COORD_AGENT_ID=$agent_id" \
-        "PI_EN_COORD_DIR=$coord_dir" \
-        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
         "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
         "PI_EN_BWRAP_PASS_ENV=$pass_env" \
         "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
@@ -795,8 +792,7 @@ print_dry_run() {
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
         "PI_EN_COORD_ROLE=$role" \
         "PI_EN_COORD_AGENT_ID=$agent_id" \
-        "PI_EN_COORD_DIR=$coord_dir" \
-        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
         "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
         "PI_EN_BWRAP_PASS_ENV=$pass_env" \
         "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
@@ -815,8 +811,7 @@ print_dry_run() {
         "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
         "PI_EN_COORD_ROLE=$role" \
         "PI_EN_COORD_AGENT_ID=$agent_id" \
-        "PI_EN_COORD_DIR=$coord_dir" \
-        "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+        "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
         "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
         "PI_EN_BWRAP_PASS_ENV=$pass_env" \
         "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
@@ -872,8 +867,7 @@ run_pi_job() {
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
           "PI_EN_COORD_ROLE=$role" \
           "PI_EN_COORD_AGENT_ID=$agent_id" \
-          "PI_EN_COORD_DIR=$coord_dir" \
-          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
           "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
           "PI_EN_BWRAP_PASS_ENV=$pass_env" \
           "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
@@ -890,8 +884,7 @@ run_pi_job() {
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
           "PI_EN_COORD_ROLE=$role" \
           "PI_EN_COORD_AGENT_ID=$agent_id" \
-          "PI_EN_COORD_DIR=$coord_dir" \
-          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
           "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
           "PI_EN_BWRAP_PASS_ENV=$pass_env" \
           "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \
@@ -909,8 +902,7 @@ run_pi_job() {
           "PI_ROLE_MANAGER_ACTIVE_ROLE=$role" \
           "PI_EN_COORD_ROLE=$role" \
           "PI_EN_COORD_AGENT_ID=$agent_id" \
-          "PI_EN_COORD_DIR=$coord_dir" \
-          "PI_EN_BWRAP_COORDINATION_DIR=$coord_dir" \
+          "PI_EN_COORD_DIR=/workspace/.pi-en/coordination" \
           "PI_EN_BWRAP_PROJECT_ROOT=$project_root" \
           "PI_EN_BWRAP_PASS_ENV=$pass_env" \
           "PI_EN_BWRAP_EXTRA_PATH=$extra_path" \

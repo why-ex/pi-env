@@ -114,6 +114,7 @@ if [ -z "$project_key" ]; then
 fi
 [ -n "$project_key" ] || coord_die "project must not be empty"
 [ -n "$agent_id" ] || coord_die "agent id must not be empty"
+coord_dir="$(coord_require_project_local_coord_dir "$coord_dir" "$(coord_project_root)" "coordination working clone dir")"
 
 remote_git_dir=""
 if [ -n "$remote_url" ]; then

@@ -9,6 +9,7 @@ scripts=(
   tests/pi-en-coord-concurrency.sh
   tests/pi-en-coord-lint.sh
   tests/pi-en-coord-root-layout.sh
+  tests/pi-en-coord-local-dir.sh
   tests/pi-en-coord-repo.sh
   tests/pi-en-coord-generate-requirements.sh
   tests/pi-en-coord-generate-requirements-coverage.sh

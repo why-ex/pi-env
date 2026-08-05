@@ -207,32 +207,52 @@ test ! -e "$server_print_project_dir/.pi-en/coordination"
 server_remote="$tmp/server-remote.git"
 git init --bare --initial-branch=main "$server_remote" >/dev/null 2>&1 \
   || git init --bare "$server_remote" >/dev/null
-pi-en-coord-init \
-  --remote "$server_remote" \
-  --project server-demo \
-  --agent-id agent-server \
-  --dir "$tmp/server-coordination" >/dev/null
+server_project="$tmp/server-project"
+mkdir -p "$server_project"
+git -C "$server_project" init -q
+(
+  cd "$server_project"
+  pi-en-coord-init \
+    --remote "$server_remote" \
+    --project server-demo \
+    --agent-id agent-server >/dev/null
+)
 
-test -f "$tmp/server-coordination/AGENTS.md"
+test -f "$server_project/.pi-en/coordination/AGENTS.md"
 server_head="$(git --git-dir="$server_remote" rev-parse main)"
-pi-en-coord-init \
-  --remote "$server_remote" \
-  --project server-demo \
-  --agent-id agent-server \
-  --dir "$tmp/server-coordination-existing" >/dev/null
+server_existing_project="$tmp/server-existing-project"
+mkdir -p "$server_existing_project"
+git -C "$server_existing_project" init -q
+(
+  cd "$server_existing_project"
+  pi-en-coord-init \
+    --remote "$server_remote" \
+    --project server-demo \
+    --agent-id agent-server >/dev/null
+)
 
-test "$(git -C "$tmp/server-coordination-existing" rev-parse HEAD)" = "$server_head"
+test "$(git -C "$server_existing_project/.pi-en/coordination" rev-parse HEAD)" = "$server_head"
 
 env_remote="$tmp/env-clone-remote.git"
 git clone --bare "$server_remote" "$env_remote" >/dev/null 2>&1
 unset PI_EN_COORD_REMOTE
-PI_EN_COORD_REMOTE="$env_remote" pi-en-coord-clone \
-  --dir "$tmp/env-remote-clone" >/dev/null
-test -f "$tmp/env-remote-clone/AGENTS.md"
-pi-en-coord-clone \
-  --remote "$server_remote" \
-  --dir "$tmp/arg-remote-clone" >/dev/null
-test -f "$tmp/arg-remote-clone/AGENTS.md"
+env_clone_project="$tmp/env-remote-project"
+mkdir -p "$env_clone_project"
+git -C "$env_clone_project" init -q
+(
+  cd "$env_clone_project"
+  PI_EN_COORD_REMOTE="$env_remote" pi-en-coord-clone >/dev/null
+)
+test -f "$env_clone_project/.pi-en/coordination/AGENTS.md"
+arg_clone_project="$tmp/arg-remote-project"
+mkdir -p "$arg_clone_project"
+git -C "$arg_clone_project" init -q
+(
+  cd "$arg_clone_project"
+  pi-en-coord-clone \
+    --remote "$server_remote" >/dev/null
+)
+test -f "$arg_clone_project/.pi-en/coordination/AGENTS.md"
 
 clone_default_project="$tmp/clone-default-project"
 mkdir -p "$clone_default_project"
@@ -303,25 +323,31 @@ git -C .pi-en/coordination config --get rebase.autoStash | grep -qx true
 test "$(git -C .pi-en/coordination remote get-url origin)" = "../../../remotes/pi-en-coordination.git"
 export PI_EN_COORD_REPO_ID=pi-en
 
-cd "$tmp"
-pi-en-coord-clone \
-  --root "$tmp/remotes" \
-  --project pi-en \
-  --dir clone >/dev/null
+clone_project="$tmp/clone-project"
+mkdir -p "$clone_project"
+git -C "$clone_project" init -q
+(
+  cd "$clone_project"
+  pi-en-coord-clone \
+    --root "$tmp/remotes" \
+    --project pi-en >/dev/null
+)
 
-test -f clone/AGENTS.md
-test -f clone/docs/SYNC_PROTOCOL.md
-test "$(git -C clone remote get-url origin)" = "../remotes/pi-en-coordination.git"
+test -f "$clone_project/.pi-en/coordination/AGENTS.md"
+test -f "$clone_project/.pi-en/coordination/docs/SYNC_PROTOCOL.md"
+test "$(git -C "$clone_project/.pi-en/coordination" remote get-url origin)" = "../../../remotes/pi-en-coordination.git"
 
-git -C clone remote remove origin
-pi-en-coord-clone \
-  --root "$tmp/remotes" \
-  --project pi-en \
-  --dir clone >/dev/null
+git -C "$clone_project/.pi-en/coordination" remote remove origin
+(
+  cd "$clone_project"
+  pi-en-coord-clone \
+    --root "$tmp/remotes" \
+    --project pi-en >/dev/null
+)
 
-test "$(git -C clone remote get-url origin)" = "../remotes/pi-en-coordination.git"
+test "$(git -C "$clone_project/.pi-en/coordination" remote get-url origin)" = "../../../remotes/pi-en-coordination.git"
 
-git -C clone rev-parse --verify HEAD >/dev/null
+git -C "$clone_project/.pi-en/coordination" rev-parse --verify HEAD >/dev/null
 
 action_path="$(cd "$workspace_dir" && pi-en-coord-new \
   --coord-dir .pi-en/coordination \

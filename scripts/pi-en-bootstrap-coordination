@@ -726,7 +726,7 @@ domain_generated_files_display="$(printf '%s ' "${domain_generated_files[@]}" | 
 
 inspect_dir="$(pwd -P)"
 root_abs="$(coord_abs "$root")"
-coord_dir_abs="$(coord_abs "$coord_dir")"
+coord_dir_abs="$(coord_require_project_local_coord_dir "$coord_dir" "$(coord_project_root)" "coordination working clone dir")"
 if [ -n "$remote_url" ]; then
   remote="$remote_url"
 else

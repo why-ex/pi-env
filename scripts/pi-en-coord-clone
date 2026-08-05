@@ -90,6 +90,8 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+coord_dir="$(coord_require_project_local_coord_dir "$coord_dir" "$(coord_project_root)" "coordination working clone dir")"
+
 if [ -z "$remote" ]; then
   if remote="$(coord_resolve_coordination_remote "" || true)" && [ -n "$remote" ]; then
     remote_set=1
