@@ -1582,16 +1582,21 @@ When `--root` is omitted, helpers default to the project-local
 mount rather than a separate remotes mount.
 
 If `PI_EN_COORD_REMOTE` or `.pi-en-coordination.yaml` names a project-local
-remote path, `pi-en-bwrap` rewrites it to the matching `/workspace/...` path. If
-`.pi-en-coordination.yaml` names an external local bare Git repo (detected by
-its `objects/` directory), `pi-en-bwrap` bind-mounts that remote's parent at
-`/workspace/.pi-en/agent-remotes` and rewrites `PI_EN_COORD_REMOTE` to the same
-project-local shape used by local clones. Outside the sandbox, Git access to
-such an external remote requires running inside `pi-en-shell` or providing a
-real or symlinked `.pi-en/agent-remotes` directory. Explicit external
-`PI_EN_COORD_REMOTE` values still bind the remote's parent read-write and rewrite
-`PI_EN_COORD_REMOTE` inside the sandbox. Coordination working clones are
-project-local only: default clone operations use `.pi-en/coordination`, and
+remote path, `pi-en-bwrap` rewrites it to the matching `/workspace/...` path.
+When that project-local path is a derived `.pi-en/agent-remotes/<name>.git`
+symlink to an external local bare Git repo, `pi-en-bwrap` masks the sandbox
+remotes directory and bind-mounts only the selected bare repo at the same
+project-local logical path. If `.pi-en-coordination.yaml` directly names an
+external local bare Git repo (detected by its `objects/` directory),
+`pi-en-bwrap` mounts only that selected repo at
+`/workspace/.pi-en/agent-remotes/<name>.git` and rewrites `PI_EN_COORD_REMOTE`
+to the same project-local shape used by local clones. Outside the sandbox, Git
+access to such an external remote requires running inside `pi-en-shell` or
+providing a real or symlinked `.pi-en/agent-remotes` directory. Explicit
+external `PI_EN_COORD_REMOTE` values similarly bind only the selected remote at
+`/agent-remotes/<name>.git` and rewrite `PI_EN_COORD_REMOTE` inside the
+sandbox. Coordination working clones are project-local only: default clone
+operations use `.pi-en/coordination`, and
 explicit `--dir`, `--coord-dir`, `PI_EN_COORD_DIR`, or
 `PI_EN_BWRAP_COORDINATION_DIR` values for automatic Pi-en workflows must resolve
 to that same checkout. External coordination working clone paths are rejected

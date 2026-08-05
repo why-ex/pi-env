@@ -90,13 +90,14 @@ test_grep '^PI_EN_COORD_REMOTE$' "$config_local_capture"
 test_grep '^/workspace/.pi-en/agent-remotes/config-local-coordination.git$' "$config_local_capture"
 
 env_remote_parent="$tmpdir/env-remotes"
-mkdir -p "$env_remote_parent"
+mkdir -p "$env_remote_parent/env-coordination.git"
 env_remote_capture="$tmpdir/env-remote-capture"
 run_harness "$tmpdir/env-remote-project" "$env_remote_capture" \
   PI_EN_COORD_REMOTE="$env_remote_parent/env-coordination.git"
 test_grep '^PI_EN_COORD_REMOTE$' "$env_remote_capture"
 test_grep '^/agent-remotes/env-coordination.git$' "$env_remote_capture"
-test_grep "^$env_remote_parent$" "$env_remote_capture"
+test_grep "^$env_remote_parent/env-coordination.git$" "$env_remote_capture"
+assert_no_grep "^$env_remote_parent$" "$env_remote_capture"
 
 config_external_project="$tmpdir/config-external-project"
 mkdir -p "$config_external_project" "$tmpdir/config-external-remotes/config-external.git/objects"
@@ -107,7 +108,8 @@ YAML
 config_external_capture="$tmpdir/config-external-capture"
 run_harness "$config_external_project" "$config_external_capture"
 test_grep '^/workspace/.pi-en/agent-remotes$' "$config_external_capture"
-test_grep "^$tmpdir/config-external-remotes$" "$config_external_capture"
+test_grep "^$tmpdir/config-external-remotes/config-external.git$" "$config_external_capture"
+assert_no_grep "^$tmpdir/config-external-remotes$" "$config_external_capture"
 test_grep '^/workspace/.pi-en/agent-remotes/config-external.git$' "$config_external_capture"
 
 config_external_nonbare_project="$tmpdir/config-external-nonbare-project"

@@ -510,10 +510,21 @@ if [ -n "$coord_remote" ]; then
     esac
     case "$coord_remote_local_candidate" in
       /*)
+        host_coord_remote_logical="$(realpath -sm "$coord_remote_local_candidate")"
         host_coord_remote="$(realpath -m "$coord_remote_local_candidate")"
         ;;
       *)
+        host_coord_remote_logical="$(realpath -sm "$project_root/$coord_remote_local_candidate")"
         host_coord_remote="$(realpath -m "$project_root/$coord_remote_local_candidate")"
+        ;;
+    esac
+    sandbox_coord_remote_logical=""
+    case "$host_coord_remote_logical" in
+      "$project_root")
+        sandbox_coord_remote_logical="/workspace"
+        ;;
+      "$project_root"/*)
+        sandbox_coord_remote_logical="/workspace${host_coord_remote_logical#"$project_root"}"
         ;;
     esac
     case "$host_coord_remote" in
@@ -526,22 +537,37 @@ if [ -n "$coord_remote" ]; then
       *)
         if [ -z "$sandbox_coord_remote" ]; then
           host_coord_remote_parent="$(dirname "$host_coord_remote")"
-          host_coord_remote_base="$(basename "$host_coord_remote")"
-          if [ "$coord_remote_source" = "config" ]; then
-            if [ -d "$host_coord_remote/objects" ] && [ -d "$host_coord_remote_parent" ] && [ "$host_coord_remote_parent" != "/" ]; then
-              coord_remote_mount_point="/workspace/.pi-en/agent-remotes"
-              sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
-              coord_remote_bind_args=(--dir /workspace/.pi-en --dir "$coord_remote_mount_point" --bind "$host_coord_remote_parent" "$coord_remote_mount_point")
-              echo "pi-en-bwrap: coordination remote parent from project config available at $coord_remote_mount_point" >&2
+          host_coord_remote_base="$(basename "$host_coord_remote_logical")"
+          if [ -n "$sandbox_coord_remote_logical" ] && [ "$coord_remote_source" = "config" ]; then
+            if [ -d "$host_coord_remote/objects" ]; then
+              coord_remote_mount_point="$(dirname "$sandbox_coord_remote_logical")"
+              sandbox_coord_remote="$sandbox_coord_remote_logical"
+              coord_remote_bind_args=(--dir /workspace/.pi-en --tmpfs /workspace/.pi-en/agent-remotes --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
+              echo "pi-en-bwrap: coordination remote alias from project config mounted at $sandbox_coord_remote" >&2
             else
               sandbox_coord_remote="$coord_remote"
               echo "pi-en-bwrap: warning: external coordination_remote from project config is not an existing bare Git repo and will not be mounted: $coord_remote" >&2
             fi
+          elif [ "$coord_remote_source" = "config" ]; then
+            if [ -d "$host_coord_remote/objects" ]; then
+              coord_remote_mount_point="/workspace/.pi-en/agent-remotes"
+              sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
+              coord_remote_bind_args=(--dir /workspace/.pi-en --tmpfs "$coord_remote_mount_point" --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
+              echo "pi-en-bwrap: coordination remote from project config mounted at $sandbox_coord_remote" >&2
+            else
+              sandbox_coord_remote="$coord_remote"
+              echo "pi-en-bwrap: warning: external coordination_remote from project config is not an existing bare Git repo and will not be mounted: $coord_remote" >&2
+            fi
+          elif [ -d "$host_coord_remote" ]; then
+            coord_remote_mount_point="/agent-remotes"
+            sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
+            coord_remote_bind_args=(--dir "$coord_remote_mount_point" --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
+            echo "pi-en-bwrap: coordination remote mounted at $sandbox_coord_remote" >&2
           elif [ -d "$host_coord_remote_parent" ] && [ "$host_coord_remote_parent" != "/" ]; then
             coord_remote_mount_point="/agent-remotes"
             sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
-            coord_remote_bind_args=(--dir "$coord_remote_mount_point" --bind "$host_coord_remote_parent" "$coord_remote_mount_point")
-            echo "pi-en-bwrap: coordination remote parent available at $coord_remote_mount_point" >&2
+            coord_remote_bind_args=(--dir "$coord_remote_mount_point" --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
+            echo "pi-en-bwrap: coordination remote mounted at $sandbox_coord_remote" >&2
           else
             sandbox_coord_remote="$coord_remote"
             echo "pi-en-bwrap: warning: local PI_EN_COORD_REMOTE outside project cannot be mounted: $coord_remote" >&2
