@@ -55,7 +55,8 @@ implementation or test evidence when relevant.
 
 ## Recommended clone settings
 
-Run these once in each coordination clone:
+Run these once in each project-local coordination working clone
+(`<project>/.pi-en/coordination`):
 
 ```bash
 git config pull.rebase true
@@ -67,13 +68,13 @@ git config rebase.autoStash true
 When the project provides the Pi-en helper, run:
 
 ```bash
-pi-en-coord-lint --coord-dir coordination --project-root .
+pi-en-coord-lint --coord-dir .pi-en/coordination --project-root .
 ```
 
 For release or handoff gates that require no active issue work, run:
 
 ```bash
-pi-en-coord-lint --coord-dir coordination --project-root . \
+pi-en-coord-lint --coord-dir .pi-en/coordination --project-root . \
   --require-done-or-closed
 ```
 

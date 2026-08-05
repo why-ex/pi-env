@@ -19,8 +19,10 @@ one coordination checkout.
 Provide a serial automation mode that repeatedly checks the Git-backed
 coordination repository, selects one eligible issue, runs one fresh Pi job in
 the appropriate role, and then returns to polling. The first implementation
-uses one mutable project clone and one coordination clone. It does not spawn
-parallel terminals, tmux panes, or separate worktrees.
+uses one mutable project clone and the project-local coordination working
+clone at `<project>/.pi-en/coordination`. It does not use an external
+coordination working clone, spawn parallel terminals, tmux panes, or separate
+worktrees.
 
 The serial mode is intended to prove the workflow and prompts before adding
 parallel role workers with per-role clones or worktrees.
@@ -34,6 +36,8 @@ parallel role workers with per-role clones or worktrees.
 - No reviewer/tester lease protocol yet; the serial orchestrator is the only
   worker using the clone.
 - No hidden database or queue outside the coordination repository.
+- No external `--coord-dir` or `/coordination` working-clone path as a normal
+  automation layout; automatic jobs use `<project>/.pi-en/coordination`.
 - No automatic selection of requirement, decision, or note work; the loop
   handles issue lifecycle work only.
 
@@ -154,7 +158,7 @@ PI_EN_BWRAP_PASS_ENV=PI_ACTIVE_ROLE \
 PI_ACTIVE_ROLE="$role" \
 PI_EN_COORD_ROLE="$role" \
 PI_EN_COORD_AGENT_ID="$agent_id" \
-PI_EN_BWRAP_COORDINATION_DIR="$coordination_dir" \
+PI_EN_BWRAP_COORDINATION_DIR="$project_root/.pi-en/coordination" \
 pi-en --raw -- \
   -e "$PI_EN_ROLE_MANAGER_PACKAGE" \
   --tools read,bash,edit,write,grep,find,ls,role_cycle_done \
@@ -183,7 +187,7 @@ PI_ROLE_MANAGER_AUTO_SHUTDOWN_ON_DONE=1 \
 PI_ACTIVE_ROLE="$role" \
 PI_EN_COORD_ROLE="$role" \
 PI_EN_COORD_AGENT_ID="$agent_id" \
-PI_EN_BWRAP_COORDINATION_DIR="$coordination_dir" \
+PI_EN_BWRAP_COORDINATION_DIR="$project_root/.pi-en/coordination" \
 pi-en --raw -- \
   -e "$PI_EN_ROLE_MANAGER_PACKAGE" \
   --tools read,bash,edit,write,grep,find,ls,role_cycle_done \

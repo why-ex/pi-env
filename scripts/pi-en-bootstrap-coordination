@@ -21,6 +21,7 @@ Usage:
 Options:
   --project-root DIR  Project directory to inspect; default: current directory
   --root DIR          Bare remote parent; default: .pi-en/agent-remotes
+                     (derived aliases for external local bare remotes)
   --remote REMOTE     Coordination repository Git remote URL or local bare path;
                      default: PI_EN_COORD_REMOTE
   --project NAME      Coordination domain project name; default: PI_EN_COORD_PROJECT
@@ -42,7 +43,8 @@ Options:
   --generated-requirements-docs
                      Convenience alias for --domain-generated-file REQUIREMENTS.md
                      and --domain-generated-file REQUIREMENTS_COVERAGE.md
-  --dir DIR           Working clone dir; default: PI_EN_COORD_DIR or .pi-en/coordination
+  --dir DIR           Working clone dir; automatic workflows require
+                     <project>/.pi-en/coordination
   --agent-id ID       Agent identity; default: PI_EN_COORD_AGENT_ID or USER
   --bare-only         Only create the bare remote
   --print-only        Print suggested settings and command; do not initialize or restore

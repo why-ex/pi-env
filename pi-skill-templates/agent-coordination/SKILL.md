@@ -2,10 +2,11 @@
 
 Use this skill when working in a project that contains a Git-backed agent
 coordination repository, when asked to find, claim, or update work, or before
-making changes that affect shared agent state. Pi-en coordination is
-attached at `.pi-en/coordination` by default. A coordination domain may span
-multiple implementation repositories, but each pi session works in one
-implementation repository.
+making changes that affect shared agent state. Pi-en coordination is attached
+at the project-local `.pi-en/coordination` working clone by default. External
+coordination working clones are not part of the automatic Pi-en workflow. A
+coordination domain may span multiple implementation repositories, but each pi
+session works in one implementation repository.
 
 ## Coordination repository
 
@@ -15,9 +16,12 @@ TODO, and coordination state in its domain. Issues are repo-scoped under
 remain shared at the domain root. Domain-wide generated files that are committed
 to an implementation repo are declared in that repo's `repos/{repo_id}/REPO.md`
 under `domain_generated_files`; ask before regenerating them when no matching
-path is declared. For fresh Pi-en projects, find the clone at
-`.pi-en/coordination` unless `PI_EN_COORD_DIR`, the user, or project coordination
-rules say otherwise.
+path is declared. For fresh Pi-en projects and automatic workflows, find the
+clone at `<project>/.pi-en/coordination`; `PI_EN_COORD_DIR` should resolve to
+that project-local checkout. The configured `coordination_remote` in
+`.pi-en-coordination.yaml` is the source of truth for the Git remote, including
+external local bare remotes, and any `.pi-en/agent-remotes/` entries for those
+remotes are derived operational aliases.
 
 ## Required protocol
 

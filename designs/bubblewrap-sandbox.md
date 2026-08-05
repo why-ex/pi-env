@@ -56,7 +56,12 @@ coordination, and temporary paths should be mounted. Project-local Pi-en
 operational artifacts should be grouped under `.pi-en/` in the selected
 project and are therefore visible through the normal `/workspace` mount;
 examples include `.pi-en/coordination`, `.pi-en/agent-remotes`,
-`.pi-en/locks`, and `.pi-en/logs`. Monorepos, submodules, worktrees,
+`.pi-en/locks`, and `.pi-en/logs`. Automatic coordination working clones live
+at `<project>/.pi-en/coordination`; external working clones are not mounted as
+part of the automatic workflow. External local bare remotes may still be named
+by `.pi-en-coordination.yaml` `coordination_remote`. Pi-en treats that file as
+the source of truth and materializes only derived operational aliases under
+`.pi-en/agent-remotes/`. Monorepos, submodules, worktrees,
 integration checkouts, and other complex source layouts remain the selected
 project's own policy; Pi-en only decides which project root is exposed for
 this run. When a path is optional, missing host state should degrade to an
@@ -103,6 +108,15 @@ for a run.
 The same controls support `UC-022`: review and automation workflows can narrow
 the selected project mount, tool access, environment variables, network access,
 and state persistence when inspecting unfamiliar code.
+
+For symlinked `.pi-en/agent-remotes/<name>.git` entries that target external
+local bare remotes, the launcher does not mount host home directories or broad
+parent directories. It masks the sandbox-visible `.pi-en/agent-remotes` path
+with a tmpfs when needed, then bind-mounts only the selected bare repository to
+its project-local logical alias. Directly configured external local bare
+remotes use the same narrow alias model inside the sandbox. External
+coordination working clones are rejected instead of being mounted at
+`/coordination`.
 
 The sandbox documents and tests the Bubblewrap flags used, but it is not a
 complete security boundary against a malicious host or kernel. `CRQ-008` and

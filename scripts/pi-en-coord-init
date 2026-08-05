@@ -19,12 +19,14 @@ Usage:
 
 Options:
   --root DIR        Bare remote parent; default: .pi-en/agent-remotes
+                    (derived aliases for external local bare remotes)
   --remote REMOTE   Coordination Git remote URL or local bare path; default: PI_EN_COORD_REMOTE
   --project ID      Coordination project; default: PI_EN_COORD_PROJECT or cwd name
   --project-key KEY Project item ID prefix; default: derived project
   --repo-id ID      Initial implementation repo id; default: PI_EN_COORD_REPO_ID,
                    .pi-en-coordination.yaml repo_id, git remote, or project
-  --dir DIR         Working clone dir; default: PI_EN_COORD_DIR or .pi-en/coordination
+  --dir DIR         Working clone dir; automatic workflows require
+                    <project>/.pi-en/coordination
   --agent-id ID     Agent identity; default: PI_EN_COORD_AGENT_ID or USER
   --role ROLE       Coordination role; default: PI_EN_COORD_ROLE
   --bare-only       Only create the bare remote
@@ -33,6 +35,8 @@ Options:
 Remote precedence is explicit --remote, then PI_EN_COORD_REMOTE,
 then .pi-en-coordination.yaml coordination_remote, then:
   <root>/<project>-coordination.git
+.pi-en-coordination.yaml remains the source of truth for configured remotes;
+.pi-en/agent-remotes entries are operational derived state.
 USAGE
 }
 
