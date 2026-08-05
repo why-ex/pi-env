@@ -46,6 +46,12 @@ fixed_grep '`.pi-en-coordination.yaml` is the source of truth' pi-skill-template
 fixed_grep '`.pi-en/agent-remotes/` entries for those' pi-skill-templates/agent-coordination/SKILL.md
 fixed_grep 'pi-en-coord-lint --coord-dir .pi-en/coordination --project-root .' pi-skill-templates/agent-coordination/SYNC_PROTOCOL.md
 
+fixed_grep 'For fresh Pi-en projects and automatic workflows' designs/agent-coordination.md
+fixed_grep 'find the clone at `<project>/.pi-en/coordination`' designs/agent-coordination.md
+fixed_grep 'External coordination working clones are' designs/agent-coordination.md
+fixed_grep '`.pi-en/agent-remotes/` entries' designs/agent-coordination.md
+fixed_absent 'unless PI_EN_COORD_DIR, the user, or environment says otherwise' designs/agent-coordination.md
+
 fixed_grep 'automatic workflows require' scripts/pi-en-coord-init
 fixed_grep '.pi-en-coordination.yaml remains the source of truth' scripts/pi-en-coord-init
 fixed_grep 'derived aliases for external local bare remotes' scripts/pi-en-coord-clone

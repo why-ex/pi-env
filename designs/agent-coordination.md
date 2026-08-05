@@ -520,12 +520,19 @@ Use this skill when working in a project that contains a Git-backed agent coordi
 ## Coordination repository
 
 The coordination repository is the only synchronization source for agent issue,
-TODO, and coordination state. Find it at `.pi-en/coordination` unless
-`PI_EN_COORD_DIR`, the user, or environment says otherwise.
+TODO, and coordination state. For fresh Pi-en projects and automatic workflows,
+find the clone at `<project>/.pi-en/coordination`; `PI_EN_COORD_DIR` should
+resolve to that project-local checkout. External coordination working clones are
+not part of the automatic Pi-en workflow. The configured `coordination_remote`
+in `.pi-en-coordination.yaml` is the source of truth for the Git remote,
+including external local bare remotes, and any `.pi-en/agent-remotes/` entries
+for those remotes are derived operational aliases.
 
 ## Required protocol
 
-1. `cd "${PI_EN_COORD_DIR:-.pi-en/coordination}" && git pull --rebase` before reading or modifying coordination state.
+1. `cd "${PI_EN_COORD_DIR:-.pi-en/coordination}" && git pull --rebase` before
+   reading or modifying coordination state, or use the `pi-en-coord-*` helpers
+   with their default coordination directory resolution.
 2. Inspect open/claimed/blocked/done YAML items relevant to the current project.
 3. Claim at most one item unless instructed otherwise.
 4. Commit and push immediately after claiming or changing status.
