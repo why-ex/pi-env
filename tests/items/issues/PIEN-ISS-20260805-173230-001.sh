@@ -149,4 +149,14 @@ assert_arg_triple "$absolute_capture" --bind \
 assert_no_exact_line "$absolute_capture" "$external_parent"
 assert_no_exact_line "$absolute_capture" "$external_sibling"
 
+missing_external="$external_parent/missing.git"
+missing_capture="$tmpdir/missing-capture"
+run_harness "$tmpdir/missing-project" "$missing_capture" \
+  PI_EN_COORD_REMOTE="$missing_external"
+assert_arg_triple "$missing_capture" --setenv \
+  PI_EN_COORD_REMOTE "$missing_external"
+assert_no_exact_line "$missing_capture" /agent-remotes/missing.git
+assert_no_exact_line "$missing_capture" "$external_parent"
+assert_no_exact_line "$missing_capture" "$external_sibling"
+
 printf 'PIEN-ISS-20260805-173230-001 passed\n'

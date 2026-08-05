@@ -536,7 +536,6 @@ if [ -n "$coord_remote" ]; then
         ;;
       *)
         if [ -z "$sandbox_coord_remote" ]; then
-          host_coord_remote_parent="$(dirname "$host_coord_remote")"
           host_coord_remote_base="$(basename "$host_coord_remote_logical")"
           if [ -n "$sandbox_coord_remote_logical" ] && [ "$coord_remote_source" = "config" ]; then
             if [ -d "$host_coord_remote/objects" ]; then
@@ -559,11 +558,6 @@ if [ -n "$coord_remote" ]; then
               echo "pi-en-bwrap: warning: external coordination_remote from project config is not an existing bare Git repo and will not be mounted: $coord_remote" >&2
             fi
           elif [ -d "$host_coord_remote" ]; then
-            coord_remote_mount_point="/agent-remotes"
-            sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
-            coord_remote_bind_args=(--dir "$coord_remote_mount_point" --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
-            echo "pi-en-bwrap: coordination remote mounted at $sandbox_coord_remote" >&2
-          elif [ -d "$host_coord_remote_parent" ] && [ "$host_coord_remote_parent" != "/" ]; then
             coord_remote_mount_point="/agent-remotes"
             sandbox_coord_remote="$coord_remote_mount_point/$host_coord_remote_base"
             coord_remote_bind_args=(--dir "$coord_remote_mount_point" --dir "$sandbox_coord_remote" --bind "$host_coord_remote" "$sandbox_coord_remote")
