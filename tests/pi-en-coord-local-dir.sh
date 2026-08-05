@@ -69,4 +69,9 @@ if grep -F -- '--bind "$host_coord_dir" /coordination' "$repo_root/scripts/pi-en
   exit 1
 fi
 
+grep -F 'rejecting external coordination clone paths' "$repo_root/README.md" >/dev/null
+grep -F 'does not bind an external clone at `/coordination`' "$repo_root/README.md" >/dev/null
+grep -F 'values must resolve to that same project-local path' "$repo_root/REQUIREMENTS.md" >/dev/null
+grep -F 'must not bind an external coordination clone' "$repo_root/REQUIREMENTS.md" >/dev/null
+
 printf 'project-local coordination dir tests passed\n'

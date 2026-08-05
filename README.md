@@ -1112,10 +1112,10 @@ Pi-en only chooses which root to expose for this run.
   without exposing all sessions;
 - passes `PI_EN_COORD_REMOTE`, `PI_EN_COORD_PROJECT`,
   `PI_EN_COORD_AGENT_ID`, `PI_EN_COORD_PROJECT_KEY`,
-  `PI_EN_COORD_ROLE`, and coordination directory context, mapping project-local
-  coordination paths to `/workspace/...`, binding external local coordination
-  remote parents as needed, and explicitly mounting an external coordination
-  clone with `PI_EN_BWRAP_COORDINATION_DIR`;
+  `PI_EN_COORD_ROLE`, and project-local coordination directory context,
+  mapping `.pi-en/coordination` to `/workspace/.pi-en/coordination` and
+  rejecting external coordination clone paths while still binding external
+  local coordination remote parents as needed;
 - accepts additional host-runtime command directories only through
   `PI_EN_BWRAP_HOST_EXTRA_PATH`; entries must be absolute, existing directories,
   are canonicalized, are mounted read-only, and are rejected under host `$HOME`;
@@ -1172,7 +1172,7 @@ PI_EN_BWRAP_IMPORT_GIT_CONFIG=0            # do not import host ~/.gitconfig and
 PI_EN_BWRAP_GIT_CONFIG_SYNC=missing        # copy git config only if sandbox copy is absent; default is always
 PI_EN_BWRAP_HOST_GITCONFIG=/path           # host global git config; default: ~/.gitconfig
 PI_EN_BWRAP_HOST_XDG_GIT_CONFIG=/path      # host XDG git config; default: $XDG_CONFIG_HOME/git/config or ~/.config/git/config
-PI_EN_BWRAP_COORDINATION_DIR=/path/to/coordination # bind external coordination clone at /coordination
+PI_EN_BWRAP_COORDINATION_DIR=/path/to/repo/.pi-en/coordination # must be the project-local coordination clone
 PI_EN_COORD_REMOTE=.pi-en/agent-remotes/pi-en-coordination.git # exact coordination remote URL/path
 PI_EN_COORD_PROJECT=pi-en                 # coordination project/domain name
 PI_EN_COORD_PROJECT_KEY=PIEN              # optional generated item ID prefix
@@ -1590,10 +1590,16 @@ project-local shape used by local clones. Outside the sandbox, Git access to
 such an external remote requires running inside `pi-en-shell` or providing a
 real or symlinked `.pi-en/agent-remotes` directory. Explicit external
 `PI_EN_COORD_REMOTE` values still bind the remote's parent read-write and rewrite
-`PI_EN_COORD_REMOTE` inside the sandbox. Without explicit overrides or
-`coordination_remote`, the sandbox launcher only recognizes project-local
-`.pi-en/coordination`; root-level `coordination/` and `agent-remotes/`
-directories are not selected or mounted automatically.
+`PI_EN_COORD_REMOTE` inside the sandbox. Coordination working clones are
+project-local only: default clone operations use `.pi-en/coordination`, and
+explicit `--dir`, `--coord-dir`, `PI_EN_COORD_DIR`, or
+`PI_EN_BWRAP_COORDINATION_DIR` values for automatic Pi-en workflows must resolve
+to that same checkout. External coordination working clone paths are rejected
+with a diagnostic that points users at `<project-root>/.pi-en/coordination`;
+`pi-en-bwrap` does not bind an external clone at `/coordination`. Without
+explicit remote overrides or `coordination_remote`, the sandbox launcher only
+recognizes project-local `.pi-en/coordination`; root-level `coordination/` and
+`agent-remotes/` directories are not selected or mounted automatically.
 
 When `--remote` or `PI_EN_COORD_REMOTE` points to a Git-server URL, helpers use
 that URL directly and no local remotes mount is
@@ -1770,17 +1776,13 @@ pien coord rules upgrade
 ```
 
 The helpers do not make `pi-en` create, claim, mark done, review, verify,
-close, commit, or push coordination state automatically. If a coordination clone
-is under the mounted project, `pi-en-bwrap` only exposes it as normal project files
-and sets `PI_EN_COORD_DIR` to the sandbox path. For a coordination clone outside
-the project, opt in explicitly:
-
-```bash
-PI_EN_BWRAP_COORDINATION_DIR=/path/to/coordination pien
-```
-
-That clone is mounted read-write at `/coordination` and `PI_EN_COORD_DIR` is set
-to `/coordination` inside the sandbox.
+close, commit, or push coordination state automatically. Coordination working
+clones must live under the mounted project at `.pi-en/coordination` for
+automatic Pi-en workflows. `pi-en-bwrap` exposes that checkout as normal project
+files and sets `PI_EN_COORD_DIR` to `/workspace/.pi-en/coordination` inside the
+sandbox. External coordination working clone paths provided through
+`PI_EN_COORD_DIR`, `PI_EN_BWRAP_COORDINATION_DIR`, or coordination-directory
+command options are rejected instead of being mounted at `/coordination`.
 
 When the role-manager extension has an active role, it sets `PI_EN_COORD_ROLE` for
 Pi subprocesses to the role's `coordCommitter` value, or to the role name when
@@ -1800,20 +1802,20 @@ shake-out before investing in parallel workers.
 Serial mode prerequisites:
 
 - run from a clean Git project root, or pass `--project-root DIR`;
-- provide a writable coordination checkout. Projects default to
-  `.pi-en/coordination`; use `PI_EN_COORD_DIR` or `--coord-dir DIR` for an
-  explicit override path;
+- provide the writable project-local coordination checkout at
+  `.pi-en/coordination`; `PI_EN_COORD_DIR` or `--coord-dir DIR` may be used
+  only when they resolve to that same project-local checkout;
 - run from the Pi-en devshell/profile so `pi-en`, `pi-en-coord-*` helpers,
   and `PI_EN_ROLE_MANAGER_PACKAGE` are available, or pass explicit `--pi-en`
   and `--role-manager` paths;
 - configure Pi model credentials on the host the same way you do for normal
   `pi-en` runs, for example host Pi auth files or provider environment
   variables; and
-- allow the orchestrator to mount the selected coordination clone into each raw
-  sandbox job. It passes `PI_EN_BWRAP_COORDINATION_DIR`, `PI_EN_COORD_DIR`,
-  `PI_EN_COORD_AGENT_ID`, and role context for the job, and exposes packaged
-  lifecycle helpers through `PI_EN_BWRAP_EXTRA_PATH` when they live in the Nix
-  store.
+- allow the orchestrator to pass only the sandbox-visible project-local
+  coordination path into each raw sandbox job. It passes
+  `PI_EN_COORD_DIR=/workspace/.pi-en/coordination`, `PI_EN_COORD_AGENT_ID`,
+  and role context for the job, and exposes packaged lifecycle helpers through
+  `PI_EN_BWRAP_EXTRA_PATH` when they live in the Nix store.
 
 Start the loop from the project root:
 

@@ -752,10 +752,13 @@ and `agents` directories; and an initial implementation namespace at
 `repos/<repo_id>/REPO.md` registry manifest. The clone must be configured
 with `pull.rebase=true` and `rebase.autoStash=true`.
 
-When `--dir` and `PI_EN_COORD_DIR` are omitted, fresh project-local
-coordination bootstraps must place the working clone at
+Fresh project-local coordination bootstraps must place the working clone at
 `<project-root>/.pi-en/coordination`, visible inside the sandbox as
 `/workspace/.pi-en/coordination` when the selected project is mounted there.
+Explicit `--dir` or `PI_EN_COORD_DIR` values for the coordination working
+clone must resolve to that same project-local path; automatic Pi-en workflows
+must reject external coordination clone directories with a diagnostic that
+points users at `<project-root>/.pi-en/coordination`.
 
 When no explicit/configured coordination remote is selected and `--root` and
 `--root` are omitted, coordination helpers must use a project-visible
@@ -767,11 +770,12 @@ When no explicit/configured coordination remote is selected and `--root` and
 #### CMD-011 `pi-en-coord-clone`
 
 `pi-en-coord-clone` must clone a coordination remote into the selected
-coordination clone directory and configure the clone with `pull.rebase=true`
-and `rebase.autoStash=true`. When no clone directory is selected with
-`--dir` or `PI_EN_COORD_DIR`, the default target must be
+project-local coordination clone directory and configure the clone with
+`pull.rebase=true` and `rebase.autoStash=true`. The clone target must be
 `<project-root>/.pi-en/coordination`. Explicit `--dir` or `PI_EN_COORD_DIR`
-values may select another coordination clone path.
+values must resolve to that same project-local path; automatic Pi-en
+workflows must reject external coordination clone directories with a clear
+diagnostic that points users at `<project-root>/.pi-en/coordination`.
 
 #### CMD-012 `pi-en-coord-new`
 
@@ -1613,13 +1617,17 @@ Project-local `.pi-en/agent-remotes` is the default for local bare remotes.
 
 If a coordination clone is detected under the selected project at
 `.pi-en/coordination`, or selected with
-`PI_EN_COORD_DIR`/`PI_EN_BWRAP_COORDINATION_DIR`, the launcher must set
-`PI_EN_COORD_DIR` inside the sandbox to the sandbox-visible path.
+`PI_EN_COORD_DIR`/`PI_EN_BWRAP_COORDINATION_DIR`, the selected path must
+resolve to the project-local `.pi-en/coordination` checkout. The launcher
+must set `PI_EN_COORD_DIR` inside the sandbox to the sandbox-visible
+`/workspace/.pi-en/coordination` path.
 
-`PI_EN_BWRAP_COORDINATION_DIR=/path/to/coordination` must explicitly bind an
-external coordination clone read-write at `/coordination`. The launcher may
-print a reminder when a coordination repository is available, but it must
-not mutate coordination state.
+`PI_EN_BWRAP_COORDINATION_DIR` must not bind an external coordination clone
+at `/coordination`. Automatic Pi-en workflows must reject external
+`PI_EN_COORD_DIR` or `PI_EN_BWRAP_COORDINATION_DIR` clone paths with a clear
+diagnostic that points users at `<project-root>/.pi-en/coordination`. The
+launcher may print a reminder when a coordination repository is available,
+but it must not mutate coordination state.
 
 ### 3.10 Network requirements
 
