@@ -13,11 +13,21 @@ Renders active requirement items from the coordination repository's root
 requirements directory as a deterministic Markdown requirements document.
 Requirement items keep coordination item-ID filenames; the public requirement
 key is read from requirement_key metadata.
+
+Source selection precedence:
+  1. An explicit --coordination-dir/--coord-dir value.
+  2. The current repository's .pi-en/coordination checkout when present.
+  3. PI_EN_COORD_DIR when no project-local checkout is present.
+
+The resolved requirements source is reported on stderr. Use
+--coordination-dir for temporary fixture checkouts or intentional non-local
+coordination sources.
 USAGE
 }
 
 project="${PI_EN_COORD_PROJECT:-pi-en}"
-coord_dir="${PI_EN_COORD_DIR:-}"
+coord_dir=""
+coord_dir_explicit=false
 output=""
 
 while [ "$#" -gt 0 ]; do
@@ -30,6 +40,7 @@ while [ "$#" -gt 0 ]; do
     --coordination-dir|--coord-dir)
       [ "$#" -ge 2 ] || { echo "missing value for $1" >&2; exit 2; }
       coord_dir="$2"
+      coord_dir_explicit=true
       shift 2
       ;;
     --output|-o)
@@ -49,16 +60,46 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "$coord_dir" ]; then
-  coord_dir=".pi-en/coordination"
+abs_path() {
+  local input="$1"
+  if [ -d "$input" ]; then
+    (cd "$input" && pwd -P)
+  else
+    local parent base
+    parent="$(dirname "$input")"
+    base="$(basename "$input")"
+    (cd "$parent" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$base") || printf '%s\n' "$input"
+  fi
+}
+
+local_coord=".pi-en/coordination"
+if [ "$coord_dir_explicit" = false ]; then
+  if [ -d "$local_coord" ]; then
+    if [ -n "${PI_EN_COORD_DIR:-}" ] && [ -d "${PI_EN_COORD_DIR:-}" ]; then
+      local_abs="$(abs_path "$local_coord")"
+      env_abs="$(abs_path "$PI_EN_COORD_DIR")"
+      if [ "$local_abs" != "$env_abs" ]; then
+        echo "warning: ignoring PI_EN_COORD_DIR=$PI_EN_COORD_DIR; using project-local $local_coord" >&2
+      fi
+    fi
+    coord_dir="$local_coord"
+  elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
+    coord_dir="$PI_EN_COORD_DIR"
+    echo "warning: using inherited PI_EN_COORD_DIR=$coord_dir; pass --coordination-dir to make non-local sources explicit" >&2
+  else
+    coord_dir="$local_coord"
+  fi
 fi
 
+requirements_dir="$coord_dir/requirements"
+echo "Using coordination requirements source: $requirements_dir" >&2
+
 requirements_dirs=()
-if [ -d "$coord_dir/requirements" ]; then
-  requirements_dirs+=("$coord_dir/requirements")
+if [ -d "$requirements_dir" ]; then
+  requirements_dirs+=("$requirements_dir")
 fi
 if [ "${#requirements_dirs[@]}" -eq 0 ]; then
-  echo "requirements directory not found: $coord_dir/requirements" >&2
+  echo "requirements directory not found: $requirements_dir" >&2
   exit 1
 fi
 
@@ -143,6 +184,11 @@ function compareSection(a, b) {
   const ar = sectionRank(a);
   const br = sectionRank(b);
   return ar[0] - br[0] || ar[1] - br[1] || ar[2].localeCompare(br[2]);
+}
+if (items.length === 0) {
+  console.error('no active renderable requirement items found in: ' + dirs.join(', '));
+  console.error('Add active requirement YAML items with requirement_key and body: |- fields, or pass --coordination-dir for the intended source.');
+  process.exit(1);
 }
 function renderBody(markdown) {
   return markdown

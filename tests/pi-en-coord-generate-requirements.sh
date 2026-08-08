@@ -71,6 +71,82 @@ if grep -F 'git history establishes' "$root_output" >/dev/null; then
   exit 1
 fi
 
+env_output="$tmpdir/env-precedence.md"
+env_stderr="$tmpdir/env-precedence.err"
+(
+  cd "$fixture_project"
+  PI_EN_COORD_DIR="$repo_root/.pi-en/coordination" \
+    "$repo_root/scripts/pi-en-coord-generate-requirements" \
+      --project 'External App' \
+      --output "$env_output" \
+      2>"$env_stderr"
+)
+grep -F 'Using coordination requirements source:' "$env_stderr" >/dev/null
+grep -F 'warning: ignoring PI_EN_COORD_DIR=' "$env_stderr" >/dev/null
+grep -F '#### EXT-001 Project-local fixture' "$env_output" >/dev/null
+if grep -F 'Nix development shell and Bubblewrap launcher' "$env_output" >/dev/null; then
+  echo "stale PI_EN_COORD_DIR overrode project-local coordination" >&2
+  exit 1
+fi
+
+explicit_coord="$tmpdir/explicit-coordination"
+mkdir -p "$explicit_coord/requirements"
+cat > "$explicit_coord/requirements/EXP-FRQ-20260618-000000-001.yaml" <<'EOF'
+schema: coordination-item/v1
+id: EXP-FRQ-20260618-000000-001
+type: functional-requirement
+requirement_key: EXP-001
+requirement_class: functional
+requirement_kind: detailed-behavior
+domain: test
+status: active
+project: explicit-app
+title: "EXP-001"
+render_order: 1
+render_section: "3.9 Explicit requirements"
+testable: no
+testability_note: fixture
+body: |-
+  #### EXP-001 Explicit fixture
+
+  Requirements must render from the explicit coordination directory.
+EOF
+explicit_output="$tmpdir/explicit-requirements.md"
+explicit_stderr="$tmpdir/explicit-requirements.err"
+(
+  cd "$fixture_project"
+  PI_EN_COORD_DIR="$repo_root/.pi-en/coordination" \
+    "$repo_root/scripts/pi-en-coord-generate-requirements" \
+      --project 'Explicit App' \
+      --coordination-dir "$explicit_coord" \
+      --output "$explicit_output" \
+      2>"$explicit_stderr"
+)
+grep -F "Using coordination requirements source: $explicit_coord/requirements" "$explicit_stderr" >/dev/null
+grep -F '#### EXP-001 Explicit fixture' "$explicit_output" >/dev/null
+if grep -F '#### EXT-001 Project-local fixture' "$explicit_output" >/dev/null; then
+  echo "explicit coordination directory did not override project-local source" >&2
+  exit 1
+fi
+
+empty_coord="$tmpdir/empty-coordination"
+mkdir -p "$empty_coord/requirements"
+empty_output="$tmpdir/empty-requirements.md"
+empty_stderr="$tmpdir/empty-requirements.err"
+if scripts/pi-en-coord-generate-requirements \
+  --coordination-dir "$empty_coord" \
+  --output "$empty_output" \
+  >"$tmpdir/empty-requirements.out" \
+  2>"$empty_stderr"; then
+  echo "empty requirements source should fail by default" >&2
+  exit 1
+fi
+grep -F 'no active renderable requirement items found' "$empty_stderr" >/dev/null
+if [ -e "$empty_output" ]; then
+  echo "empty requirements source should not write output" >&2
+  exit 1
+fi
+
 sample_requirement=".pi-en/coordination/requirements/PIEN-FRQ-20260612-210000-001.yaml"
 if [ ! -f "$sample_requirement" ]; then
   echo "missing canonical sample requirement: $sample_requirement" >&2
