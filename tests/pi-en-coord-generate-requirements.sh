@@ -129,6 +129,28 @@ if grep -F '#### EXT-001 Project-local fixture' "$explicit_output" >/dev/null; t
   exit 1
 fi
 
+no_local_project="$tmpdir/no-local-project"
+mkdir -p "$no_local_project"
+no_local_output="$tmpdir/no-local-requirements.md"
+no_local_stderr="$tmpdir/no-local-requirements.err"
+if (
+  cd "$no_local_project"
+  PI_EN_COORD_DIR="$explicit_coord" \
+    "$repo_root/scripts/pi-en-coord-generate-requirements" \
+      --project 'No Local App' \
+      --output "$no_local_output" \
+      2>"$no_local_stderr"
+); then
+  echo "inherited non-local PI_EN_COORD_DIR should require explicit override" >&2
+  exit 1
+fi
+grep -F 'refusing inherited PI_EN_COORD_DIR=' "$no_local_stderr" >/dev/null
+grep -F 'Pass --coordination-dir' "$no_local_stderr" >/dev/null
+if [ -e "$no_local_output" ]; then
+  echo "implicit inherited PI_EN_COORD_DIR should not write output" >&2
+  exit 1
+fi
+
 empty_coord="$tmpdir/empty-coordination"
 mkdir -p "$empty_coord/requirements"
 empty_output="$tmpdir/empty-requirements.md"

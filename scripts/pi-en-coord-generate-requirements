@@ -17,11 +17,11 @@ key is read from requirement_key metadata.
 Source selection precedence:
   1. An explicit --coordination-dir/--coord-dir value.
   2. The current repository's .pi-en/coordination checkout when present.
-  3. PI_EN_COORD_DIR when no project-local checkout is present.
+  3. Otherwise fail safely; inherited PI_EN_COORD_DIR is not used implicitly.
 
 The resolved requirements source is reported on stderr. Use
 --coordination-dir for temporary fixture checkouts or intentional non-local
-coordination sources.
+coordination sources, including paths from PI_EN_COORD_DIR.
 USAGE
 }
 
@@ -84,8 +84,9 @@ if [ "$coord_dir_explicit" = false ]; then
     fi
     coord_dir="$local_coord"
   elif [ -n "${PI_EN_COORD_DIR:-}" ]; then
-    coord_dir="$PI_EN_COORD_DIR"
-    echo "warning: using inherited PI_EN_COORD_DIR=$coord_dir; pass --coordination-dir to make non-local sources explicit" >&2
+    echo "error: refusing inherited PI_EN_COORD_DIR=$PI_EN_COORD_DIR without project-local $local_coord" >&2
+    echo "Pass --coordination-dir \"$PI_EN_COORD_DIR\" to make this non-local requirements source explicit." >&2
+    exit 1
   else
     coord_dir="$local_coord"
   fi
