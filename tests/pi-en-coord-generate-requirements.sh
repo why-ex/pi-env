@@ -11,6 +11,14 @@ trap cleanup EXIT
 stdout_file="$tmpdir/requirements.stdout.md"
 output_file="$tmpdir/requirements.output.md"
 
+help_output="$(scripts/pi-en-coord-generate-requirements --help)"
+grep -F 'render REQUIREMENTS.md from coordination items' <<<"$help_output" >/dev/null
+grep -F "Renders active requirement items from the coordination repository's root" <<<"$help_output" >/dev/null
+if grep -Fq 'designs' <<<"$help_output"; then
+  echo "requirements generator help should not describe designs as its source" >&2
+  exit 1
+fi
+
 scripts/pi-en-coord-generate-requirements > "$stdout_file"
 scripts/pi-en-coord-generate-requirements --output "$output_file"
 

@@ -8,6 +8,10 @@ tmpdir="$(mktemp -d)"
 cleanup() { rm -rf "$tmpdir"; }
 trap cleanup EXIT
 
+help_output="$(scripts/pi-en-coord-generate-requirements-coverage --help)"
+grep -F -- '--designs-dir DIR' <<<"$help_output" >/dev/null
+grep -F 'Design documents directory' <<<"$help_output" >/dev/null
+
 coord_dir="$tmpdir/coordination"
 designs_dir="$tmpdir/designs"
 req_dir="$coord_dir/requirements"

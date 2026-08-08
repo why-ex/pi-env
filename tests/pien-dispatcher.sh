@@ -217,6 +217,10 @@ assert_no_completion --runtime --runtime host --raw --
 assert_no_completion host --runtime host --raw --runtime h
 assert_completion host run --runtime h
 assert_completion --repo-id coord status --
+assert_completion --coordination-dir coord requirements generate --
+assert_completion --coord-dir coord requirements generate --
+assert_no_completion --designs-dir coord requirements generate --
+assert_completion --designs-dir coord requirements coverage --
 assert_no_completion --runtime coord --
 assert_no_completion --runtime sandbox --
 assert_no_completion --runtime recipe --
@@ -253,10 +257,26 @@ case "$coord_help_output" in
   *) echo "pien help coord did not list nested command equivalents" >&2; exit 1 ;;
 esac
 
+coord_requirements_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help coord requirements)"
+case "$coord_requirements_help_output" in
+  *'generate  Render active coordination requirement items'*'coverage  Generate requirements coverage report'* ) ;;
+  *) echo "pien help coord requirements did not describe source semantics" >&2; exit 1 ;;
+esac
+if grep -Fq 'Generate requirements from designs' <<<"$coord_requirements_help_output"; then
+  echo "pien help coord requirements still claims generation reads designs" >&2
+  exit 1
+fi
+
 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help coord status
 case "$(cat "$tmp_dir/log")" in
   $'cmd=pi-en-coord-status\narg=--help') ;;
   *) echo "pien help coord status did not dispatch to leaf help" >&2; exit 1 ;;
+esac
+
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help coord requirements generate
+case "$(cat "$tmp_dir/log")" in
+  $'cmd=pi-en-coord-generate-requirements\narg=--help') ;;
+  *) echo "pien help coord requirements generate did not dispatch to leaf help" >&2; exit 1 ;;
 esac
 
 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help run

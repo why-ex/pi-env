@@ -145,7 +145,7 @@ Usage:
   pien coord requirements coverage [args...]
 
 Commands:
-  generate  Generate requirements from designs (existing command: pi-en-coord-generate-requirements)
+  generate  Render active coordination requirement items (existing command: pi-en-coord-generate-requirements)
   coverage  Generate requirements coverage report (existing command: pi-en-coord-generate-requirements-coverage)
 USAGE
 }
@@ -392,7 +392,7 @@ _pien() {
       coord\ list) option_words="--coord-dir --repo-id --all-repos --show-repo --category --show-category --group-by-category --help -h" ;;
       coord\ show) option_words="--coord-dir --path --help -h" ;;
       coord\ rules\ upgrade) option_words="--coord-dir --agent-id --role --preview --no-pull --push --help -h" ;;
-      coord\ requirements\ generate) option_words="--project --coordination-dir --designs-dir --output -o --help -h" ;;
+      coord\ requirements\ generate) option_words="--project --coordination-dir --coord-dir --output -o --help -h" ;;
       coord\ requirements\ coverage) option_words="--project --coordination-dir --designs-dir --output -o --help -h" ;;
       coord\ claim|coord\ done|coord\ review|coord\ verify|coord\ close) option_words="--coord-dir --agent-id --role --result --message --no-pull --no-push --force --pass --fail --help -h" ;;
       coord\ bootstrap) option_words="--project-root --root --remote --project --project-key --repo-id --register-repo --implementation-remote --domain-generated-file --generated-requirements-docs --dir --agent-id --bare-only --print-only --dry-run --no-status --help -h" ;;
