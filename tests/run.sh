@@ -13,6 +13,7 @@ scripts=(
   tests/pi-en-coord-repo.sh
   tests/pi-en-coord-generate-requirements.sh
   tests/pi-en-coord-generate-requirements-coverage.sh
+  tests/pi-en-coordination-context.sh
   tests/flake-package-boundary.sh
   tests/design-covers.sh
   tests/pi-en-install-non-nix.sh

@@ -390,6 +390,79 @@ if [ "${PI_EN_BWRAP_IMPORT_COMMON:-1}" = "1" ] && [ -n "$common_agent_dir" ] && 
   done
 fi
 
+coordination_context_begin="<!-- pi-en generated coordination context: begin -->"
+coordination_context_end="<!-- pi-en generated coordination context: end -->"
+
+strip_generated_coordination_context() {
+  local context_file tmp_file
+  context_file="$1"
+  [ -f "$context_file" ] || return 0
+  tmp_file="$context_file.tmp.$$"
+  awk -v begin="$coordination_context_begin" -v end="$coordination_context_end" '
+    $0 == begin { skip = 1; next }
+    $0 == end { skip = 0; next }
+    !skip { print }
+  ' "$context_file" >"$tmp_file"
+  if [ -s "$tmp_file" ]; then
+    mv "$tmp_file" "$context_file"
+  else
+    rm -f "$context_file" "$tmp_file"
+  fi
+}
+
+refresh_generated_coordination_context() {
+  local context_file
+  context_file="$state_base/agent/AGENTS.md"
+  strip_generated_coordination_context "$context_file"
+
+  if [ -d "$host_coord_dir" ] && { [ -d "$host_coord_dir/.git" ] || [ -f "$host_coord_dir/AGENTS.md" ]; }; then
+    mkdir -p "$state_base/agent"
+    if [ -f "$context_file" ]; then
+      printf '\n' >>"$context_file"
+    fi
+    cat >>"$context_file" <<EOF_COORDINATION_CONTEXT
+$coordination_context_begin
+
+## Pi-en coordination context
+
+This Pi session is running through Pi-en with a project-local coordination
+checkout at \`$sandbox_coord_dir\` inside the sandbox. When the task involves
+coordination items, requirements, decisions, TODOs, generated requirements
+documents, reviews, verification, or shared agent state, read and follow
+\`$sandbox_coord_dir/AGENTS.md\` before changing coordination state.
+
+Prefer the sandbox-safe helper namespace over hand-editing coordination item
+structure or generated outputs when the helpers are available:
+
+- \`pien coord pull\` before reading or changing shared state.
+- \`pien coord status\`, \`pien coord list ...\`, and \`pien coord show ITEM\`
+  for inspection.
+- \`pien coord new\`, \`claim\`, \`done\`, \`review\`, \`verify\`, and \`close\`
+  for lifecycle transitions.
+- \`pien coord repo ...\` for implementation repo registry changes.
+- \`pien coord requirements generate --output REQUIREMENTS.md\` and
+  \`pien coord requirements coverage --output REQUIREMENTS_COVERAGE.md\` for
+  generated domain requirement views that this implementation repo commits.
+- \`pien coord lint --project-root .\` before reporting completion when
+  practical.
+
+For generated domain files, update the coordination requirement items first,
+then check the current repo manifest at
+\`\$PI_EN_COORD_DIR/repos/<repo_id>/REPO.md\`. Regenerate and commit only the
+paths listed in \`domain_generated_files\`; ask before touching generated files
+that are not declared for this implementation repo.
+
+If \`pien diagnostics\` reports \`coordination_helpers=unavailable\`, or if Git
+credentials needed for the coordination remote are not intentionally available
+inside the sandbox, report the limitation and ask for an outer-terminal or
+credential-enabled workflow instead of silently bypassing the helper-first
+protocol.
+
+$coordination_context_end
+EOF_COORDINATION_CONTEXT
+  fi
+}
+
 should_sync_git_config() {
   local target="$1"
   [ "${PI_EN_BWRAP_GIT_CONFIG_SYNC:-always}" = "always" ] || [ ! -e "$target" ]
@@ -637,6 +710,7 @@ if [ -d "$host_coord_dir" ]; then
 elif [ "$coord_dir_explicit" = "1" ]; then
   echo "pi-en-bwrap: warning: coordination dir not found for $coord_dir_source: $host_coord_dir" >&2
 fi
+refresh_generated_coordination_context
 
 shell_interactive=0
 bash_args_request_interactive() {

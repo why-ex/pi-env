@@ -1288,6 +1288,16 @@ discovers project resources from `/workspace`, giving a clean split:
   project;
 - `pi-en`: neutral runtime and isolation layer only.
 
+When a project-local coordination checkout exists at `.pi-en/coordination`,
+`pi-en-bwrap` also appends a small generated Pi-en coordination block to the
+sandbox copy of `/home/pi/.pi/agent/AGENTS.md`. That block is rewritten on each
+launch, points Pi at `/workspace/.pi-en/coordination/AGENTS.md`, and tells the
+agent to prefer sandbox-safe `pien coord ...` helpers for coordination item
+state, linting, repo registry changes, and generated requirement views. This
+makes coordination helper usage visible after updating Pi-en; external projects
+do not need to commit extra root `AGENTS.md` text just to teach Pi about the
+helper-first workflow.
+
 ## 9. Git config and credentials
 
 `pi-en-bwrap` imports the user's host Git config into the isolated sandbox home by

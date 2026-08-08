@@ -65,7 +65,31 @@ Role resources are imported only through the role selection path. This keeps
 side effects: role prompts, skills, and package additions apply when that role
 is active.
 
-## 4. Precedence and diagnostics
+## 4. Generated Pi-en coordination context
+
+When the selected project has the project-local coordination checkout at
+`.pi-en/coordination`, `pi-en-bwrap` appends an idempotent generated block to
+the sandbox copy of `/home/pi/.pi/agent/AGENTS.md`. This makes the coordination
+attachment visible to Pi at normal startup even though the coordination
+repository is nested below `.pi-en/` and its own `AGENTS.md` is not discovered
+by Pi's ancestor walk from `/workspace`.
+
+The generated block is deliberately small and operational. It tells the agent
+to read `/workspace/.pi-en/coordination/AGENTS.md`, prefer sandbox-safe
+`pien coord ...` helpers for lifecycle changes, linting, repo registry changes,
+and generated requirements views, and to respect `domain_generated_files` in
+the current repo manifest before regenerating committed domain outputs. The
+block is stripped and rewritten on each launch so stale coordination guidance is
+removed when a later run uses the same state directory for a project without a
+coordination checkout.
+
+This generated context is Pi-en runtime guidance, not user-owned common
+configuration. It must not overwrite common rules imported from the host/common
+agent directory, and it must not relax sandbox credential or filesystem policy:
+if helpers or Git credentials are unavailable inside the sandbox, the agent
+should report that limitation instead of bypassing the helper-first protocol.
+
+## 5. Precedence and diagnostics
 
 When the same resource name appears in multiple scopes, project-specific data
 wins over common data only in the documented project resource locations. The

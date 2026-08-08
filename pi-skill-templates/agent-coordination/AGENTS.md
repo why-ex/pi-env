@@ -7,6 +7,12 @@ registered repository namespace by path.
 
 ## Required rules
 
+When Pi is launched through Pi-en and coordination helpers are available,
+prefer the `pien coord ...` namespace, or the matching `pi-en-coord-*` helper,
+over hand-editing item lifecycle state, repo registry structure, lint checks,
+or generated coordination outputs. Use direct edits only for content the helpers
+do not manage, and keep the file format rules below intact.
+
 1. Treat this coordination repository as the only shared synchronization
    source for agent work state.
 2. Pull/rebase before inspecting, selecting, creating, claiming, blocking,
