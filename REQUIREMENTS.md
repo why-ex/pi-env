@@ -4,31 +4,6 @@ This document is generated reference output for requirements that have active co
 
 Each rendered requirement has a stable public key such as `UC-001`, `CMD-004`, or `FS-010`. Coordination items may have timestamped item IDs, but generated documentation preserves these stable keys as the public requirement identifiers.
 
-## 1. Product scope
-
-`pi-en` provides a reusable Nix development shell and Bubblewrap launcher for `pi-coding-agent`. Each run operates on one selected project root, and that root is mounted read-write at `/workspace` inside the sandbox. `/workspace` is the sandbox path name, not a host-side multi-project workspace manager.
-
-Coordination support must be implemented as an opt-in layer. It must not make default `pi-en` startup create, claim, mark done, review, verify, close, commit, push, or otherwise mutate coordination state automatically. Any coordination helper that changes shared state must be explicit, inspectable, and backed by normal Git commits.
-
-The project must keep two responsibilities separate:
-
-- **Nix devshell/runtime:** reproducibly provide command-line tools on `PATH`.
-- **Bubblewrap launcher:** isolate the `pi` process from the host filesystem and environment while still allowing controlled access to the selected project root and selected Pi state.
-
-## 2. History-derived intent
-
-The git history establishes these product requirements:
-
-1. The project started as a Nix flake providing a Pi agent runtime devshell.
-2. A startup command was added for running `pi` with an explicit tool allowlist and `--continue`.
-3. The launcher evolved from an ad-hoc script to flake-generated commands.
-4. The runtime became self-contained and no longer depends on a local `common-nix-runtime` flake.
-5. Bubblewrap isolation became the primary runtime boundary.
-6. Project-specific Pi sessions were intentionally exposed inside the sandbox, but only for the active project/path.
-7. The flake is intended for reuse by other projects through `lib.mkPiShell` or packages.
-8. Common Pi rules/skills/prompts/roles are imported from an external user-controlled directory, not shipped by `pi-en`.
-9. Host Git configuration is copied into the sandbox by default, but credentials, SSH keys, and host home are not mounted.
-
 ## 3. Functional requirements
 
 ### 3.1 Workflow-level functional requirements
@@ -2336,13 +2311,13 @@ Required fields for functional, quality, and constraint requirement items:
 
 ```yaml
 schema: coordination-item/v1
-id: PIEN-FRQ-YYYYMMDD-HHMMSS-NNN
+id: PROJ-FRQ-YYYYMMDD-HHMMSS-NNN
 type: functional-requirement
 requirement_key: CMD-004
 requirement_kind: detailed-behavior
 domain: commands
 status: active
-project: pi-en
+project: example-project
 title: "`pi-en-bwrap` default invocation"
 source_refs:
   - "REQUIREMENTS.md#CMD-004"

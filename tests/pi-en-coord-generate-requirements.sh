@@ -36,30 +36,40 @@ grep -F 'one renderable top-level `body: |-` block' "$stdout_file" >/dev/null
 fixture_project="$tmpdir/fixture-project"
 root_coord="$fixture_project/.pi-en/coordination"
 mkdir -p "$root_coord/requirements"
-cat > "$root_coord/requirements/PIEN-FRQ-20260618-000000-001.yaml" <<'EOF'
+cat > "$root_coord/requirements/EXT-FRQ-20260618-000000-001.yaml" <<'EOF'
 schema: coordination-item/v1
-id: PIEN-FRQ-20260618-000000-001
+id: EXT-FRQ-20260618-000000-001
 type: functional-requirement
-requirement_key: ROOT-001
+requirement_key: EXT-001
 requirement_class: functional
 requirement_kind: detailed-behavior
 domain: test
 status: active
-project: pi-en
-title: "ROOT-001"
+project: external-app
+title: "EXT-001"
 render_order: 1
 render_section: "3.9 Root layout requirements"
 testable: no
 testability_note: fixture
 body: |-
-  #### ROOT-001 Project-local fixture
+  #### EXT-001 Project-local fixture
 
   Requirements must render from the project-local .pi-en coordination requirements directory.
 EOF
 root_output="$tmpdir/root-requirements.md"
 scripts/pi-en-coord-generate-requirements \
+  --project 'External App' \
   --coordination-dir "$root_coord" > "$root_output"
-grep -F '#### ROOT-001 Project-local fixture' "$root_output" >/dev/null
+grep -F '# External App Requirements' "$root_output" >/dev/null
+grep -F '#### EXT-001 Project-local fixture' "$root_output" >/dev/null
+if grep -F 'Nix development shell and Bubblewrap launcher' "$root_output" >/dev/null; then
+  echo "external requirements output contains pi-en product scope" >&2
+  exit 1
+fi
+if grep -F 'git history establishes' "$root_output" >/dev/null; then
+  echo "external requirements output contains pi-en history framing" >&2
+  exit 1
+fi
 
 sample_requirement=".pi-en/coordination/requirements/PIEN-FRQ-20260612-210000-001.yaml"
 if [ ! -f "$sample_requirement" ]; then
