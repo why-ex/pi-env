@@ -90,6 +90,31 @@ runtime tools; use the Nix flake/devshell for a pinned runtime.
 USAGE
 }
 
+update_usage() {
+  cat <<'USAGE'
+pi-en-update - update a non-Nix Pi-en installation
+
+Usage:
+  pi-en-update [--prefix PREFIX] [--check-deps]
+  pi-en-update --url URL --ref REF [--prefix PREFIX]
+  pi-en-update [--ref REF] [--repo OWNER/REPO] [--artifact-url URL]
+  pi-en-update --help
+
+Options:
+  --prefix PREFIX      Installed prefix to update; default: $PREFIX or ~/.local
+  --check-deps         Check host tools before updating
+  --url URL            Git repository URL or local path to update from
+  --ref REF            Git branch, tag, COMMIT@BRANCH, or archive ref
+  --repo OWNER/REPO    GitHub repository for archive --ref; default: u2up/pi-en
+  --artifact-url URL   Archive URL or local archive path to fetch instead
+  -h, --help           Show this help
+
+Packaged pi-en-update applies explicit source options by delegating to the
+non-Nix installer. Non-Nix installed pi-en-update wrappers also reuse stored
+Git install origin metadata when source options are omitted.
+USAGE
+}
+
 prefix="${PREFIX:-$HOME/.local}"
 check_deps=0
 uninstall=0
@@ -98,6 +123,14 @@ git_url=""
 remote_repo="u2up/pi-en"
 artifact_url=""
 temp_source_dir=""
+prefer_remote="${PI_EN_INSTALL_PREFER_REMOTE:-0}"
+if [ "${PI_EN_INSTALL_UPDATE_WRAPPER:-0}" = "1" ]; then
+  for pi_en_arg in "$@"; do
+    case "$pi_en_arg" in
+      -h|--help) update_usage; exit 0 ;;
+    esac
+  done
+fi
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --prefix)
@@ -402,6 +435,8 @@ if [ "\$pi_en_has_url" = 0 ] && [ "\$pi_en_has_ref" = 0 ] && [ "\$pi_en_has_arch
   echo "pi-en-update: no usable stored Git install origin found; pass --url URL --ref REF" >&2
   exit 1
 fi
+export PI_EN_INSTALL_UPDATE_WRAPPER=1
+export PI_EN_INSTALL_PREFER_REMOTE=1
 exec /usr/bin/env bash "\$pi_en_share_dir/scripts/pi-en-install-non-nix" --prefix "\$pi_en_prefix" "\${pi_en_extra_args[@]}" "\$@"
 EOF
   chmod +x "$bin_dir/pi-en-update"
@@ -607,6 +642,10 @@ if [ -n "$git_url" ]; then
   source_kind="git"
   source_url="$(normalize_git_url "$git_url")"
   fetch_git_source_root
+elif [ "$prefer_remote" = "1" ] && { [ -n "$remote_ref" ] || [ -n "$artifact_url" ]; }; then
+  source_kind="remote"
+  source_url="$(remote_archive_url)"
+  fetch_source_root
 elif source_root="$(find_source_root)"; then
   :
 elif [ -n "$remote_ref" ] || [ -n "$artifact_url" ]; then

@@ -790,6 +790,8 @@ case "${1:-}" in
       echo "pien: installed prefixes can use pi-en-update to reuse stored install origin metadata." >&2
       exit 2
     fi
+    export PI_EN_INSTALL_UPDATE_WRAPPER=1
+    export PI_EN_INSTALL_PREFER_REMOTE=1
     exec_command pi-en-install-non-nix "$@"
     ;;
   uninstall)

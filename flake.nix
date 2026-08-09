@@ -149,6 +149,8 @@
           piEnUpdate = pkgs.writeShellScriptBin "pi-en-update" ''
             set -euo pipefail
             export PATH="${runtimePath}:''${PATH:-}"
+            export PI_EN_INSTALL_UPDATE_WRAPPER=1
+            export PI_EN_INSTALL_PREFER_REMOTE=1
             exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/pi-en-install-non-nix" "$@"
           '';
           piEnUninstall = pkgs.writeShellScriptBin "pi-en-uninstall" ''

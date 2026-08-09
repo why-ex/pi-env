@@ -67,6 +67,11 @@ cp -R "$repo_root/pi-skill-templates" "$archive_root/pi-skill-templates"
 archive="$workdir/pi-en-main.tar.gz"
 tar -czf "$archive" -C "$workdir/archive-root" pi-en-main
 
+"$local_prefix/bin/pi-en-update" --artifact-url "file://$archive" >/dev/null
+assert_file "$local_prefix/share/pi-en/install-origin"
+grep -qx 'source=archive' "$local_prefix/share/pi-en/install-origin"
+grep -qx "artifact_url=file://$archive" "$local_prefix/share/pi-en/install-origin"
+
 remote_script_dir="$workdir/remote-script"
 mkdir -p "$remote_script_dir"
 cp "$repo_root/scripts/pi-en-install-non-nix" "$remote_script_dir/pi-en-install-non-nix"

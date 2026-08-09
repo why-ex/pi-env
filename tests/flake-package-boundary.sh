@@ -57,6 +57,9 @@ assert.match(flake, /pien help coord requirements generate/);
 assert.match(flake, /pien roles serial --help/);
 assert.match(flake, /pien install --help/);
 assert.match(flake, /pien update --help/);
+assert.match(flake, /piEnUpdate = pkgs\.writeShellScriptBin "pi-en-update"/);
+assert.match(flake, /export PI_EN_INSTALL_UPDATE_WRAPPER=1/);
+assert.match(flake, /export PI_EN_INSTALL_PREFER_REMOTE=1/);
 assert.match(flake, /pien uninstall --help/);
 assert.match(bwrap, /--setenv PI_EN_INSIDE_SANDBOX 1/);
 
