@@ -91,6 +91,7 @@ with `pien coord`.
 | `pien coord requirements coverage [...]` | `pi-en-coord-generate-requirements-coverage [...]` |
 | `pien roles serial [options]` | `pi-en-serial-roles [options]` |
 | `pien install [options]` | `pi-en-install-non-nix [options]` |
+| `pien update [options]` | planned: `pi-en-update [options]` |
 | `pien uninstall [options]` | `pi-en-uninstall [options]` |
 | `pien completion bash` | print Bash completion for `pien` |
 
@@ -199,9 +200,9 @@ allow/block table:
   bootstrap remains constrained by the mounted filesystem and available Git
   authentication;
 - block runtime and process-boundary commands (`pien` default launch,
-  `run`, `--runtime ...`, `shell`, `sandbox`, `install`, and `uninstall`) with
-  diagnostics that tell users to run the equivalent command in the outer
-  terminal.
+  `run`, `--runtime ...`, `shell`, `sandbox`, `install`, planned `update`, and
+  `uninstall`) with diagnostics that tell users to run the equivalent command
+  in the outer terminal.
 
 The implementation should expose the safe `pien` entrypoint inside the
 sandbox only when the selected runtime or devshell supplies it. In Nix
@@ -216,6 +217,18 @@ policy. If SSH keys, credential helpers, or host-home files are unavailable,
 commands should fail clearly and documentation should recommend running the
 remote-authenticated operation from the outer terminal or using an existing
 explicit sandbox opt-in, not broad default mounts.
+
+## Planned update command
+
+The non-Nix installer extension tracked by INSTALL-003 should add
+`pi-en-update` as the low-level installed updater and may expose `pien update`
+as the canonical user-facing wrapper. `pi-en-update` should stay a thin wrapper
+around the installed `pi-en-install-non-nix`, parallel to `pi-en-uninstall`:
+it embeds the installed prefix, reads stored origin metadata, supplies stored
+`--url` and `--ref` values only when the caller did not provide replacements,
+and then execs the installer. The dispatcher must not reimplement update logic;
+it should only find and exec the low-level command and preserve source override
+arguments.
 
 ## Covers
 

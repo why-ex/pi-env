@@ -353,6 +353,24 @@ utilities must already be available for host-runtime use.
   (`scripts/`, `role-manager/`, and `pi-skill-templates/`); end users do not
   need a full Git clone for installation.
 
+- **Planned Git URL and update support.** The next installer extension is
+  tracked by INSTALL-003 / PIEN-FRQ-20260809-181859-001 and will prefer:
+
+  ```bash
+  pi-en-install-non-nix \
+    --url https://github.com/u2up/pi-en.git \
+    --ref v0.1.0 \
+    --prefix "$HOME/.local"
+  pi-en-update
+  ```
+
+  The planned `--url` option should accept local repositories and arbitrary Git
+  remotes, while `--ref` should accept branches, tags, or `COMMIT@BRANCH` pins.
+  Installed origin metadata should record the requested URL/ref and resolved
+  commit so `pi-en-update` can reuse them unless you pass replacements. Treat
+  arbitrary Git installs as trusted-code installs; mutable branches are useful
+  for latest/development workflows but are not reproducible.
+
 - **Upgrade or repair an existing local installation.** Re-run the same
   installer command with the same prefix. To remove installed files later, use
   the manifest-backed uninstall command:

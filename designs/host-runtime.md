@@ -14,6 +14,7 @@ explicit opt-in for users and teams that want it.
 | RUNTIME-005 | PIEN-FRQ-20260701-110512-001 |
 | INSTALL-001 | PIEN-FRQ-20260701-182129-001 |
 | INSTALL-002 | PIEN-FRQ-20260702-064100-001 |
+| INSTALL-003 | PIEN-FRQ-20260809-181859-001 |
 | PATH-006 | PIEN-FRQ-20260701-110514-001 |
 | FS-011 | PIEN-FRQ-20260701-110516-001 |
 | AGENT-017 | PIEN-FRQ-20260701-110518-001 |
@@ -82,6 +83,16 @@ the preferred stable channel.
 Uninstall should work from installed state, such as an installed uninstall
 command or manifest, without needing the original source checkout, network
 access, or temporary downloaded artifact.
+
+A later Git-source extension should prefer an explicit `--url URL --ref REF`
+mode for arbitrary local or remote Git repositories. This mode should resolve
+branches, tags, and `COMMIT@BRANCH` pins in a temporary clone or worktree, then
+install from the checked-out payload. Explicit Git source inputs must take
+precedence over local payload discovery so an installed updater does not
+mistake `$PREFIX/share/pi-en` for the desired source. The installer should
+record requested source inputs and the resolved commit in installed origin
+metadata, then generate a `pi-en-update` wrapper that reuses those stored
+values unless the user supplies replacements.
 
 This keeps the adoption path lightweight while preserving a clear boundary:
 non-Nix installs use host-provided tools and are not reproducible or pinned by

@@ -580,6 +580,65 @@ Acceptance criteria:
 - Existing local payload installation from a checkout or release archive
   remains compatible.
 
+#### INSTALL-003 Git URL install and update support
+
+The non-Nix installer should support explicit installation from arbitrary
+local or remote Git repositories, not only GitHub codeload archives. Users
+should be able to pass `--url URL --ref REF` where `URL` is a local checkout
+path, `file://` URL, HTTPS Git URL, SSH Git URL, or scp-like Git remote, and
+`REF` names one of these forms:
+
+- a branch name, such as `main`;
+- a tag name, such as `v0.2.0`;
+- a pinned commit constrained to a branch, expressed as `COMMIT@BRANCH`.
+
+Branch and tag names are mutable unless governed externally, so the installer
+must record the requested ref and the resolved commit in installed origin
+metadata. For `COMMIT@BRANCH`, the installer should verify that the commit is
+reachable from the named branch before installing. If an unqualified `REF`
+resolves to both a branch and a tag, the installer should fail with an
+ambiguity diagnostic rather than guessing.
+
+Explicit Git source inputs should take precedence over local payload
+discovery. This allows an installed `pi-en-update` wrapper, which runs from
+`$PREFIX/share/pi-en/scripts`, to fetch the stored origin instead of
+accidentally reinstalling the already-installed payload as if it were a local
+source checkout.
+
+The installer should keep the existing archive/bootstrap path for backwards
+compatibility, including `--repo OWNER/REPO` and `--artifact-url URL`, but
+`--url URL --ref REF` should be the preferred future interface for arbitrary
+repositories and updater-driven installs.
+
+Installed state should include enough origin data for a generated
+`pi-en-update` wrapper to rerun the installer without requiring the user to
+remember the original URL and ref. The wrapper should reuse stored values
+when the caller does not pass replacements and should allow explicit
+`--url`, `--ref`, or archive override options for one-off migrations.
+
+Acceptance criteria:
+
+- `pi-en-install-non-nix --url URL --ref REF --prefix PREFIX` installs from
+  local Git repositories and from remote Git URLs using a temporary clone or
+  worktree when needed.
+- Plain `REF` values resolve safely as branch or tag names, with ambiguous
+  branch/tag names rejected unless the user chooses a non-ambiguous input.
+- `COMMIT@BRANCH` installs exactly the requested commit only after verifying
+  it is reachable from the requested branch.
+- Installed origin metadata records source type, normalized URL, requested
+  ref, resolved ref type, resolved commit, and any compatibility archive
+  inputs that were used.
+- Re-running installation through `pi-en-update` reuses stored URL/ref values
+  when the caller does not pass replacements and writes refreshed origin
+  metadata after a successful install.
+- The install manifest lists origin metadata and the generated update wrapper
+  so uninstall removes both from installed state.
+- Documentation distinguishes trusted-code installation, mutable branch
+  updates, pinned `COMMIT@BRANCH` installs, archive compatibility, and the
+  host-runtime/non-pinned nature of non-Nix installs.
+- Existing direct-checkout local installs, GitHub archive bootstrap installs,
+  manifest-backed uninstall, and Nix workflows remain compatible.
+
 ### 3.4 Command requirements
 
 #### CMD-001 `pi-en-bwrap` existence

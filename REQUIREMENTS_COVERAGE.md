@@ -4,8 +4,8 @@ This file is generated from active requirement items and `designs/*.md`.
 
 ## Summary
 
-- Requirements: 174
-- Covered by design: 174
+- Requirements: 175
+- Covered by design: 175
 - Not covered by design: 0
 
 ## Coverage by requirement
@@ -57,6 +57,7 @@ This file is generated from active requirement items and `designs/*.md`.
 | INSTALL-001 | PIEN-FRQ-20260701-182129-001 | designs/host-runtime.md |
 | RUNTIME-006 | PIEN-FRQ-20260720-094621-001 | designs/nix-runtime.md |
 | INSTALL-002 | PIEN-FRQ-20260702-064100-001 | designs/host-runtime.md |
+| INSTALL-003 | PIEN-FRQ-20260809-181859-001 | designs/host-runtime.md |
 | CMD-001 | PIEN-FRQ-20260612-210000-032 | designs/launcher-layering.md |
 | CMD-002 | PIEN-FRQ-20260612-210000-033 | designs/launcher-layering.md |
 | CMD-003 | PIEN-FRQ-20260612-210000-034 | designs/launcher-layering.md |
