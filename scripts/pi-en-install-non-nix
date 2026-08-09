@@ -62,6 +62,7 @@ pi-en-install-non-nix - install pi-en for host-runtime use without Nix
 
 Usage:
   scripts/pi-en-install-non-nix [--prefix PREFIX] [--check-deps]
+  scripts/pi-en-install-non-nix --url URL --ref REF [--prefix PREFIX]
   scripts/pi-en-install-non-nix [--ref REF] [--repo OWNER/REPO] [--artifact-url URL]
   scripts/pi-en-install-non-nix --uninstall [--prefix PREFIX]
   scripts/pi-en-install-non-nix --help
@@ -69,9 +70,13 @@ Usage:
 Options:
   --prefix PREFIX      Install prefix; default: $PREFIX or ~/.local
   --check-deps         Check host tools before installing
-  --ref REF            Fetch and install a repository archive for REF when no
-                       local payload is available; --ref main is latest/dev
-  --repo OWNER/REPO    GitHub repository for --ref; default: u2up/pi-en
+  --url URL            Git repository URL or local path to install from; used
+                       with --ref and resolved before local payload discovery
+  --ref REF            With --url, check out a branch, tag, or COMMIT@BRANCH.
+                       Without --url, fetch and install a repository archive
+                       when no local payload is available; --ref main is
+                       latest/dev
+  --repo OWNER/REPO    GitHub repository for archive --ref; default: u2up/pi-en
   --artifact-url URL   Archive URL or local archive path to fetch instead of
                        constructing a GitHub archive URL
   --uninstall          Remove files listed in the installed manifest
@@ -88,6 +93,7 @@ prefix="${PREFIX:-$HOME/.local}"
 check_deps=0
 uninstall=0
 remote_ref=""
+git_url=""
 remote_repo="u2up/pi-en"
 artifact_url=""
 temp_source_dir=""
@@ -104,6 +110,15 @@ while [ "$#" -gt 0 ]; do
       ;;
     --check-deps)
       check_deps=1
+      shift
+      ;;
+    --url)
+      [ "$#" -ge 2 ] || { echo "pi-en-install-non-nix: --url requires a value" >&2; exit 2; }
+      git_url="$2"
+      shift 2
+      ;;
+    --url=*)
+      git_url="${1#--url=}"
       shift
       ;;
     --ref)
@@ -310,6 +325,93 @@ cleanup_temp_source() {
   [ -z "$temp_source_dir" ] || rm -rf "$temp_source_dir"
 }
 
+normalize_git_url() {
+  local url="$1" local_path
+  case "$url" in
+    file://*)
+      local_path="${url#file://}"
+      if [ -d "$local_path" ]; then
+        printf 'file://%s\n' "$(cd "$local_path" && pwd -P)"
+      else
+        printf '%s\n' "$url"
+      fi
+      ;;
+    /*|./*|../*)
+      if [ -d "$url" ]; then
+        printf '%s\n' "$(cd "$url" && pwd -P)"
+      else
+        printf '%s\n' "$url"
+      fi
+      ;;
+    *) printf '%s\n' "$url" ;;
+  esac
+}
+
+ls_remote_ref_exists() {
+  local kind="$1" url="$2" ref="$3" pattern
+  case "$kind" in
+    heads) pattern="refs/heads/$ref" ;;
+    tags) pattern="refs/tags/$ref" ;;
+    *) return 2 ;;
+  esac
+  git ls-remote --exit-code "$url" "$pattern" >/dev/null 2>&1
+}
+
+fetch_git_source_root() {
+  local normalized_url ref branch commit branch_exists=0 tag_exists=0 checkout_ref
+  if [ -z "$remote_ref" ]; then
+    echo "pi-en-install-non-nix: --url requires --ref" >&2
+    return 2
+  fi
+  normalized_url="$(normalize_git_url "$git_url")"
+  temp_source_dir="$(mktemp -d)"
+  trap cleanup_temp_source EXIT
+  git init -q "$temp_source_dir/repo"
+  git -C "$temp_source_dir/repo" remote add origin "$normalized_url"
+
+  ref="$remote_ref"
+  if [[ "$ref" == *@* ]]; then
+    commit="${ref%%@*}"
+    branch="${ref#*@}"
+    if [ -z "$commit" ] || [ -z "$branch" ]; then
+      echo "pi-en-install-non-nix: --ref COMMIT@BRANCH requires both parts" >&2
+      return 2
+    fi
+    git -C "$temp_source_dir/repo" fetch --no-tags origin \
+      "+refs/heads/$branch:refs/remotes/origin/pi-en-install-branch" >/dev/null
+    if ! git -C "$temp_source_dir/repo" cat-file -e "$commit^{commit}" 2>/dev/null; then
+      echo "pi-en-install-non-nix: commit not found after fetching branch: $commit" >&2
+      return 1
+    fi
+    if ! git -C "$temp_source_dir/repo" merge-base --is-ancestor "$commit" refs/remotes/origin/pi-en-install-branch; then
+      echo "pi-en-install-non-nix: commit $commit is not reachable from branch $branch" >&2
+      return 1
+    fi
+    checkout_ref="$commit"
+  else
+    if ls_remote_ref_exists heads "$normalized_url" "$ref"; then branch_exists=1; fi
+    if ls_remote_ref_exists tags "$normalized_url" "$ref"; then tag_exists=1; fi
+    if [ "$branch_exists" = "1" ] && [ "$tag_exists" = "1" ]; then
+      echo "pi-en-install-non-nix: ambiguous ref '$ref' exists as both branch and tag; use COMMIT@BRANCH or rename the ref" >&2
+      return 1
+    elif [ "$branch_exists" = "1" ]; then
+      git -C "$temp_source_dir/repo" fetch --no-tags origin \
+        "+refs/heads/$ref:refs/remotes/origin/pi-en-install-ref" >/dev/null
+      checkout_ref="refs/remotes/origin/pi-en-install-ref"
+    elif [ "$tag_exists" = "1" ]; then
+      git -C "$temp_source_dir/repo" fetch --no-tags origin \
+        "+refs/tags/$ref:refs/tags/pi-en-install-ref" >/dev/null
+      checkout_ref="refs/tags/pi-en-install-ref"
+    else
+      echo "pi-en-install-non-nix: ref '$ref' was not found as a branch or tag in $normalized_url" >&2
+      return 1
+    fi
+  fi
+
+  git -C "$temp_source_dir/repo" -c advice.detachedHead=false checkout -q --detach "$checkout_ref"
+  source_root="$temp_source_dir/repo"
+}
+
 remote_archive_url() {
   if [ -n "$artifact_url" ]; then
     printf '%s\n' "$artifact_url"
@@ -385,7 +487,11 @@ fi
 
 source_kind="local"
 source_url=""
-if source_root="$(find_source_root)"; then
+if [ -n "$git_url" ]; then
+  source_kind="git"
+  source_url="$(normalize_git_url "$git_url")"
+  fetch_git_source_root
+elif source_root="$(find_source_root)"; then
   :
 elif [ -n "$remote_ref" ] || [ -n "$artifact_url" ]; then
   source_kind="remote"
