@@ -37,6 +37,10 @@ assert_file "$local_prefix/bin/pi-en-bwrap"
 assert_file "$local_prefix/bin/pi-en-serial-roles"
 assert_file "$local_prefix/bin/pi-en-install-non-nix"
 assert_file "$local_prefix/bin/pi-en-update"
+"$local_prefix/bin/pi-en-update" --help | grep -q 'pi-en-update - update a non-Nix Pi-en installation'
+"$local_prefix/bin/pi-en-update" --help | grep -q -- '--artifact-url URL'
+PI_EN_INSIDE_SANDBOX=0 "$local_prefix/bin/pien" update --help | grep -q 'pi-en-update - update a non-Nix Pi-en installation'
+PI_EN_INSIDE_SANDBOX=0 "$local_prefix/bin/pien" update --help | grep -q -- '--url URL'
 assert_file "$local_prefix/bin/pi-en-coord-repo"
 assert_file "$local_prefix/share/pi-en/install-manifest"
 assert_file "$local_prefix/share/bash-completion/completions/pien"
