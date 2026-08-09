@@ -56,6 +56,7 @@ assert.match(flake, /pien coord requirements coverage --help/);
 assert.match(flake, /pien help coord requirements generate/);
 assert.match(flake, /pien roles serial --help/);
 assert.match(flake, /pien install --help/);
+assert.match(flake, /pien update --help/);
 assert.match(flake, /pien uninstall --help/);
 assert.match(bwrap, /--setenv PI_EN_INSIDE_SANDBOX 1/);
 

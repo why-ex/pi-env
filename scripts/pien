@@ -21,6 +21,7 @@ Usage:
   pien roles serial [args...]
   pien recipe flake-agent-shell
   pien install [args...]
+  pien update [args...]
   pien uninstall [args...]
   pien completion bash
   pien diagnostics
@@ -36,6 +37,7 @@ Commands:
   roles serial        Serial role orchestrator (existing command: pi-en-serial-roles)
   recipe              Print non-mutating integration recipes
   install             Non-Nix installer (existing command: pi-en-install-non-nix)
+  update              Non-Nix updater (existing command: pi-en-update)
   uninstall           Non-Nix uninstaller (existing command: pi-en-uninstall)
   completion bash     Print Bash completion for pien
   diagnostics         Print sandbox/runtime diagnostics without launching Pi
@@ -52,7 +54,7 @@ and PI_EN_NIX_DEVSHELL. CLI options win over environment values. These
 launcher options are passed to pi-en or pi-en-shell. For raw mode, put
 launcher options before --raw (for example, 'pien --runtime host --raw -- ...');
 the 'pien raw' namespace remains a thin 'pi-en --raw' dispatcher. Coordination,
-recipe, install, uninstall, and sandbox commands have separate option sets.
+recipe, install, update, uninstall, and sandbox commands have separate option sets.
 
 Use 'pien -- ...' to pass a first Pi argument that would otherwise be
 parsed as a pien subcommand.
@@ -302,6 +304,32 @@ pien --help
 RECIPE
 }
 
+update_help() {
+  cat <<'USAGE'
+pien update - update a non-Nix Pi-en installation
+
+Usage:
+  pien update [--prefix PREFIX] [--check-deps]
+  pien update --url URL --ref REF [--prefix PREFIX]
+  pien update [--ref REF] [--repo OWNER/REPO] [--artifact-url URL]
+  pien update --help
+
+Options:
+  --prefix PREFIX      Installed prefix to update; default: $PREFIX or ~/.local
+  --check-deps         Check host tools before updating
+  --url URL            Git repository URL or local path to install from
+  --ref REF            Branch, tag, or COMMIT@BRANCH to install
+  --repo OWNER/REPO    GitHub repository for archive --ref
+  --artifact-url URL   Archive URL or local archive path to fetch
+  -h, --help           Show this help
+
+When pi-en-update is installed, this command delegates to it. From a direct
+checkout, pass explicit source arguments such as --url with --ref, --ref for an
+archive install, or --artifact-url; pien then delegates to pi-en-install-non-nix
+with those arguments.
+USAGE
+}
+
 completion_help() {
   cat <<'USAGE'
 pien completion - shell completion commands
@@ -370,7 +398,7 @@ _pien() {
       command_path="recipe"
       [ "${words[2]:-}" = "flake-agent-shell" ] && command_path="recipe flake-agent-shell"
       ;;
-    install|uninstall|completion|diagnostics|version|help) command_path="${words[1]}" ;;
+    install|update|uninstall|completion|diagnostics|version|help) command_path="${words[1]}" ;;
   esac
 
   if [ "$prev" = "--runtime" ]; then
@@ -407,7 +435,8 @@ _pien() {
       raw) option_words="--help -h" ;;
       roles\ serial) option_words="--role --limit --coord-dir --help -h" ;;
       recipe\ flake-agent-shell) option_words="--help -h" ;;
-      install) option_words="--prefix --check-deps --ref --repo --artifact-url --help -h" ;;
+      install) option_words="--prefix --check-deps --url --ref --repo --artifact-url --help -h" ;;
+      update) option_words="--prefix --check-deps --url --ref --repo --artifact-url --help -h" ;;
       uninstall) option_words="--prefix --help -h" ;;
       *) option_words="--help -h" ;;
     esac
@@ -416,7 +445,7 @@ _pien() {
   fi
 
   case "$cword" in
-    1) COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version help completion") ); return 0 ;;
+    1) COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install update uninstall diagnostics version help completion") ); return 0 ;;
   esac
 
   case "${words[1]:-}" in
@@ -441,7 +470,7 @@ _pien() {
       ;;
     help)
       case "${words[2]:-}" in
-        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install uninstall diagnostics version completion") ) ;;
+        "") [ "$cword" -eq 2 ] && COMPREPLY=( $(_pien_comp_words "run raw shell sandbox coord roles recipe install update uninstall diagnostics version completion") ) ;;
         coord)
           case "${words[3]:-}" in
             "") [ "$cword" -eq 3 ] && COMPREPLY=( $(_pien_comp_words "bootstrap init clone status list show new claim done review verify close pull push lint repo rules requirements") ) ;;
@@ -570,6 +599,13 @@ help_dispatch() {
     shell) run_command_help pi-en-shell ;;
     sandbox) run_command_help pi-en-bwrap ;;
     install) run_command_help pi-en-install-non-nix ;;
+    update)
+      if command -v pi-en-update >/dev/null 2>&1; then
+        run_command_help pi-en-update
+      else
+        update_help
+      fi
+      ;;
     diagnostics) diagnostics_output ;;
     version) version_output ;;
     uninstall)
@@ -729,6 +765,30 @@ case "${1:-}" in
     shift
     if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
       sandbox_outer_only install "$@"
+    fi
+    exec_command pi-en-install-non-nix "$@"
+    ;;
+  update)
+    shift
+    if [ "${PI_EN_INSIDE_SANDBOX:-0}" = "1" ]; then
+      sandbox_outer_only update "$@"
+    fi
+    case "${1:-}" in
+      -h|--help) help_dispatch update; exit 0 ;;
+    esac
+    if command -v pi-en-update >/dev/null 2>&1; then
+      exec_command pi-en-update "$@"
+    fi
+    has_source_arg=0
+    for arg in "$@"; do
+      case "$arg" in
+        --url|--url=*|--ref|--ref=*|--repo|--repo=*|--artifact-url|--artifact-url=*) has_source_arg=1 ;;
+      esac
+    done
+    if [ "$has_source_arg" = "0" ]; then
+      echo "pien: update from a direct checkout requires --url/--ref, --ref, or --artifact-url" >&2
+      echo "pien: installed prefixes can use pi-en-update to reuse stored install origin metadata." >&2
+      exit 2
     fi
     exec_command pi-en-install-non-nix "$@"
     ;;

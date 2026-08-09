@@ -36,7 +36,7 @@ for name in \
   pi-en-coord-push pi-en-coord-lint pi-en-coord-repo \
   pi-en-coord-upgrade-rules pi-en-coord-generate-requirements \
   pi-en-coord-generate-requirements-coverage pi-en-serial-roles \
-  pi-en-install-non-nix pi-en-uninstall; do
+  pi-en-install-non-nix pi-en-update pi-en-uninstall; do
   make_stub "$name"
 done
 
@@ -72,7 +72,10 @@ run_case $'cmd=pi-en-coord-generate-requirements\narg=--repo-id\narg=pi-en' coor
 run_case $'cmd=pi-en-coord-generate-requirements-coverage' coord requirements coverage
 run_case $'cmd=pi-en-serial-roles\narg=--role\narg=developer' roles serial --role developer
 run_case $'cmd=pi-en-install-non-nix\narg=--prefix\narg=/tmp/pien' install --prefix /tmp/pien
+run_case $'cmd=pi-en-update\narg=--prefix\narg=/tmp/pien' update --prefix /tmp/pien
 run_case $'cmd=pi-en-uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
+rm "$tmp_dir/bin/pi-en-update"
+run_case $'cmd=pi-en-install-non-nix\narg=--url\narg=https://example.invalid/pi-en.git\narg=--ref\narg=main\narg=--prefix\narg=/tmp/pien' update --url https://example.invalid/pi-en.git --ref main --prefix /tmp/pien
 rm "$tmp_dir/bin/pi-en-uninstall"
 run_case $'cmd=pi-en-install-non-nix\narg=--uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
 
@@ -114,6 +117,8 @@ run_sandbox_outer_only_case shell -- -lc true
 run_sandbox_outer_only_case sandbox --help
 run_sandbox_outer_only_case roles serial --role developer
 run_sandbox_outer_only_case install --prefix /tmp/pien
+run_sandbox_outer_only_case update --help
+run_sandbox_outer_only_case update --prefix /tmp/pien
 run_sandbox_outer_only_case uninstall --prefix /tmp/pien
 
 run_sandbox_safe_no_dispatch_case() {
@@ -207,6 +212,7 @@ assert_completion coverage coord requirements c
 assert_completion serial roles s
 assert_completion recipe r
 assert_completion flake-agent-shell recipe f
+assert_completion update u
 assert_completion --runtime --
 assert_completion --runtime run --
 assert_completion --runtime shell --
@@ -216,6 +222,11 @@ assert_no_completion --runtime --raw --
 assert_no_completion --runtime --runtime host --raw --
 assert_no_completion host --runtime host --raw --runtime h
 assert_completion host run --runtime h
+assert_completion --url update --
+assert_completion --ref update --
+assert_completion --prefix update --
+assert_completion --artifact-url update --
+assert_completion --check-deps update --
 assert_completion --repo-id coord status --
 assert_completion --coordination-dir coord requirements generate --
 assert_completion --coord-dir coord requirements generate --
@@ -244,6 +255,7 @@ for snippet in \
   'CLI options win' \
   'pien raw' \
   'pien diagnostics' \
+  'pien update [args...]' \
   'pien version'; do
   if ! grep -Fq -- "$snippet" <<<"$help_output"; then
     echo "pien help missed command, recipe, or runtime launcher guidance: $snippet" >&2
@@ -278,6 +290,20 @@ case "$(cat "$tmp_dir/log")" in
   $'cmd=pi-en-coord-generate-requirements\narg=--help') ;;
   *) echo "pien help coord requirements generate did not dispatch to leaf help" >&2; exit 1 ;;
 esac
+
+make_stub pi-en-update
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help update
+case "$(cat "$tmp_dir/log")" in
+  $'cmd=pi-en-update\narg=--help') ;;
+  *) echo "pien help update did not delegate to pi-en-update help" >&2; exit 1 ;;
+esac
+rm "$tmp_dir/bin/pi-en-update"
+update_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help update)"
+case "$update_help_output" in
+  *'pien update - update a non-Nix Pi-en installation'*'--url URL'*'--artifact-url URL'* ) ;;
+  *) echo "pien help update fallback did not describe update source options" >&2; exit 1 ;;
+esac
+make_stub pi-en-update
 
 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help run
 case "$(cat "$tmp_dir/log")" in

@@ -146,6 +146,11 @@
             export PATH="${runtimePath}:''${PATH:-}"
             exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/pi-en-install-non-nix" "$@"
           '';
+          piEnUpdate = pkgs.writeShellScriptBin "pi-en-update" ''
+            set -euo pipefail
+            export PATH="${runtimePath}:''${PATH:-}"
+            exec ${pkgs.bash}/bin/bash "${support}/share/pi-en/scripts/pi-en-install-non-nix" "$@"
+          '';
           piEnUninstall = pkgs.writeShellScriptBin "pi-en-uninstall" ''
             set -euo pipefail
             export PATH="${runtimePath}:''${PATH:-}"
@@ -153,7 +158,7 @@
           '';
         in
         {
-          inherit installNonNix piEnUninstall;
+          inherit installNonNix piEnUpdate piEnUninstall;
         };
 
       mkAgentCoordCommand = pkgs: name:
@@ -352,6 +357,7 @@
             pien sandbox --help >/dev/null
             pien completion bash >/dev/null
             pien install --help >/dev/null
+            pien update --help >/dev/null
             pien uninstall --help >/dev/null
             if pien coord status --help >/dev/null 2>&1; then
               echo "pien coord leaked into pi-core" >&2
@@ -396,6 +402,7 @@
             pien roles serial --help >/dev/null
             pien completion bash >/dev/null
             pien install --help >/dev/null
+            pien update --help >/dev/null
             pien uninstall --help >/dev/null
             pi-en-shell --help >/dev/null
             pi-en-coord-status --help >/dev/null

@@ -353,8 +353,9 @@ utilities must already be available for host-runtime use.
   (`scripts/`, `role-manager/`, and `pi-skill-templates/`); end users do not
   need a full Git clone for installation.
 
-- **Planned Git URL and update support.** The next installer extension is
-  tracked by INSTALL-003 / PIEN-FRQ-20260809-181859-001 and will prefer:
+- **Install from a Git URL and update later.** `--url` accepts local
+  repositories and arbitrary Git remotes, while `--ref` accepts branches, tags,
+  or `COMMIT@BRANCH` pins:
 
   ```bash
   pi-en-install-non-nix \
@@ -362,18 +363,22 @@ utilities must already be available for host-runtime use.
     --ref v0.1.0 \
     --prefix "$HOME/.local"
   pi-en-update
+  # or through the canonical dispatcher:
+  pien update
   ```
 
-  The planned `--url` option should accept local repositories and arbitrary Git
-  remotes, while `--ref` should accept branches, tags, or `COMMIT@BRANCH` pins.
-  Installed origin metadata should record the requested URL/ref and resolved
-  commit so `pi-en-update` can reuse them unless you pass replacements. Treat
+  Installed origin metadata records the requested URL/ref and resolved commit so
+  `pi-en-update` and `pien update` can reuse them unless you pass replacement
+  source options such as `--url`, `--ref`, `--repo`, or `--artifact-url`. Treat
   arbitrary Git installs as trusted-code installs; mutable branches are useful
   for latest/development workflows but are not reproducible.
 
 - **Upgrade or repair an existing local installation.** Re-run the same
-  installer command with the same prefix. To remove installed files later, use
-  the manifest-backed uninstall command:
+  installer command with the same prefix, or run `pien update --prefix PREFIX`
+  from the outer terminal. From a direct checkout where `pi-en-update` is not
+  installed, pass explicit source options, for example `pien update --url
+  https://github.com/u2up/pi-en.git --ref main --prefix "$HOME/.local"`. To
+  remove installed files later, use the manifest-backed uninstall command:
 
   ```bash
   pi-en-uninstall
@@ -826,7 +831,8 @@ nix flake update pi-en
 `pien` is the canonical user-facing command namespace. Lower-level/debug
 entrypoints use `pi-en-*` names: `pi-en`, `pi-en-shell`, `pi-en-bwrap`,
 `pi-en-bootstrap-coordination`, `pi-en-coord-*`, `pi-en-serial-roles`,
-`pi-en-install-non-nix`, and `pi-en-uninstall`. The old non-prefixed names
+`pi-en-install-non-nix`, `pi-en-update`, and `pi-en-uninstall`. The old
+non-prefixed names
 are intentionally not compatibility entrypoints. Operational state paths such
 as `.pi-en/` and environment variables such as `PI_EN_RUNTIME` and
 `PI_EN_COORD_DIR` keep their existing names.
@@ -885,6 +891,7 @@ installation, or start a new Pi sandbox:
 | `pien shell ...` | Open a runtime/sandbox shell from outside Pi with `pien shell ...`. |
 | `pien sandbox ...`, `pien sandbox shell ...` | Start the lower-level sandbox from outside Pi with the same command. |
 | `pien install ...` | Install from the outer terminal, for example `pien install --prefix ~/.local`. |
+| `pien update ...` | Update from the outer terminal with `pien update ...`. |
 | `pien uninstall ...` | Uninstall from the outer terminal with `pien uninstall ...`. |
 | `pien roles serial ...` | Run serial orchestration from the outer terminal; `pien roles serial --help` is allowed inside Pi for guidance. |
 
@@ -934,6 +941,7 @@ humans and agents see consistent operational advice.
 | `pien coord requirements coverage [...]` | `pi-en-coord-generate-requirements-coverage [...]` |
 | `pien roles serial [options]` | `pi-en-serial-roles [options]` |
 | `pien install [options]` | `pi-en-install-non-nix [options]` |
+| `pien update [options]` | `pi-en-update [options]`, or `pi-en-install-non-nix [options]` from a direct checkout with explicit source options |
 | `pien uninstall [options]` | `pi-en-uninstall [options]` |
 
 #### Help and completion
@@ -956,7 +964,9 @@ source <(pien completion bash)
 ```
 
 Completion covers top-level commands, nested `coord`, `roles`, `sandbox`, and
-`completion` subcommands, and known options for representative leaf commands.
+`completion` subcommands, and known options for representative leaf commands,
+including update source options such as `--url`, `--ref`, `--prefix`,
+`--artifact-url`, and `--check-deps`.
 
 ### Lower-level entrypoints
 
