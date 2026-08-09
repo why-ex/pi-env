@@ -27,6 +27,7 @@ command_names=(
   pi-en-coord-upgrade-rules
   pi-en-serial-roles
   pi-en-install-non-nix
+  pi-en-update
   pi-en-uninstall
 )
 
@@ -321,6 +322,63 @@ EOF
   chmod +x "$bin_dir/pi-en-uninstall"
 }
 
+install_update_wrapper() {
+  local prefix_q share_dir_q
+  prefix_q="$(shell_quote "$prefix")"
+  share_dir_q="$(shell_quote "$share_dir")"
+  cat > "$bin_dir/pi-en-update" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+pi_en_prefix=$prefix_q
+pi_en_share_dir=$share_dir_q
+pi_en_origin_file="\$pi_en_share_dir/install-origin"
+pi_en_origin_value() {
+  local key="\$1" line
+  [ -f "\$pi_en_origin_file" ] || return 1
+  while IFS= read -r line || [ -n "\$line" ]; do
+    case "\$line" in
+      "\$key="*) printf '%s\\n' "\${line#*=}"; return 0 ;;
+    esac
+  done < "\$pi_en_origin_file"
+  return 1
+}
+pi_en_has_url=0
+pi_en_has_ref=0
+pi_en_has_archive_source=0
+for pi_en_arg in "\$@"; do
+  case "\$pi_en_arg" in
+    --url|--url=*) pi_en_has_url=1 ;;
+    --ref|--ref=*) pi_en_has_ref=1 ;;
+    --artifact-url|--artifact-url=*|--repo|--repo=*) pi_en_has_archive_source=1 ;;
+  esac
+done
+pi_en_extra_args=()
+if [ "\$pi_en_has_archive_source" = 0 ]; then
+  pi_en_origin_source="\$(pi_en_origin_value source || true)"
+  if [ "\$pi_en_origin_source" = git ]; then
+    if [ "\$pi_en_has_url" = 0 ]; then
+      pi_en_origin_url="\$(pi_en_origin_value url || true)"
+      if [ -n "\$pi_en_origin_url" ]; then
+        pi_en_extra_args+=(--url "\$pi_en_origin_url")
+      fi
+    fi
+    if [ "\$pi_en_has_ref" = 0 ]; then
+      pi_en_origin_ref="\$(pi_en_origin_value requested_ref || pi_en_origin_value ref || true)"
+      if [ -n "\$pi_en_origin_ref" ]; then
+        pi_en_extra_args+=(--ref "\$pi_en_origin_ref")
+      fi
+    fi
+  fi
+fi
+if [ "\$pi_en_has_url" = 0 ] && [ "\$pi_en_has_ref" = 0 ] && [ "\$pi_en_has_archive_source" = 0 ] && [ "\${#pi_en_extra_args[@]}" -eq 0 ]; then
+  echo "pi-en-update: no usable stored Git install origin found; pass --url URL --ref REF" >&2
+  exit 1
+fi
+exec /usr/bin/env bash "\$pi_en_share_dir/scripts/pi-en-install-non-nix" --prefix "\$pi_en_prefix" "\${pi_en_extra_args[@]}" "\$@"
+EOF
+  chmod +x "$bin_dir/pi-en-update"
+}
+
 cleanup_temp_source() {
   [ -z "$temp_source_dir" ] || rm -rf "$temp_source_dir"
 }
@@ -357,6 +415,10 @@ ls_remote_ref_exists() {
   git ls-remote --exit-code "$url" "$pattern" >/dev/null 2>&1
 }
 
+git_resolved_url=""
+git_resolved_ref_type=""
+git_resolved_commit=""
+
 fetch_git_source_root() {
   local normalized_url ref branch commit branch_exists=0 tag_exists=0 checkout_ref
   if [ -z "$remote_ref" ]; then
@@ -388,6 +450,7 @@ fetch_git_source_root() {
       return 1
     fi
     checkout_ref="$commit"
+    git_resolved_ref_type="commit@branch"
   else
     if ls_remote_ref_exists heads "$normalized_url" "$ref"; then branch_exists=1; fi
     if ls_remote_ref_exists tags "$normalized_url" "$ref"; then tag_exists=1; fi
@@ -398,10 +461,12 @@ fetch_git_source_root() {
       git -C "$temp_source_dir/repo" fetch --no-tags origin \
         "+refs/heads/$ref:refs/remotes/origin/pi-en-install-ref" >/dev/null
       checkout_ref="refs/remotes/origin/pi-en-install-ref"
+      git_resolved_ref_type="branch"
     elif [ "$tag_exists" = "1" ]; then
       git -C "$temp_source_dir/repo" fetch --no-tags origin \
         "+refs/tags/$ref:refs/tags/pi-en-install-ref" >/dev/null
       checkout_ref="refs/tags/pi-en-install-ref"
+      git_resolved_ref_type="tag"
     else
       echo "pi-en-install-non-nix: ref '$ref' was not found as a branch or tag in $normalized_url" >&2
       return 1
@@ -409,6 +474,8 @@ fetch_git_source_root() {
   fi
 
   git -C "$temp_source_dir/repo" -c advice.detachedHead=false checkout -q --detach "$checkout_ref"
+  git_resolved_url="$normalized_url"
+  git_resolved_commit="$(git -C "$temp_source_dir/repo" rev-parse HEAD)"
   source_root="$temp_source_dir/repo"
 }
 
@@ -460,20 +527,41 @@ fetch_source_root() {
 }
 
 write_origin_metadata() {
-  local source_kind="$1" source_url="$2" checksum=""
-  [ "$source_kind" = "remote" ] || { rm -f "$origin_file"; return 0; }
-  if command -v sha256sum >/dev/null 2>&1 && [ -n "$source_url" ]; then
-    case "$source_url" in
-      file://*) checksum="$(sha256sum "${source_url#file://}" 2>/dev/null | awk '{print $1}' || true)" ;;
-      /*|./*|../*) checksum="$(sha256sum "$source_url" 2>/dev/null | awk '{print $1}' || true)" ;;
-    esac
-  fi
-  {
-    printf 'repository=%s\n' "$remote_repo"
-    printf 'ref=%s\n' "$remote_ref"
-    printf 'artifact_url=%s\n' "$source_url"
-    [ -z "$checksum" ] || printf 'sha256=%s\n' "$checksum"
-  } > "$origin_file"
+  local source_kind="$1" source_url="$2" checksum="" installed_at
+  installed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  case "$source_kind" in
+    git)
+      {
+        printf 'source=git\n'
+        printf 'url=%s\n' "$git_resolved_url"
+        printf 'requested_ref=%s\n' "$remote_ref"
+        printf 'ref=%s\n' "$remote_ref"
+        printf 'resolved_ref_type=%s\n' "$git_resolved_ref_type"
+        printf 'resolved_commit=%s\n' "$git_resolved_commit"
+        printf 'installed_at=%s\n' "$installed_at"
+      } > "$origin_file"
+      ;;
+    remote)
+      if command -v sha256sum >/dev/null 2>&1 && [ -n "$source_url" ]; then
+        case "$source_url" in
+          file://*) checksum="$(sha256sum "${source_url#file://}" 2>/dev/null | awk '{print $1}' || true)" ;;
+          /*|./*|../*) checksum="$(sha256sum "$source_url" 2>/dev/null | awk '{print $1}' || true)" ;;
+        esac
+      fi
+      {
+        printf 'source=archive\n'
+        printf 'repository=%s\n' "$remote_repo"
+        printf 'requested_ref=%s\n' "$remote_ref"
+        printf 'ref=%s\n' "$remote_ref"
+        printf 'artifact_url=%s\n' "$source_url"
+        printf 'installed_at=%s\n' "$installed_at"
+        [ -z "$checksum" ] || printf 'sha256=%s\n' "$checksum"
+      } > "$origin_file"
+      ;;
+    *)
+      rm -f "$origin_file"
+      ;;
+  esac
 }
 
 if [ "$uninstall" = "1" ]; then
@@ -521,10 +609,11 @@ chmod +x "$share_dir/scripts"/pi-en-coord-* \
 for name in "${command_names[@]}"; do
   case "$name" in
     pi-en|pi-en-shell) install_wrapper "$name" pi-en-launcher ;;
-    pi-en-uninstall) ;;
+    pi-en-update|pi-en-uninstall) ;;
     *) install_wrapper "$name" "$name" ;;
   esac
 done
+install_update_wrapper
 install_uninstall_wrapper
 write_origin_metadata "$source_kind" "$source_url"
 write_manifest

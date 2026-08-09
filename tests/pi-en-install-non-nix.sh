@@ -36,10 +36,12 @@ assert_file "$local_prefix/bin/pi-en"
 assert_file "$local_prefix/bin/pi-en-bwrap"
 assert_file "$local_prefix/bin/pi-en-serial-roles"
 assert_file "$local_prefix/bin/pi-en-install-non-nix"
+assert_file "$local_prefix/bin/pi-en-update"
 assert_file "$local_prefix/bin/pi-en-coord-repo"
 assert_file "$local_prefix/share/pi-en/install-manifest"
 assert_file "$local_prefix/share/bash-completion/completions/pien"
 grep -qx "$local_prefix/share/bash-completion/completions/pien" "$local_prefix/share/pi-en/install-manifest"
+grep -qx "$local_prefix/bin/pi-en-update" "$local_prefix/share/pi-en/install-manifest"
 for stale_command in "${stale_commands[@]}"; do
   [ ! -e "$local_prefix/bin/$stale_command" ] || {
     echo "stale $stale_command wrapper survived reinstall" >&2
@@ -79,14 +81,59 @@ assert_file "$remote_prefix/bin/pi-en"
 assert_file "$remote_prefix/bin/pi-en-bwrap"
 assert_file "$remote_prefix/bin/pi-en-serial-roles"
 assert_file "$remote_prefix/bin/pi-en-install-non-nix"
+assert_file "$remote_prefix/bin/pi-en-update"
 assert_file "$remote_prefix/bin/pi-en-coord-repo"
 assert_file "$remote_prefix/share/pi-en/install-origin"
 assert_file "$remote_prefix/share/bash-completion/completions/pien"
+grep -qx 'source=archive' "$remote_prefix/share/pi-en/install-origin"
 grep -qx 'repository=test-owner/test-repo' "$remote_prefix/share/pi-en/install-origin"
+grep -qx 'requested_ref=main' "$remote_prefix/share/pi-en/install-origin"
 grep -qx 'ref=main' "$remote_prefix/share/pi-en/install-origin"
 grep -qx "artifact_url=file://$archive" "$remote_prefix/share/pi-en/install-origin"
 grep -q '^sha256=' "$remote_prefix/share/pi-en/install-origin"
 grep -qx "$remote_prefix/share/pi-en/install-origin" "$remote_prefix/share/pi-en/install-manifest"
+grep -qx "$remote_prefix/bin/pi-en-update" "$remote_prefix/share/pi-en/install-manifest"
+
+# Git-source installs must persist reusable update origin metadata.
+git_source="$workdir/git-source"
+mkdir -p "$git_source"
+cp -R "$repo_root/scripts" "$git_source/scripts"
+cp -R "$repo_root/role-manager" "$git_source/role-manager"
+cp -R "$repo_root/pi-skill-templates" "$git_source/pi-skill-templates"
+git -C "$git_source" init -q
+git -C "$git_source" config user.email pi-en-test@example.invalid
+git -C "$git_source" config user.name 'Pi-en Test'
+git -C "$git_source" add .
+git -C "$git_source" commit -q -m 'Initial test payload'
+git -C "$git_source" branch -M main
+git -C "$git_source" checkout -q -b feature
+git -C "$git_source" commit -q --allow-empty -m 'Feature test payload'
+git -C "$git_source" checkout -q main
+git_main_commit="$(git -C "$git_source" rev-parse main)"
+git_feature_commit="$(git -C "$git_source" rev-parse feature)"
+
+git_prefix="$workdir/git-prefix"
+(
+  cd "$workdir"
+  "$remote_script_dir/pi-en-install-non-nix" \
+    --prefix "$git_prefix" \
+    --url "$git_source" \
+    --ref main
+)
+assert_file "$git_prefix/bin/pi-en-update"
+assert_file "$git_prefix/share/pi-en/install-origin"
+grep -qx 'source=git' "$git_prefix/share/pi-en/install-origin"
+grep -qx "url=$git_source" "$git_prefix/share/pi-en/install-origin"
+grep -qx 'requested_ref=main' "$git_prefix/share/pi-en/install-origin"
+grep -qx 'resolved_ref_type=branch' "$git_prefix/share/pi-en/install-origin"
+grep -qx "resolved_commit=$git_main_commit" "$git_prefix/share/pi-en/install-origin"
+grep -qx "$git_prefix/bin/pi-en-update" "$git_prefix/share/pi-en/install-manifest"
+grep -qx "$git_prefix/share/pi-en/install-origin" "$git_prefix/share/pi-en/install-manifest"
+"$git_prefix/bin/pi-en-update" >/dev/null
+grep -qx "resolved_commit=$git_main_commit" "$git_prefix/share/pi-en/install-origin"
+"$git_prefix/bin/pi-en-update" --ref feature >/dev/null
+grep -qx 'requested_ref=feature' "$git_prefix/share/pi-en/install-origin"
+grep -qx "resolved_commit=$git_feature_commit" "$git_prefix/share/pi-en/install-origin"
 
 # Uninstall must be driven by installed state only. Remove source/archive inputs
 # before invoking the installed wrapper.
@@ -102,6 +149,10 @@ rm -rf "$remote_script_dir" "$archive" "$archive_root"
 }
 [ ! -e "$remote_prefix/share/pi-en/install-origin" ] || {
   echo "origin metadata survived uninstall" >&2
+  exit 1
+}
+[ ! -e "$remote_prefix/bin/pi-en-update" ] || {
+  echo "pi-en-update wrapper survived uninstall" >&2
   exit 1
 }
 [ ! -e "$remote_prefix/share/bash-completion/completions/pien" ] || {
