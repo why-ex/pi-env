@@ -9,24 +9,33 @@ mkdir -p "$tmp_dir/support" "$tmp_dir/bin"
 cp "$repo_root/scripts/pien" "$tmp_dir/support/pien"
 chmod +x "$tmp_dir/support/pien"
 
-make_stub() {
-  local name="$1"
-  cat > "$tmp_dir/bin/$name" <<'STUB'
+make_stub_at() {
+  local path="$1"
+  local label="${2:-}"
+  [ -n "$label" ] || label="$(basename "$path")"
+  cat > "$path" <<STUB
 #!/usr/bin/env bash
 set -euo pipefail
 {
-  printf 'cmd=%s\n' "$(basename "$0")"
-  if [ "${PIEN_TEST_LOG_CONTEXT:-0}" = "1" ]; then
-    printf 'cwd=%s\n' "$PWD"
-    printf 'PI_EN_COORD_DIR=%s\n' "${PI_EN_COORD_DIR:-}"
+  printf 'cmd=%s\\n' '$label'
+  if [ "\${PIEN_TEST_LOG_CONTEXT:-0}" = "1" ]; then
+    printf 'cwd=%s\\n' "\$PWD"
+    printf 'PI_EN_COORD_DIR=%s\\n' "\${PI_EN_COORD_DIR:-}"
   fi
-  for arg in "$@"; do
-    printf 'arg=%s\n' "$arg"
+  for arg in "\$@"; do
+    printf 'arg=%s\\n' "\$arg"
   done
-} > "$PIEN_TEST_LOG"
+} > "\$PIEN_TEST_LOG"
 STUB
-  chmod +x "$tmp_dir/bin/$name"
+  chmod +x "$path"
 }
+
+make_stub() {
+  local name="$1"
+  make_stub_at "$tmp_dir/bin/$name"
+}
+
+make_stub_at "$tmp_dir/support/pi-en-update" pi-en-update-bundled
 
 for name in \
   nix pi-en pi-en-shell pi-en-bwrap pi-en-bootstrap-coordination \
@@ -74,6 +83,9 @@ run_case $'cmd=pi-en-serial-roles\narg=--role\narg=developer' roles serial --rol
 run_case $'cmd=pi-en-install-non-nix\narg=--prefix\narg=/tmp/pien' install --prefix /tmp/pien
 run_case $'cmd=pi-en-update\narg=--prefix\narg=/tmp/pien' update --prefix /tmp/pien
 run_case $'cmd=pi-en-uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
+make_stub_at "$tmp_dir/bin/pi-en-update" pi-en-update-nix-shell
+run_case $'cmd=pi-en-update-nix-shell\narg=--ref\narg=main' update --ref main
+make_stub pi-en-update
 rm "$tmp_dir/bin/pi-en-update"
 run_case $'cmd=pi-en-install-non-nix\narg=--url\narg=https://example.invalid/pi-en.git\narg=--ref\narg=main\narg=--prefix\narg=/tmp/pien' update --url https://example.invalid/pi-en.git --ref main --prefix /tmp/pien
 rm "$tmp_dir/bin/pi-en-uninstall"

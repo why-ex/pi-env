@@ -519,11 +519,33 @@ exec_command() {
   exec "$command_path" "$@"
 }
 
+exec_path_command() {
+  local name="$1"
+  shift
+  local command_path
+  if ! command_path="$(command -v "$name" 2>/dev/null)"; then
+    echo "pien: required command not found: $name" >&2
+    return 127
+  fi
+  exec "$command_path" "$@"
+}
+
 run_command_help() {
   local name="$1"
   shift
   local command_path
   command_path="$(resolve_command "$name")"
+  "$command_path" --help
+}
+
+run_path_command_help() {
+  local name="$1"
+  shift
+  local command_path
+  if ! command_path="$(command -v "$name" 2>/dev/null)"; then
+    echo "pien: required command not found: $name" >&2
+    return 127
+  fi
   "$command_path" --help
 }
 
@@ -601,7 +623,7 @@ help_dispatch() {
     install) run_command_help pi-en-install-non-nix ;;
     update)
       if command -v pi-en-update >/dev/null 2>&1; then
-        run_command_help pi-en-update
+        run_path_command_help pi-en-update
       else
         update_help
       fi
@@ -777,7 +799,7 @@ case "${1:-}" in
       -h|--help) help_dispatch update; exit 0 ;;
     esac
     if command -v pi-en-update >/dev/null 2>&1; then
-      exec_command pi-en-update "$@"
+      exec_path_command pi-en-update "$@"
     fi
     has_source_arg=0
     for arg in "$@"; do
