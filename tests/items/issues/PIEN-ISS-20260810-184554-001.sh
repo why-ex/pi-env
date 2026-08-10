@@ -55,14 +55,14 @@ EOF
   : >"$dir/flake.lock"
 }
 
-# No options remains a pure no-op.
+# No options leaves flake.nix unchanged while refreshing the lock.
 p0="$workdir/no-options"
 make_project "$p0" 'github:old/pi-en?ref=main'
 cp "$p0/flake.nix" "$workdir/p0.before"
 (cd "$p0" && "$updater" >"$workdir/no-options.out")
-assert_contains "$workdir/no-options.out" 'nothing to update'
+assert_contains "$workdir/no-options.out" 'refreshing lock'
 assert_file_equals "$workdir/p0.before" "$p0/flake.nix"
-[ ! -s "$NIX_CALLS" ] || { echo "no-option updater invoked nix" >&2; cat "$NIX_CALLS" >&2; exit 1; }
+assert_contains "$NIX_CALLS" 'flake update pi-en'
 
 # Explicitly specifying the current branch leaves flake.nix unchanged but still
 # refreshes flake.lock so a mutable branch can advance.

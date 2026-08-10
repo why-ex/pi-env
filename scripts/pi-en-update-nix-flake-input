@@ -6,8 +6,8 @@ usage() {
 Usage: pi-en-update [--url URL] [--ref REF]
 
 Update the pi-en flake input for a project using pi-en.lib.mkPiShell.
-Omitted source parts are left unchanged; with no options, no files are
-modified and no lock update is run.
+Omitted source parts are left unchanged; with no options, flake.nix is
+left unchanged and the pi-en lock input is refreshed.
 
 Options:
   --url URL   Set the pi-en input source URL.
@@ -55,11 +55,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ -z "$url$ref" ]; then
-  echo "pi-en-update: no --url or --ref specified; nothing to update"
-  exit 0
-fi
-
 find_flake_root() {
   local dir
   dir="$(pwd -P)"
@@ -73,8 +68,21 @@ find_flake_root() {
   done
 }
 
+run_lock_update() {
+  cd "$flake_root"
+  if ! nix flake update "$input_name"; then
+    nix flake lock --update-input "$input_name"
+  fi
+}
+
 flake_root="$(find_flake_root)" || fail "could not find flake.nix from current directory"
 flake_file="$flake_root/flake.nix"
+
+if [ -z "$url$ref" ]; then
+  echo "pi-en-update: no --url or --ref specified; refreshing lock"
+  run_lock_update
+  exit 0
+fi
 
 current_url="$(node - "$flake_file" "$input_name" <<'NODE'
 const { readFileSync } = require('node:fs');
@@ -228,7 +236,4 @@ console.error(`unsupported or dynamic ${name} input definition; edit ${path} man
 process.exit(1);
 NODE
 
-cd "$flake_root"
-if ! nix flake update "$input_name"; then
-  nix flake lock --update-input "$input_name"
-fi
+run_lock_update

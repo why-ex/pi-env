@@ -66,10 +66,11 @@ than baked into Nix derivations.
 `mkPiShell` also exposes shell-local lifecycle helpers that act on the
 consuming project rather than on an installed Pi-en prefix. The `pi-en-update`
 helper belongs in this category: inside a Pi-en-enabled Nix shell it updates
-the consuming flake's `pi-en` input URL/ref and refreshes only that lock input
-when at least one source option is provided, even if the computed URL is already
-present in `flake.nix`. Omitted source parts are preserved, and invoking it
-without `--url` or `--ref` is a no-op. Outside the shell the same command name
+the consuming flake's `pi-en` input URL/ref and refreshes only that lock input.
+Omitted source parts are preserved. Invoking it without `--url` or `--ref`
+leaves `flake.nix` unchanged and refreshes the current lock input; explicit
+source options also refresh the lock even if the computed URL is already present
+in `flake.nix`. Outside the shell the same command name
 continues to mean the non-Nix installed-prefix updater. Normal Nix-shell `PATH`
 precedence selects the Nix-store updater inside `mkPiShell`. The shell marks
 this context explicitly so the Nix-store updater refuses to mutate files when
@@ -125,8 +126,9 @@ The same conservative edit scope should apply to the planned Nix-shell updater.
 It should support common direct `pi-en` input URL assignment forms, preserve
 any source component the user did not ask to change, convert `COMMIT@BRANCH` to
 a Nix Git flake URL with both `ref` and `rev`, run the narrow `pi-en` input
-lock update for every explicit source request, and fail with manual-edit
-guidance for dynamic or generated input definitions rather than guessing.
+lock update for source changes and no-source refreshes, and fail with
+manual-edit guidance for dynamic or generated input definitions when a rewrite
+is requested rather than guessing.
 
 The `.#agent` selector should become the conventional target for Pi-en-aware
 project shells. Projects that do not need a separate agent shell can keep

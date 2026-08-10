@@ -829,11 +829,11 @@ nix flake update pi-en
 `pi-en.lib.mkPiShell` provides a shell-local `pi-en-update`. In that context,
 `pi-en-update` / `pien update` updates the consuming project's `pi-en` flake
 input with only `--url` and `--ref` options. Omitted source parts are preserved:
-`--url` alone keeps the current ref/rev selector, `--ref` alone keeps the
-current base URL, and no options is a no-op that does not rewrite files or run a
-lock update. When at least one source option is provided, the updater refreshes
-that lock input even if `flake.nix` already contains the computed URL, so
-mutable repository or branch inputs can advance to a newer commit. Outside a
+`--url` alone keeps the current ref/rev selector and `--ref` alone keeps the
+current base URL. With no options, the updater leaves `flake.nix` unchanged and
+refreshes the current lock input. Explicit source options also refresh that lock
+input even if `flake.nix` already contains the computed URL, so mutable
+repository or branch inputs can advance to a newer commit. Outside a
 Pi-en-enabled Nix shell, the same command name remains the non-Nix installed-prefix
 updater. Normal Nix shell `PATH` precedence is the selection
 mechanism: the Nix-store command shadows any locally installed prefix updater

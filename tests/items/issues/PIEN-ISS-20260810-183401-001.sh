@@ -55,15 +55,14 @@ EOF
   : >"$dir/flake.lock"
 }
 
-# No source options should be a successful no-op, not an error and not a lock
-# update. It should not even require inspecting or rewriting the flake.
+# No source options should leave flake.nix unchanged while refreshing the lock.
 p0="$workdir/no-options"
 make_project "$p0" 'github:old/pi-en?ref=main&rev=deadbeef'
 cp "$p0/flake.nix" "$workdir/p0.before"
 (cd "$p0" && "$updater" >"$workdir/no-options.out")
-assert_contains "$workdir/no-options.out" 'nothing to update'
+assert_contains "$workdir/no-options.out" 'refreshing lock'
 assert_file_equals "$workdir/p0.before" "$p0/flake.nix"
-[ ! -s "$NIX_CALLS" ] || { echo "no-option updater invoked nix" >&2; cat "$NIX_CALLS" >&2; exit 1; }
+assert_contains "$NIX_CALLS" 'flake update pi-en'
 
 # Supplying only --url should preserve the existing ref/rev selector.
 p1="$workdir/url-only"

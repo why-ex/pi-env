@@ -74,10 +74,11 @@ When a Pi-en-enabled Nix shell provides `pi-en-update`, use it only for the
 narrow task of updating the consuming project's `pi-en` flake input. Inside
 `pi-en.lib.mkPiShell`, `pi-en-update` / `pien update` uses normal Nix-shell
 `PATH` precedence and accepts only `--url`, `--ref`, and help. Omitted source
-parts stay unchanged, no source options is a no-op, and any explicit source
-option still refreshes the lock even when `flake.nix` is unchanged. Outside
-that shell, the same command name refers to the non-Nix installed-prefix updater
-and should not be recommended for editing project flakes.
+parts stay unchanged. No source options leaves `flake.nix` unchanged and
+refreshes the lock, and explicit source options also refresh the lock even when
+`flake.nix` is unchanged. Outside that shell, the same command name refers to
+the non-Nix installed-prefix updater and should not be recommended for editing
+project flakes.
 
 For pinned branch commits, prefer the shared `COMMIT@BRANCH` user syntax, for
 example `pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main`.
