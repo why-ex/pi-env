@@ -831,9 +831,11 @@ nix flake update pi-en
 input with only `--url` and `--ref` options. Omitted source parts are preserved:
 `--url` alone keeps the current ref/rev selector, `--ref` alone keeps the
 current base URL, and no options is a no-op that does not rewrite files or run a
-lock update. When a source change is made, the updater refreshes that lock
-input. Outside a Pi-en-enabled Nix shell, the same command name remains the
-non-Nix installed-prefix updater. Normal Nix shell `PATH` precedence is the selection
+lock update. When at least one source option is provided, the updater refreshes
+that lock input even if `flake.nix` already contains the computed URL, so
+mutable repository or branch inputs can advance to a newer commit. Outside a
+Pi-en-enabled Nix shell, the same command name remains the non-Nix installed-prefix
+updater. Normal Nix shell `PATH` precedence is the selection
 mechanism: the Nix-store command shadows any locally installed prefix updater
 inside `mkPiShell`, while the local installed command applies outside the Nix
 shell.

@@ -200,8 +200,7 @@ else
 fi
 
 if [ "$new_url" = "$current_url" ]; then
-  echo "pi-en-update: pi-en input already uses $new_url; nothing to update"
-  exit 0
+  echo "pi-en-update: pi-en input already uses $new_url; refreshing lock"
 fi
 
 export PI_EN_UPDATE_FLAKE_FILE="$flake_file"

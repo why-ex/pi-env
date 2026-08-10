@@ -55,39 +55,42 @@ EOF
   : >"$dir/flake.lock"
 }
 
-# No source options should be a successful no-op, not an error and not a lock
-# update. It should not even require inspecting or rewriting the flake.
+# No options remains a pure no-op.
 p0="$workdir/no-options"
-make_project "$p0" 'github:old/pi-en?ref=main&rev=deadbeef'
+make_project "$p0" 'github:old/pi-en?ref=main'
 cp "$p0/flake.nix" "$workdir/p0.before"
 (cd "$p0" && "$updater" >"$workdir/no-options.out")
 assert_contains "$workdir/no-options.out" 'nothing to update'
 assert_file_equals "$workdir/p0.before" "$p0/flake.nix"
 [ ! -s "$NIX_CALLS" ] || { echo "no-option updater invoked nix" >&2; cat "$NIX_CALLS" >&2; exit 1; }
 
-# Supplying only --url should preserve the existing ref/rev selector.
-p1="$workdir/url-only"
-make_project "$p1" 'github:old/pi-en?ref=main&rev=deadbeef'
-(cd "$p1" && "$updater" --url https://example.invalid/pi-en.git)
-assert_contains "$p1/flake.nix" 'pi-en.url = "https://example.invalid/pi-en.git?ref=main&rev=deadbeef";'
+# Explicitly specifying the current branch leaves flake.nix unchanged but still
+# refreshes flake.lock so a mutable branch can advance.
+p1="$workdir/same-ref"
+make_project "$p1" 'github:old/pi-en?ref=main'
+cp "$p1/flake.nix" "$workdir/p1.before"
+(cd "$p1" && "$updater" --ref main >"$workdir/same-ref.out")
+assert_contains "$workdir/same-ref.out" 'refreshing lock'
+assert_file_equals "$workdir/p1.before" "$p1/flake.nix"
 assert_contains "$NIX_CALLS" 'flake update pi-en'
 
-# Supplying only --ref should preserve the existing base URL and replace only
-# the selector.
-p2="$workdir/ref-only"
-make_project "$p2" 'https://example.invalid/pi-en.git?ref=main&rev=deadbeef'
-(cd "$p2" && "$updater" --ref release)
-assert_contains "$p2/flake.nix" 'pi-en.url = "https://example.invalid/pi-en.git?ref=release";'
-
-# Supplying the current ref should leave flake.nix unchanged. The follow-up
-# lock update behavior for explicit unchanged sources is covered by
-# PIEN-ISS-20260810-184554-001.
+# Explicitly specifying the same repository URL also refreshes the lock while
+# preserving the branch selector and leaving flake.nix unchanged.
 : >"$NIX_CALLS"
-p3="$workdir/same-ref"
-make_project "$p3" 'github:old/pi-en?ref=release'
-cp "$p3/flake.nix" "$workdir/p3.before"
-(cd "$p3" && "$updater" --ref release >"$workdir/same-ref.out")
-assert_contains "$workdir/same-ref.out" 'already uses'
-assert_file_equals "$workdir/p3.before" "$p3/flake.nix"
+p2="$workdir/same-url"
+make_project "$p2" 'github:old/pi-en?ref=main'
+cp "$p2/flake.nix" "$workdir/p2.before"
+(cd "$p2" && "$updater" --url github:old/pi-en >"$workdir/same-url.out")
+assert_contains "$workdir/same-url.out" 'refreshing lock'
+assert_file_equals "$workdir/p2.before" "$p2/flake.nix"
+assert_contains "$NIX_CALLS" 'flake update pi-en'
 
-printf 'PIEN-ISS-20260810-183401-001 tests passed\n'
+# Changed URLs still rewrite flake.nix before refreshing the lock.
+: >"$NIX_CALLS"
+p3="$workdir/changed"
+make_project "$p3" 'github:old/pi-en?ref=main'
+(cd "$p3" && "$updater" --url github:new/pi-en)
+assert_contains "$p3/flake.nix" 'pi-en.url = "github:new/pi-en?ref=main";'
+assert_contains "$NIX_CALLS" 'flake update pi-en'
+
+printf 'PIEN-ISS-20260810-184554-001 tests passed\n'
