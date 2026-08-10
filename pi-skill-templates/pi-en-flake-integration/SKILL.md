@@ -68,6 +68,22 @@ explicitly ask for one.
   when adding Pi-en would require choosing between conflicting project
   policies.
 
+## Pi-en input updates
+
+When a Pi-en-enabled Nix shell provides the planned `pi-en-update` helper, use
+it only for the narrow task of updating the consuming project's `pi-en` flake
+input. Inside `pi-en.lib.mkPiShell`, `pi-en-update` / `pien update` should use
+normal Nix-shell `PATH` precedence and should accept only `--url` and `--ref`.
+Outside that shell, the same command name refers to the non-Nix installed
+prefix updater and should not be recommended for editing project flakes.
+
+For pinned branch commits, prefer the shared `COMMIT@BRANCH` user syntax, for
+example `pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main`.
+The updater is expected to translate that form to a Nix Git flake URL with both
+`ref=main` and `rev=abc123`. If the project flake defines its `pi-en` input
+dynamically or in an unsupported form, ask for guidance or make a small manual
+edit instead of relying on broad automated rewriting.
+
 ## Validation
 
 After editing, run the narrowest practical checks for the project, for example:

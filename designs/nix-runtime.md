@@ -23,6 +23,7 @@ contract for packages, apps, shells, and reusable shell construction.
 | RUNTIME-002 | PIEN-FRQ-20260612-210000-031 |
 | RUNTIME-003 | PIEN-FRQ-20260614-180306-001 |
 | RUNTIME-006 | PIEN-FRQ-20260720-094621-001 |
+| RUNTIME-007 | PIEN-FRQ-20260810-165351-001 |
 | CMD-027 | PIEN-FRQ-20260720-091901-001 |
 | AGENT-018 | PIEN-FRQ-20260720-091904-001 |
 | DOC-005 | PIEN-QRQ-20260720-091907-001 |
@@ -61,6 +62,15 @@ core-only shell.
 The reusable shell must remain deterministic. Host-specific state such as auth
 files, Git preferences, and Pi resources is imported at launcher runtime rather
 than baked into Nix derivations.
+
+`mkPiShell` may also expose shell-local lifecycle helpers that act on the
+consuming project rather than on an installed Pi-en prefix. The planned
+`pi-en-update` helper belongs in this category: inside a Pi-en-enabled Nix
+shell it should update the consuming flake's `pi-en` input URL/ref and refresh
+only that lock input, while outside the shell the same command name continues
+to mean the non-Nix installed-prefix updater. The shell should mark this
+context explicitly so the Nix-store updater refuses to mutate files when run
+outside a Pi-en-enabled Nix shell.
 
 ## 3. Runtime tools
 
@@ -107,6 +117,12 @@ instead of attempting broad AST edits across arbitrary flakes. A packaged skill
 should teach agents to consult that helper, to avoid inventing unrelated
 `agentProfile` shells, and to ask for clarification when a flake shape cannot
 be changed safely with a small textual patch.
+
+The same conservative edit scope should apply to the planned Nix-shell updater.
+It should support common direct `pi-en` input URL assignment forms, convert
+`COMMIT@BRANCH` to a Nix Git flake URL with both `ref` and `rev`, run the
+narrow `pi-en` input lock update, and fail with manual-edit guidance for
+dynamic or generated input definitions rather than guessing.
 
 The `.#agent` selector should become the conventional target for Pi-en-aware
 project shells. Projects that do not need a separate agent shell can keep

@@ -540,6 +540,75 @@ users can force `agent`, `default`, or another project shell without relying
 on automatic discovery. Command-line selection must take precedence over the
 environment variable.
 
+#### RUNTIME-007 Nix-shell Pi-en flake input update support
+
+Pi-en-enabled Nix shells created with `pi-en.lib.mkPiShell` should provide a
+shell-local `pi-en-update` command for updating the consuming project's
+`pi-en` flake input. This command is distinct from the non-Nix installed
+updater even though it intentionally uses the same command name: normal Nix
+shell `PATH` precedence should make the Nix-store command available inside
+the shell, while locally installed prefixes continue to provide the non-Nix
+updater outside the shell.
+
+The Nix-shell updater should accept only source selector options:
+
+- `--url URL` to replace or set the base `pi-en` flake input URL;
+- `--ref REF` to select a branch, tag, or `COMMIT@BRANCH` pin;
+- `-h` / `--help` for command help.
+
+It must not accept non-Nix installer options such as `--prefix`, `--repo`,
+`--artifact-url`, or `--check-deps`. When neither `--url` nor `--ref` is
+supplied, the command should either refresh the current `pi-en` input lock or
+print a clear no-op/update diagnostic according to the implemented policy.
+
+The command should run only from an active Pi-en-enabled Nix shell. The shell
+should export an explicit marker, such as `PI_EN_NIX_SHELL=1`, plus the input
+name to update, defaulting to `pi-en`. If invoked without that marker, the
+Nix-store updater should fail clearly instead of editing arbitrary projects.
+
+For common flakes, the updater should locate the project root containing
+`flake.nix`, inspect the current `pi-en` input, update that input when
+`--url` or `--ref` changes the requested source, and refresh `flake.lock` for
+that input. Supported textual forms should include at least direct input URL
+assignments such as `pi-en.url = "...";`, `inputs.pi-en.url = "...";`, and
+`"pi-en".url = "...";`. Complex or dynamically generated inputs should fail
+safely with manual-edit guidance rather than guessed rewrites.
+
+Ref handling should match the Git-source installer mental model. A plain
+branch or tag ref may be represented with a Nix flake URL form appropriate to
+the base URL. A `COMMIT@BRANCH` ref should become a Nix Git URL containing
+both the branch and revision, for example
+`git+https://github.com/u2up/pi-en.git?ref=BRANCH&rev=COMMIT`, so the user
+gets the same URL/ref CLI semantics across Nix-shell and non-Nix update
+workflows while Nix receives a reproducible pinned revision.
+
+`pien update` should use the context-appropriate updater. Inside a
+Pi-en-enabled Nix shell, it should resolve and run the Nix-shell
+`pi-en-update` from `PATH`. Outside that shell, it should continue to use the
+non-Nix installed updater or the existing direct-checkout fallback behavior.
+The sandbox policy should remain unchanged: mutating update commands are for
+the outer terminal or devshell, not Pi's Bubblewrap sandbox.
+
+Acceptance criteria:
+
+- `pi-en.lib.mkPiShell` exposes a Nix-store `pi-en-update` only in
+  Pi-en-enabled Nix shells and marks the shell so the tool can detect its
+  intended context.
+- Nix-shell `pi-en-update --help` documents only `--url`, `--ref`, and help
+  options, and rejects non-Nix installer options.
+- The updater locates the consuming project flake, rewrites supported
+  `pi-en` input URL assignment forms when `--url` or `--ref` changes the
+  requested source, and fails safely for unsupported dynamic forms.
+- `COMMIT@BRANCH` refs are converted to Nix Git flake URLs with both
+  `ref=BRANCH` and `rev=COMMIT`.
+- After any required `flake.nix` edit, the updater refreshes only the `pi-en`
+  input lock using the supported Nix command for the project's Nix version.
+- `pien update` delegates to the Nix-shell updater inside `mkPiShell` and to
+  the non-Nix installed updater outside Nix shell contexts.
+- Documentation explains the two context-specific `pi-en-update` meanings,
+  PATH precedence, supported flake forms, `COMMIT@BRANCH` mapping, and the
+  trusted-source/pinning implications.
+
 #### INSTALL-002 Remote-ref non-Nix installer bootstrap
 
 The non-Nix installer should be able to run as a small bootstrap script when

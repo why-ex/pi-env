@@ -826,6 +826,26 @@ Update a consuming project's pinned input with:
 nix flake update pi-en
 ```
 
+Planned RUNTIME-007 support will add a shell-local `pi-en-update` inside
+`pi-en.lib.mkPiShell`. In that context, `pi-en-update` / `pien update` will
+update the consuming project's `pi-en` flake input with only `--url` and
+`--ref` options, then refresh that lock input. Outside a Pi-en-enabled Nix
+shell, the same command name remains the non-Nix installed-prefix updater.
+Normal Nix shell `PATH` precedence is the selection mechanism.
+
+Examples for the planned Nix-shell updater:
+
+```bash
+pi-en-update --ref main
+pi-en-update --url github:u2up/pi-en --ref v0.2.0
+pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main
+```
+
+The `COMMIT@BRANCH` form maps internally to a Nix Git flake URL containing
+both `ref=BRANCH` and `rev=COMMIT`, for example
+`git+https://github.com/u2up/pi-en.git?ref=main&rev=abc123`. Review and commit
+any resulting `flake.nix` and `flake.lock` changes in the consuming project.
+
 ## 5. Command reference
 
 `pien` is the canonical user-facing command namespace. Lower-level/debug
@@ -941,7 +961,7 @@ humans and agents see consistent operational advice.
 | `pien coord requirements coverage [...]` | `pi-en-coord-generate-requirements-coverage [...]` |
 | `pien roles serial [options]` | `pi-en-serial-roles [options]` |
 | `pien install [options]` | `pi-en-install-non-nix [options]` |
-| `pien update [options]` | `pi-en-update [options]`, or `pi-en-install-non-nix [options]` from a direct checkout with explicit source options |
+| `pien update [options]` | context-specific `pi-en-update [options]`, or `pi-en-install-non-nix [options]` from a direct checkout with explicit non-Nix source options |
 | `pien uninstall [options]` | `pi-en-uninstall [options]` |
 
 #### Help and completion

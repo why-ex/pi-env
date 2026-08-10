@@ -91,7 +91,7 @@ with `pien coord`.
 | `pien coord requirements coverage [...]` | `pi-en-coord-generate-requirements-coverage [...]` |
 | `pien roles serial [options]` | `pi-en-serial-roles [options]` |
 | `pien install [options]` | `pi-en-install-non-nix [options]` |
-| `pien update [options]` | planned: `pi-en-update [options]` |
+| `pien update [options]` | context-specific `pi-en-update [options]` |
 | `pien uninstall [options]` | `pi-en-uninstall [options]` |
 | `pien completion bash` | print Bash completion for `pien` |
 
@@ -218,17 +218,22 @@ commands should fail clearly and documentation should recommend running the
 remote-authenticated operation from the outer terminal or using an existing
 explicit sandbox opt-in, not broad default mounts.
 
-## Planned update command
+## Context-specific update command
 
-The non-Nix installer extension tracked by INSTALL-003 should add
-`pi-en-update` as the low-level installed updater and may expose `pien update`
-as the canonical user-facing wrapper. `pi-en-update` should stay a thin wrapper
-around the installed `pi-en-install-non-nix`, parallel to `pi-en-uninstall`:
-it embeds the installed prefix, reads stored origin metadata, supplies stored
-`--url` and `--ref` values only when the caller did not provide replacements,
-and then execs the installer. The dispatcher must not reimplement update logic;
-it should only find and exec the low-level command and preserve source override
-arguments.
+`pien update` should remain a dispatcher, not an updater implementation. It
+should resolve the active `pi-en-update` in the current execution context and
+preserve the remaining arguments.
+
+Outside Pi-en-enabled Nix shells, `pi-en-update` is the non-Nix installed-prefix
+updater created by INSTALL-003. It updates files under a prefix from stored
+install-origin metadata and supports the non-Nix installer source options.
+
+Inside `pi-en.lib.mkPiShell`, the planned RUNTIME-007 updater should be a
+Nix-store `pi-en-update` placed earlier on `PATH`. It updates the consuming
+project's `pi-en` flake input and should expose only `--url`, `--ref`, and help
+options. The dispatcher should therefore avoid hard-coding a bundled non-Nix
+updater ahead of normal command resolution when the Nix-shell updater is
+available.
 
 ## Covers
 
