@@ -66,12 +66,13 @@ than baked into Nix derivations.
 `mkPiShell` also exposes shell-local lifecycle helpers that act on the
 consuming project rather than on an installed Pi-en prefix. The `pi-en-update`
 helper belongs in this category: inside a Pi-en-enabled Nix shell it updates
-the consuming flake's `pi-en` input URL/ref and refreshes only that lock input,
-while outside the shell the same command name continues to mean the non-Nix
-installed-prefix updater. Normal Nix-shell `PATH` precedence selects the
-Nix-store updater inside `mkPiShell`. The shell marks this context explicitly
-so the Nix-store updater refuses to mutate files when run outside a
-Pi-en-enabled Nix shell.
+the consuming flake's `pi-en` input URL/ref and refreshes only that lock input
+when a source value changes. Omitted source parts are preserved, and invoking it
+without `--url` or `--ref` is a no-op. Outside the shell the same command name
+continues to mean the non-Nix installed-prefix updater. Normal Nix-shell `PATH`
+precedence selects the Nix-store updater inside `mkPiShell`. The shell marks
+this context explicitly so the Nix-store updater refuses to mutate files when
+run outside a Pi-en-enabled Nix shell.
 
 ## 3. Runtime tools
 
@@ -120,10 +121,11 @@ should teach agents to consult that helper, to avoid inventing unrelated
 be changed safely with a small textual patch.
 
 The same conservative edit scope should apply to the planned Nix-shell updater.
-It should support common direct `pi-en` input URL assignment forms, convert
-`COMMIT@BRANCH` to a Nix Git flake URL with both `ref` and `rev`, run the
-narrow `pi-en` input lock update, and fail with manual-edit guidance for
-dynamic or generated input definitions rather than guessing.
+It should support common direct `pi-en` input URL assignment forms, preserve
+any source component the user did not ask to change, convert `COMMIT@BRANCH` to
+a Nix Git flake URL with both `ref` and `rev`, run the narrow `pi-en` input
+lock update only after a changed flake input, and fail with manual-edit
+guidance for dynamic or generated input definitions rather than guessing.
 
 The `.#agent` selector should become the conventional target for Pi-en-aware
 project shells. Projects that do not need a separate agent shell can keep

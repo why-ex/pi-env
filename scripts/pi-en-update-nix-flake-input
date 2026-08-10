@@ -6,6 +6,8 @@ usage() {
 Usage: pi-en-update [--url URL] [--ref REF]
 
 Update the pi-en flake input for a project using pi-en.lib.mkPiShell.
+Omitted source parts are left unchanged; with no options, no files are
+modified and no lock update is run.
 
 Options:
   --url URL   Set the pi-en input source URL.
@@ -53,7 +55,10 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-[ -n "$url$ref" ] || fail "provide --url, --ref, or both"
+if [ -z "$url$ref" ]; then
+  echo "pi-en-update: no --url or --ref specified; nothing to update"
+  exit 0
+fi
 
 find_flake_root() {
   local dir
@@ -91,13 +96,86 @@ process.exit(1);
 NODE
 )" || fail "unsupported or dynamic pi-en input definition; edit $flake_file manually"
 
-strip_query() {
-  printf '%s\n' "$1" | sed 's/[?&]ref=[^&]*//; s/[?&]rev=[^&]*//; s/[?&]$//'
+strip_ref_rev_query() {
+  local value="$1" base query part rest=""
+  case "$value" in
+    *\?*)
+      base="${value%%\?*}"
+      query="${value#*\?}"
+      ;;
+    *)
+      printf '%s\n' "$value"
+      return 0
+      ;;
+  esac
+  while [ -n "$query" ]; do
+    part="${query%%&*}"
+    if [ "$part" = "$query" ]; then
+      query=""
+    else
+      query="${query#*&}"
+    fi
+    case "$part" in
+      ref=*|rev=*) ;;
+      *)
+        if [ -z "$rest" ]; then rest="$part"; else rest="$rest&$part"; fi
+        ;;
+    esac
+  done
+  if [ -n "$rest" ]; then
+    printf '%s?%s\n' "$base" "$rest"
+  else
+    printf '%s\n' "$base"
+  fi
 }
 
-base_url="${url:-$(strip_query "$current_url") }"
+extract_ref_rev_query() {
+  local value="$1" query part selector=""
+  case "$value" in
+    *\?*) query="${value#*\?}" ;;
+    *) return 0 ;;
+  esac
+  while [ -n "$query" ]; do
+    part="${query%%&*}"
+    if [ "$part" = "$query" ]; then
+      query=""
+    else
+      query="${query#*&}"
+    fi
+    case "$part" in
+      ref=*|rev=*)
+        if [ -z "$selector" ]; then selector="$part"; else selector="$selector&$part"; fi
+        ;;
+    esac
+  done
+  [ -z "$selector" ] || printf '%s\n' "$selector"
+}
+
+has_ref_rev_query() {
+  case "$1" in
+    *\?ref=*|*\?rev=*|*\&ref=*|*\&rev=*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+append_query() {
+  local base="$1" query="$2"
+  if [ -z "$query" ]; then
+    printf '%s\n' "$base"
+  elif [ -z "$base" ]; then
+    printf '%s\n' "$query"
+  else
+    case "$base" in
+      *\?*) printf '%s&%s\n' "$base" "$query" ;;
+      *) printf '%s?%s\n' "$base" "$query" ;;
+    esac
+  fi
+}
+
+base_url="${url:-$(strip_ref_rev_query "$current_url") }"
 # Trim the intentional command-substitution fallback space if used.
 base_url="${base_url% }"
+base_url="$(strip_ref_rev_query "$base_url")"
 
 if [ -n "$ref" ]; then
   case "$ref" in
@@ -106,19 +184,24 @@ if [ -n "$ref" ]; then
       branch="${ref#*@}"
       [ -n "$commit" ] && [ -n "$branch" ] || fail "COMMIT@BRANCH ref must include both parts"
       case "$base_url" in
-        git+*) new_url="$base_url?ref=$branch&rev=$commit" ;;
-        *) new_url="git+$base_url?ref=$branch&rev=$commit" ;;
+        git+*) ;;
+        *) base_url="git+$base_url" ;;
       esac
+      new_url="$(append_query "$base_url" "ref=$branch&rev=$commit")"
       ;;
     *)
-      case "$base_url" in
-        *\?*) new_url="$base_url&ref=$ref" ;;
-        *) new_url="$base_url?ref=$ref" ;;
-      esac
+      new_url="$(append_query "$base_url" "ref=$ref")"
       ;;
   esac
+elif [ -n "$url" ] && has_ref_rev_query "$url"; then
+  new_url="$url"
 else
-  new_url="$base_url"
+  new_url="$(append_query "$base_url" "$(extract_ref_rev_query "$current_url")")"
+fi
+
+if [ "$new_url" = "$current_url" ]; then
+  echo "pi-en-update: pi-en input already uses $new_url; nothing to update"
+  exit 0
 fi
 
 export PI_EN_UPDATE_FLAKE_FILE="$flake_file"

@@ -557,9 +557,11 @@ The Nix-shell updater should accept only source selector options:
 - `-h` / `--help` for command help.
 
 It must not accept non-Nix installer options such as `--prefix`, `--repo`,
-`--artifact-url`, or `--check-deps`. When neither `--url` nor `--ref` is
-supplied, the command should either refresh the current `pi-en` input lock or
-print a clear no-op/update diagnostic according to the implemented policy.
+`--artifact-url`, or `--check-deps`. Omitted source parts must remain
+unchanged: without `--url`, keep the existing base URL; without `--ref`, keep
+the existing ref/rev selector when present. When neither `--url` nor `--ref`
+is supplied, the command should print a clear no-op diagnostic, leave
+`flake.nix` and `flake.lock` untouched, and skip the Nix lock update.
 
 The command should run only from an active Pi-en-enabled Nix shell. The shell
 should export an explicit marker, such as `PI_EN_NIX_SHELL=1`, plus the input
@@ -602,7 +604,9 @@ Acceptance criteria:
 - `COMMIT@BRANCH` refs are converted to Nix Git flake URLs with both
   `ref=BRANCH` and `rev=COMMIT`.
 - After any required `flake.nix` edit, the updater refreshes only the `pi-en`
-  input lock using the supported Nix command for the project's Nix version.
+  input lock using the supported Nix command for the project's Nix version;
+  when the computed URL is unchanged, it skips both file writes and lock
+  updates.
 - `pien update` delegates to the Nix-shell updater inside `mkPiShell` and to
   the non-Nix installed updater outside Nix shell contexts.
 - Documentation explains the two context-specific `pi-en-update` meanings,
