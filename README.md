@@ -826,14 +826,16 @@ Update a consuming project's pinned input with:
 nix flake update pi-en
 ```
 
-Planned RUNTIME-007 support will add a shell-local `pi-en-update` inside
-`pi-en.lib.mkPiShell`. In that context, `pi-en-update` / `pien update` will
-update the consuming project's `pi-en` flake input with only `--url` and
-`--ref` options, then refresh that lock input. Outside a Pi-en-enabled Nix
-shell, the same command name remains the non-Nix installed-prefix updater.
-Normal Nix shell `PATH` precedence is the selection mechanism.
+`pi-en.lib.mkPiShell` provides a shell-local `pi-en-update`. In that context,
+`pi-en-update` / `pien update` updates the consuming project's `pi-en` flake
+input with only `--url` and `--ref` options, then refreshes that lock input.
+Outside a Pi-en-enabled Nix shell, the same command name remains the non-Nix
+installed-prefix updater. Normal Nix shell `PATH` precedence is the selection
+mechanism: the Nix-store command shadows any locally installed prefix updater
+inside `mkPiShell`, while the local installed command applies outside the Nix
+shell.
 
-Examples for the planned Nix-shell updater:
+Examples for the Nix-shell updater:
 
 ```bash
 pi-en-update --ref main
@@ -843,8 +845,12 @@ pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main
 
 The `COMMIT@BRANCH` form maps internally to a Nix Git flake URL containing
 both `ref=BRANCH` and `rev=COMMIT`, for example
-`git+https://github.com/u2up/pi-en.git?ref=main&rev=abc123`. Review and commit
-any resulting `flake.nix` and `flake.lock` changes in the consuming project.
+`git+https://github.com/u2up/pi-en.git?ref=main&rev=abc123`. The updater
+supports direct `pi-en` URL assignments such as `pi-en.url = "...";`,
+`inputs.pi-en.url = "...";`, and `"pi-en".url = "...";`. Dynamic or otherwise
+unsupported input definitions fail safely with manual-edit guidance instead of
+guessed rewrites. Review and commit any resulting `flake.nix` and `flake.lock`
+changes in the consuming project.
 
 ## 5. Command reference
 
@@ -911,7 +917,7 @@ installation, or start a new Pi sandbox:
 | `pien shell ...` | Open a runtime/sandbox shell from outside Pi with `pien shell ...`. |
 | `pien sandbox ...`, `pien sandbox shell ...` | Start the lower-level sandbox from outside Pi with the same command. |
 | `pien install ...` | Install from the outer terminal, for example `pien install --prefix ~/.local`. |
-| `pien update ...` | Update from the outer terminal with `pien update ...`. |
+| `pien update ...` | Update from the outer terminal or mkPiShell devshell with context-specific `pien update ...`; inside Pi's Bubblewrap sandbox it remains blocked. |
 | `pien uninstall ...` | Uninstall from the outer terminal with `pien uninstall ...`. |
 | `pien roles serial ...` | Run serial orchestration from the outer terminal; `pien roles serial --help` is allowed inside Pi for guidance. |
 
@@ -961,7 +967,7 @@ humans and agents see consistent operational advice.
 | `pien coord requirements coverage [...]` | `pi-en-coord-generate-requirements-coverage [...]` |
 | `pien roles serial [options]` | `pi-en-serial-roles [options]` |
 | `pien install [options]` | `pi-en-install-non-nix [options]` |
-| `pien update [options]` | context-specific `pi-en-update [options]`, or `pi-en-install-non-nix [options]` from a direct checkout with explicit non-Nix source options |
+| `pien update [options]` | context-specific `pi-en-update [options]`: inside `mkPiShell`, only `--url`, `--ref`, and help for the consuming flake input; outside Nix shells, the non-Nix installed-prefix updater or direct-checkout fallback with explicit non-Nix source options |
 | `pien uninstall [options]` | `pi-en-uninstall [options]` |
 
 #### Help and completion

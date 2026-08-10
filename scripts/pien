@@ -37,7 +37,7 @@ Commands:
   roles serial        Serial role orchestrator (existing command: pi-en-serial-roles)
   recipe              Print non-mutating integration recipes
   install             Non-Nix installer (existing command: pi-en-install-non-nix)
-  update              Non-Nix updater (existing command: pi-en-update)
+  update              Context-specific updater (existing command: pi-en-update)
   uninstall           Non-Nix uninstaller (existing command: pi-en-uninstall)
   completion bash     Print Bash completion for pien
   diagnostics         Print sandbox/runtime diagnostics without launching Pi
@@ -301,20 +301,46 @@ nix flake lock --update-input pi-en
 nix develop .#agent
 pien --help
 ```
+
+Once inside the mkPiShell devshell, use the shell-local updater for narrow
+pi-en input updates only:
+
+```bash
+pi-en-update --ref main
+pi-en-update --url github:u2up/pi-en --ref v0.2.0
+pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main
+```
+
+Normal Nix-shell PATH precedence selects this updater inside mkPiShell; outside
+that shell, pi-en-update remains the non-Nix installed-prefix updater. The
+Nix-shell updater accepts only --url, --ref, and help, rewrites only supported
+direct pi-en URL assignments (`pi-en.url`, `inputs.pi-en.url`, and
+`"pi-en".url`), and fails safely for dynamic forms. Review and commit any
+resulting flake.nix and flake.lock changes.
 RECIPE
 }
 
 update_help() {
   cat <<'USAGE'
-pien update - update a non-Nix Pi-en installation
+pien update - run the context-specific pi-en updater
 
-Usage:
+Usage inside pi-en.lib.mkPiShell:
+  pien update [--url URL] [--ref REF]
+  pien update --help
+
+Nix-shell options:
+  --url URL            Set the consuming project's pi-en flake input URL
+  --ref REF            Branch, tag, or COMMIT@BRANCH; COMMIT@BRANCH becomes
+                       a Git flake URL with ref=BRANCH and rev=COMMIT
+  -h, --help           Show this help
+
+Usage outside Pi-en-enabled Nix shells:
   pien update [--prefix PREFIX] [--check-deps]
   pien update --url URL --ref REF [--prefix PREFIX]
   pien update [--ref REF] [--repo OWNER/REPO] [--artifact-url URL]
   pien update --help
 
-Options:
+Non-Nix options:
   --prefix PREFIX      Installed prefix to update; default: $PREFIX or ~/.local
   --check-deps         Check host tools before updating
   --url URL            Git repository URL or local path to install from
@@ -323,10 +349,13 @@ Options:
   --artifact-url URL   Archive URL or local archive path to fetch
   -h, --help           Show this help
 
-When pi-en-update is installed, this command delegates to it. From a direct
-checkout, pass explicit source arguments such as --url with --ref, --ref for an
-archive install, or --artifact-url; pien then delegates to pi-en-install-non-nix
-with those arguments.
+When pi-en-update is installed, this command delegates to the pi-en-update found
+on PATH. Inside mkPiShell that is the Nix-shell updater for the consuming
+flake's pi-en input and it intentionally accepts only --url, --ref, and help.
+Outside that shell, installed prefixes provide the non-Nix updater. From a
+direct checkout without pi-en-update on PATH, pass explicit source arguments
+such as --url with --ref, --ref for an archive install, or --artifact-url; pien
+then delegates to pi-en-install-non-nix with those arguments.
 USAGE
 }
 

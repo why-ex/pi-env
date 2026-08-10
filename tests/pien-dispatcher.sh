@@ -337,8 +337,8 @@ esac
 rm "$tmp_dir/bin/pi-en-update"
 update_help_output="$(PATH="$tmp_dir/bin:$PATH" "$tmp_dir/support/pien" help update)"
 case "$update_help_output" in
-  *'pien update - update a non-Nix Pi-en installation'*'--url URL'*'--artifact-url URL'* ) ;;
-  *) echo "pien help update fallback did not describe update source options" >&2; exit 1 ;;
+  *'pien update - run the context-specific pi-en updater'*'Usage inside pi-en.lib.mkPiShell:'*'--url URL'*'--ref REF'*'--artifact-url URL'* ) ;;
+  *) echo "pien help update fallback did not describe Nix and non-Nix source options" >&2; exit 1 ;;
 esac
 make_stub pi-en-update
 
@@ -370,6 +370,8 @@ for snippet in \
   'agent = existingDevShells.default;' \
   'includeCoordinationHelpers = false;' \
   'extraPackages = with pkgs; [' \
+  'pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main' \
+  'Review and commit any' \
   'does not read, edit, or write project files'; do
   if ! grep -Fq "$snippet" <<< "$recipe_output"; then
     echo "pien recipe flake-agent-shell missed stable recipe snippet: $snippet" >&2

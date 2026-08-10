@@ -70,19 +70,22 @@ explicitly ask for one.
 
 ## Pi-en input updates
 
-When a Pi-en-enabled Nix shell provides the planned `pi-en-update` helper, use
-it only for the narrow task of updating the consuming project's `pi-en` flake
-input. Inside `pi-en.lib.mkPiShell`, `pi-en-update` / `pien update` should use
-normal Nix-shell `PATH` precedence and should accept only `--url` and `--ref`.
-Outside that shell, the same command name refers to the non-Nix installed
-prefix updater and should not be recommended for editing project flakes.
+When a Pi-en-enabled Nix shell provides `pi-en-update`, use it only for the
+narrow task of updating the consuming project's `pi-en` flake input. Inside
+`pi-en.lib.mkPiShell`, `pi-en-update` / `pien update` uses normal Nix-shell
+`PATH` precedence and accepts only `--url`, `--ref`, and help. Outside that
+shell, the same command name refers to the non-Nix installed-prefix updater and
+should not be recommended for editing project flakes.
 
 For pinned branch commits, prefer the shared `COMMIT@BRANCH` user syntax, for
 example `pi-en-update --url https://github.com/u2up/pi-en.git --ref abc123@main`.
-The updater is expected to translate that form to a Nix Git flake URL with both
-`ref=main` and `rev=abc123`. If the project flake defines its `pi-en` input
-dynamically or in an unsupported form, ask for guidance or make a small manual
-edit instead of relying on broad automated rewriting.
+The updater translates that form to a Nix Git flake URL with both `ref=main`
+and `rev=abc123`. It rewrites supported direct URL assignments such as
+`pi-en.url`, `inputs.pi-en.url`, and `"pi-en".url`; if the project flake defines
+its `pi-en` input dynamically or in another unsupported form, ask for guidance
+or make a small manual edit instead of relying on broad automated rewriting.
+After either helper-driven or manual updates, review and commit the resulting
+`flake.nix` and/or `flake.lock` changes.
 
 ## Validation
 

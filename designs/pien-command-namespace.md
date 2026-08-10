@@ -228,12 +228,14 @@ Outside Pi-en-enabled Nix shells, `pi-en-update` is the non-Nix installed-prefix
 updater created by INSTALL-003. It updates files under a prefix from stored
 install-origin metadata and supports the non-Nix installer source options.
 
-Inside `pi-en.lib.mkPiShell`, the planned RUNTIME-007 updater should be a
-Nix-store `pi-en-update` placed earlier on `PATH`. It updates the consuming
-project's `pi-en` flake input and should expose only `--url`, `--ref`, and help
-options. The dispatcher should therefore avoid hard-coding a bundled non-Nix
-updater ahead of normal command resolution when the Nix-shell updater is
-available.
+Inside `pi-en.lib.mkPiShell`, RUNTIME-007 is provided by a Nix-store
+`pi-en-update` placed earlier on `PATH`. It updates the consuming project's
+`pi-en` flake input and exposes only `--url`, `--ref`, and help options. The
+dispatcher therefore avoids hard-coding a bundled non-Nix updater ahead of
+normal command resolution when the Nix-shell updater is available. Help text
+for `pien update` should make both contexts visible: the mkPiShell updater's
+restricted `--url` / `--ref` option set and the separate non-Nix
+installed-prefix updater options used outside Nix shells.
 
 ## Covers
 

@@ -63,14 +63,15 @@ The reusable shell must remain deterministic. Host-specific state such as auth
 files, Git preferences, and Pi resources is imported at launcher runtime rather
 than baked into Nix derivations.
 
-`mkPiShell` may also expose shell-local lifecycle helpers that act on the
-consuming project rather than on an installed Pi-en prefix. The planned
-`pi-en-update` helper belongs in this category: inside a Pi-en-enabled Nix
-shell it should update the consuming flake's `pi-en` input URL/ref and refresh
-only that lock input, while outside the shell the same command name continues
-to mean the non-Nix installed-prefix updater. The shell should mark this
-context explicitly so the Nix-store updater refuses to mutate files when run
-outside a Pi-en-enabled Nix shell.
+`mkPiShell` also exposes shell-local lifecycle helpers that act on the
+consuming project rather than on an installed Pi-en prefix. The `pi-en-update`
+helper belongs in this category: inside a Pi-en-enabled Nix shell it updates
+the consuming flake's `pi-en` input URL/ref and refreshes only that lock input,
+while outside the shell the same command name continues to mean the non-Nix
+installed-prefix updater. Normal Nix-shell `PATH` precedence selects the
+Nix-store updater inside `mkPiShell`. The shell marks this context explicitly
+so the Nix-store updater refuses to mutate files when run outside a
+Pi-en-enabled Nix shell.
 
 ## 3. Runtime tools
 
