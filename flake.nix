@@ -91,7 +91,11 @@
           ] ++ installCommands ++ coordinationCommands);
           pienBin = pkgs.writeShellScriptBin "pien" ''
             set -euo pipefail
-            export PATH="${runtimePath}:''${PATH:-}"
+            if [ "''${PI_EN_NIX_SHELL:-0}" = "1" ]; then
+              export PATH="''${PATH:-}:${runtimePath}"
+            else
+              export PATH="${runtimePath}:''${PATH:-}"
+            fi
             exec -a pien ${pkgs.bash}/bin/bash ${./scripts/pien} "$@"
           '';
         in

@@ -85,6 +85,31 @@ run_case $'cmd=pi-en-update\narg=--prefix\narg=/tmp/pien' update --prefix /tmp/p
 run_case $'cmd=pi-en-uninstall\narg=--prefix\narg=/tmp/pien' uninstall --prefix /tmp/pien
 make_stub_at "$tmp_dir/bin/pi-en-update" pi-en-update-nix-shell
 run_case $'cmd=pi-en-update-nix-shell\narg=--ref\narg=main' update --ref main
+mkdir -p "$tmp_dir/wrapper-runtime"
+make_stub_at "$tmp_dir/wrapper-runtime/pi-en-update" pi-en-update-wrapper-runtime
+cat > "$tmp_dir/pien-wrapper" <<WRAPPER
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "\${PI_EN_NIX_SHELL:-0}" = "1" ]; then
+  export PATH="\${PATH:-}:$tmp_dir/wrapper-runtime"
+else
+  export PATH="$tmp_dir/wrapper-runtime:\${PATH:-}"
+fi
+exec -a pien bash "$tmp_dir/support/pien" "\$@"
+WRAPPER
+chmod +x "$tmp_dir/pien-wrapper"
+: > "$tmp_dir/log"
+PI_EN_NIX_SHELL=1 PIEN_TEST_LOG="$tmp_dir/log" PATH="$tmp_dir/bin:$PATH" "$tmp_dir/pien-wrapper" update --ref main
+case "$(cat "$tmp_dir/log")" in
+  $'cmd=pi-en-update-nix-shell\narg=--ref\narg=main') ;;
+  *) echo "pien wrapper did not preserve Nix-shell pi-en-update precedence" >&2; cat "$tmp_dir/log" >&2; exit 1 ;;
+esac
+: > "$tmp_dir/log"
+PIEN_TEST_LOG="$tmp_dir/log" PATH="$PATH" "$tmp_dir/pien-wrapper" update --prefix /tmp/pien
+case "$(cat "$tmp_dir/log")" in
+  $'cmd=pi-en-update-wrapper-runtime\narg=--prefix\narg=/tmp/pien') ;;
+  *) echo "pien wrapper did not preserve packaged pi-en-update outside Nix shell" >&2; cat "$tmp_dir/log" >&2; exit 1 ;;
+esac
 make_stub pi-en-update
 rm "$tmp_dir/bin/pi-en-update"
 run_case $'cmd=pi-en-install-non-nix\narg=--url\narg=https://example.invalid/pi-en.git\narg=--ref\narg=main\narg=--prefix\narg=/tmp/pien' update --url https://example.invalid/pi-en.git --ref main --prefix /tmp/pien
