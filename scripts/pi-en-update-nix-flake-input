@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: pi-en-update [--url URL] [--ref REF]
+
+Update the pi-en flake input for a project using pi-en.lib.mkPiShell.
+
+Options:
+  --url URL   Set the pi-en input source URL.
+  --ref REF   Set a Git ref. COMMIT@BRANCH becomes a Git flake URL with
+              both ref=BRANCH and rev=COMMIT.
+  -h, --help  Show this help.
+USAGE
+}
+
+fail() {
+  echo "pi-en-update: $*" >&2
+  exit 1
+}
+
+if [ "${PI_EN_NIX_SHELL:-}" != "1" ]; then
+  fail "refusing to update outside a Pi-en-enabled Nix shell"
+fi
+
+input_name="${PI_EN_FLAKE_INPUT_NAME:-pi-en}"
+url=""
+ref=""
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --url)
+      [ "$#" -ge 2 ] || fail "--url requires a value"
+      url="$2"
+      shift 2
+      ;;
+    --ref)
+      [ "$#" -ge 2 ] || fail "--ref requires a value"
+      ref="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --prefix|--uninstall|--yes|--system|--user|--install-dir)
+      fail "unsupported Nix-shell updater option: $1"
+      ;;
+    *)
+      fail "unsupported option: $1"
+      ;;
+  esac
+done
+
+[ -n "$url$ref" ] || fail "provide --url, --ref, or both"
+
+find_flake_root() {
+  local dir
+  dir="$(pwd -P)"
+  while :; do
+    if [ -f "$dir/flake.nix" ]; then
+      printf '%s\n' "$dir"
+      return 0
+    fi
+    [ "$dir" != / ] || return 1
+    dir="$(dirname "$dir")"
+  done
+}
+
+flake_root="$(find_flake_root)" || fail "could not find flake.nix from current directory"
+flake_file="$flake_root/flake.nix"
+
+current_url="$(node - "$flake_file" "$input_name" <<'NODE'
+const { readFileSync } = require('node:fs');
+const [path, name] = process.argv.slice(2);
+const text = readFileSync(path, 'utf8');
+const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const patterns = [
+  new RegExp(`^[ \\t]*(?:inputs\\.)?${esc}\\.url[ \\t]*=[ \\t]*"([^"]*)"[ \\t]*;`, 'm'),
+  new RegExp(`^[ \\t]*"${esc}"\\.url[ \\t]*=[ \\t]*"([^"]*)"[ \\t]*;`, 'm'),
+];
+for (const pattern of patterns) {
+  const match = text.match(pattern);
+  if (match) {
+    console.log(match[1]);
+    process.exit(0);
+  }
+}
+process.exit(1);
+NODE
+)" || fail "unsupported or dynamic pi-en input definition; edit $flake_file manually"
+
+strip_query() {
+  printf '%s\n' "$1" | sed 's/[?&]ref=[^&]*//; s/[?&]rev=[^&]*//; s/[?&]$//'
+}
+
+base_url="${url:-$(strip_query "$current_url") }"
+# Trim the intentional command-substitution fallback space if used.
+base_url="${base_url% }"
+
+if [ -n "$ref" ]; then
+  case "$ref" in
+    *@*)
+      commit="${ref%@*}"
+      branch="${ref#*@}"
+      [ -n "$commit" ] && [ -n "$branch" ] || fail "COMMIT@BRANCH ref must include both parts"
+      case "$base_url" in
+        git+*) new_url="$base_url?ref=$branch&rev=$commit" ;;
+        *) new_url="git+$base_url?ref=$branch&rev=$commit" ;;
+      esac
+      ;;
+    *)
+      case "$base_url" in
+        *\?*) new_url="$base_url&ref=$ref" ;;
+        *) new_url="$base_url?ref=$ref" ;;
+      esac
+      ;;
+  esac
+else
+  new_url="$base_url"
+fi
+
+export PI_EN_UPDATE_FLAKE_FILE="$flake_file"
+export PI_EN_UPDATE_INPUT_NAME="$input_name"
+export PI_EN_UPDATE_NEW_URL="$new_url"
+node <<'NODE'
+const { readFileSync, writeFileSync } = require('node:fs');
+const path = process.env.PI_EN_UPDATE_FLAKE_FILE;
+const name = process.env.PI_EN_UPDATE_INPUT_NAME;
+const newUrl = process.env.PI_EN_UPDATE_NEW_URL;
+const text = readFileSync(path, 'utf8');
+const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const patterns = [
+  new RegExp(`(^[ \\t]*(?:inputs\\.)?${esc}\\.url[ \\t]*=[ \\t]*")([^"]*)("[ \\t]*;)`, 'm'),
+  new RegExp(`(^[ \\t]*"${esc}"\\.url[ \\t]*=[ \\t]*")([^"]*)("[ \\t]*;)`, 'm'),
+];
+for (const pattern of patterns) {
+  if (pattern.test(text)) {
+    const next = text.replace(pattern, (_match, prefix, _oldUrl, suffix) => `${prefix}${newUrl}${suffix}`);
+    if (next !== text) writeFileSync(path, next);
+    process.exit(0);
+  }
+}
+console.error(`unsupported or dynamic ${name} input definition; edit ${path} manually`);
+process.exit(1);
+NODE
+
+cd "$flake_root"
+if ! nix flake update "$input_name"; then
+  nix flake lock --update-input "$input_name"
+fi

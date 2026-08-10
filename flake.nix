@@ -137,6 +137,16 @@
             "$out/share/pi-en/scripts/pi-en-install-non-nix"
         '';
 
+      mkPiEnNixUpdate = pkgs:
+        let
+          runtimePath = pkgs.lib.makeBinPath (mkRuntime pkgs);
+        in
+        pkgs.writeShellScriptBin "pi-en-update" ''
+          set -euo pipefail
+          export PATH="${runtimePath}:''${PATH:-}"
+          exec ${pkgs.bash}/bin/bash ${./scripts/pi-en-update-nix-flake-input} "$@"
+        '';
+
       mkInstallNonNixCommands = pkgs:
         let
           runtimePath = pkgs.lib.makeBinPath (mkRuntime pkgs);
@@ -201,6 +211,7 @@
           piEn = mkPiEn pkgs;
           piEnShell = mkPiEnShell pkgs;
           pien = mkPien pkgs { inherit includeCoordinationHelpers; };
+          piEnNixUpdate = mkPiEnNixUpdate pkgs;
           agentCoordCommands = builtins.attrValues (mkAgentCoordCommands pkgs);
           coordinationPackages = if includeCoordinationHelpers then agentCoordCommands else [ ];
           roleManagerPackage = mkRoleManagerPackage pkgs;
@@ -221,6 +232,7 @@
             piEn
             piEnShell
             pien
+            piEnNixUpdate
           ] ++ coordinationPackages ++ extraPackages;
 
           shellHook = ''
@@ -229,6 +241,8 @@
             export PI_EN_ROLE_MANAGER_PACKAGE="${roleManagerPackage}"
             export PI_EN_NIX_PROJECT_BWRAP="${piBwrap}/bin/pi-en-bwrap"
             export PI_EN_NIX_SANDBOX_COMMAND_PATH="${piSandboxCommandPath}"
+            export PI_EN_NIX_SHELL=1
+            export PI_EN_FLAKE_INPUT_NAME=pi-en
             if [ -n "${extraPackagePath}" ]; then
               if [ -n "''${PI_EN_BWRAP_EXTRA_PATH:-}" ]; then
                 export PI_EN_BWRAP_EXTRA_PATH="${extraPackagePath}:$PI_EN_BWRAP_EXTRA_PATH"
@@ -253,6 +267,7 @@
           mkPiEn
           mkPiEnShell
           mkPien
+          mkPiEnNixUpdate
           mkInstallNonNixCommands
           agentCoordCommandNames
           mkAgentCoordSupport
