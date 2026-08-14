@@ -489,6 +489,7 @@ grep -q -- '--workspace-item has been removed' "$tmp/workspace-item.err"
 requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type functional \
+  --requirement-key FRQ-001 \
   --status accepted \
   --testable no \
   --testability-note "Covered by coordination helper smoke tests." \
@@ -496,6 +497,7 @@ requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
 grep -q '^id: PIEN-FRQ-[0-9]\{8\}-[0-9]\{6\}-001$' \
   "$workspace_dir/.pi-en/coordination/$requirement_path"
 grep -q '^type: functional-requirement$' "$workspace_dir/.pi-en/coordination/$requirement_path"
+grep -q '^requirement_key: FRQ-001$' "$workspace_dir/.pi-en/coordination/$requirement_path"
 grep -q '^status: accepted$' "$workspace_dir/.pi-en/coordination/$requirement_path"
 grep -q '^testable: no$' "$workspace_dir/.pi-en/coordination/$requirement_path"
 case "$requirement_path" in
@@ -506,6 +508,7 @@ esac
 quality_requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type quality \
+  --requirement-key QRQ-001 \
   --status accepted \
   --testable no \
   --testability-note "Covered by coordination helper smoke tests." \
@@ -513,6 +516,7 @@ quality_requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
 grep -q '^id: PIEN-QRQ-[0-9]\{8\}-[0-9]\{6\}-001$' \
   "$workspace_dir/.pi-en/coordination/$quality_requirement_path"
 grep -q '^type: quality-requirement$' "$workspace_dir/.pi-en/coordination/$quality_requirement_path"
+grep -q '^requirement_key: QRQ-001$' "$workspace_dir/.pi-en/coordination/$quality_requirement_path"
 case "$quality_requirement_path" in
   requirements/*.yaml) ;;
   *) printf 'unexpected quality requirement path: %s\n' "$quality_requirement_path" >&2; exit 1 ;;
@@ -521,6 +525,7 @@ esac
 constraint_requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type constraint \
+  --requirement-key CRQ-001 \
   --status accepted \
   --testable no \
   --testability-note "Covered by coordination helper smoke tests." \
@@ -528,10 +533,22 @@ constraint_requirement_path="$(cd "$workspace_dir" && pi-en-coord-new \
 grep -q '^id: PIEN-CRQ-[0-9]\{8\}-[0-9]\{6\}-001$' \
   "$workspace_dir/.pi-en/coordination/$constraint_requirement_path"
 grep -q '^type: constraint-requirement$' "$workspace_dir/.pi-en/coordination/$constraint_requirement_path"
+grep -q '^requirement_key: CRQ-001$' "$workspace_dir/.pi-en/coordination/$constraint_requirement_path"
 case "$constraint_requirement_path" in
   requirements/*.yaml) ;;
   *) printf 'unexpected constraint requirement path: %s\n' "$constraint_requirement_path" >&2; exit 1 ;;
 esac
+
+if (cd "$workspace_dir" && pi-en-coord-new \
+  --coord-dir .pi-en/coordination \
+  --type functional \
+  --testable no \
+  --testability-note "Covered by coordination helper smoke tests." \
+  "Missing requirement key" >/dev/null 2>"$tmp/missing-req-key.err"); then
+  printf 'expected missing requirement key creation to fail\n' >&2
+  exit 1
+fi
+grep -q -- '--requirement-key is required for requirement items' "$tmp/missing-req-key.err"
 
 if (cd "$workspace_dir" && pi-en-coord-new \
   --coord-dir .pi-en/coordination \

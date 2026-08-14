@@ -102,7 +102,10 @@ messages:
 
 Requirement items are specification records rather than workflow history
 records. Active requirement files under `requirements/` store current metadata
-and a single renderable body:
+and a single renderable body. The top-level `id` is the generated coordination
+item ID used for filenames and workflow links; `requirement_key` is the stable,
+public, human-facing requirement identifier (for example `UC-001`, `CMD-004`,
+`AUTH-001`, `TEST-001`, or `CRQ-001`) and must not be a generated item ID:
 
 ```yaml
 schema: coordination-item/v1

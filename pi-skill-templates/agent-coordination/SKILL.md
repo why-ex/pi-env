@@ -84,7 +84,11 @@ requirement, `CRQ` for constraint requirement, `TODO` for todo, `DEC` for
 decision, and `NOTE` for note. The `NNN`
 suffix starts at
 `001` for each UTC timestamp. Historical items may keep legacy IDs; do not
-rename, renumber, rewrite, or move them unless explicitly directed.
+rename, renumber, rewrite, or move them unless explicitly directed. For
+functional, quality, and constraint requirement items, pass an explicit
+`--requirement-key`; the generated `id` is the coordination item ID, while
+`requirement_key` is the stable public requirement identifier such as
+`UC-001`, `CMD-004`, `AUTH-001`, `TEST-001`, or `CRQ-001`.
 
 `pi-en-coord-list notes` and `pi-en-coord-list todos` report note and TODO
 items by their YAML `status` values. `pi-en-coord-list requirements` reports

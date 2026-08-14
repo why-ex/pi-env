@@ -104,9 +104,13 @@ Issue current state is stored near the top (`status`, `owner`, `updated`,
 `current`), while authoritative issue history is stored in chronological
 `events` and linked Markdown `messages` entries. Requirement items are
 current-state records under `requirements/`: they keep requirement metadata and
-one top-level renderable `body: |-` block. TODO items are current-state records
-under `todos/` with one top-level `body: |-` block. Requirement and TODO items
-must not contain top-level `current`, `events`, or `messages` sections.
+one top-level renderable `body: |-` block. For requirements, `id` is the
+generated coordination item ID, while `requirement_key` is the stable public
+requirement identifier such as `UC-001`, `CMD-004`, `AUTH-001`, `TEST-001`, or
+`CRQ-001`; do not use generated item IDs as requirement keys. TODO items are
+current-state records under `todos/` with one top-level `body: |-` block.
+Requirement and TODO items must not contain top-level `current`, `events`, or
+`messages` sections.
 
 When changing requirements, update the corresponding requirement item first.
 Then consult the current implementation repo's `repos/{repo_id}/REPO.md`

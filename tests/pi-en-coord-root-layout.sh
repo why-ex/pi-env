@@ -87,6 +87,7 @@ pi-en-coord-list --coord-dir "$coord_dir" issues closed | grep -q "^$issue_id"
 requirement_path="$(pi-en-coord-new \
   --coord-dir "$coord_dir" \
   --type functional \
+  --requirement-key ROOT-001 \
   --testable no \
   --testability-note "Rendered by root layout test." \
   "Project-local root layout requirement" | tail -n 1)"
@@ -107,7 +108,7 @@ cat >"$project_root/designs/root.md" <<EOF_DESIGN
 
 | Requirement | Coordination item |
 |-------------|-------------------|
-| $requirement_id | $requirement_id |
+| ROOT-001 | $requirement_id |
 EOF_DESIGN
 pi-en-coord-generate-requirements-coverage \
   --coordination-dir "$coord_dir" \

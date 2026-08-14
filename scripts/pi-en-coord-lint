@@ -41,6 +41,8 @@ Checks:
   - issue items have embedded current/events/messages history;
   - requirement and todo items have current-state body records without
     embedded history;
+  - active FRQ/QRQ/CRQ requirement_key values are present, unique, and not
+    generated coordination item IDs;
   - imported FRQ/QRQ/CRQ items have non-empty source_refs;
   - every tests/items/**/*.sh script matches an existing item ID;
   - design ## Covers entries reference active requirement keys and IDs.
@@ -134,6 +136,7 @@ failures=0
 warnings=0
 items_seen=0
 item_identity_seen=$'\n'
+active_requirement_key_seen=$'\n'
 
 lint_fail() {
   printf 'pi-en-coord-lint: FAIL: %s\n' "$*" >&2
@@ -383,6 +386,22 @@ while IFS= read -r file; do
       esac
       if [ -z "$(coord_trim "$requirement_key")" ]; then
         lint_fail "$file requirement item is missing requirement_key"
+      elif printf '%s' "$requirement_key" | grep -Eq '^[A-Z0-9]+-[A-Z0-9]{1,4}-[0-9]{8}-[0-9]{6}-[0-9]{3}$'; then
+        lint_fail "$file requirement_key $requirement_key looks like a generated coordination item id; use a stable public requirement key"
+      else
+        case "$status" in
+          closed|superseded) ;;
+          *)
+            case "$active_requirement_key_seen" in
+              *$'\n'"$requirement_key"$'\n'*)
+                lint_fail "$file duplicates active requirement_key $requirement_key"
+                ;;
+              *)
+                active_requirement_key_seen="${active_requirement_key_seen}${requirement_key}"$'\n'
+                ;;
+            esac
+            ;;
+        esac
       fi
       if [ -z "$(coord_trim "$requirement_kind")" ]; then
         lint_fail "$file requirement item is missing requirement_kind"

@@ -75,6 +75,7 @@ fi
 requirement_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type functional-requirement \
+  --requirement-key FRQ-001 \
   --testable no \
   --testability-note "Reviewed as a policy requirement." \
   "Lint functional requirement item" | tail -n 1)"
@@ -102,6 +103,28 @@ if pi-en-coord-lint \
   exit 1
 fi
 cp "$tmp/requirement.clean.yaml" ".pi-en/coordination/$requirement_path"
+cp ".pi-en/coordination/$requirement_path" "$tmp/requirement.key.clean.yaml"
+sed -i "s/^requirement_key: .*/requirement_key: $requirement_id/" \
+  ".pi-en/coordination/$requirement_path"
+if pi-en-coord-lint \
+  --coord-dir .pi-en/coordination \
+  --project-root . >/dev/null 2>&1; then
+  printf 'expected lint to fail for generated-ID-style requirement_key\n' >&2
+  exit 1
+fi
+cp "$tmp/requirement.key.clean.yaml" ".pi-en/coordination/$requirement_path"
+
+if pi-en-coord-new \
+  --coord-dir .pi-en/coordination \
+  --type quality \
+  --testable no \
+  --testability-note "Missing requirement key check." \
+  "Lint missing requirement key" >/dev/null 2>"$tmp/missing-requirement-key.err"; then
+  printf 'expected requirement creation without --requirement-key to fail\n' >&2
+  exit 1
+fi
+grep -q -- '--requirement-key is required for requirement items' \
+  "$tmp/missing-requirement-key.err"
 
 todo_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
@@ -135,12 +158,14 @@ cp "$tmp/todo.clean.yaml" ".pi-en/coordination/$todo_path"
 quality_requirement_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type quality \
+  --requirement-key QRQ-001 \
   --testable no \
   --testability-note "Reviewed as a quality requirement." \
   "Lint quality requirement item" | tail -n 1)"
 imported_requirement_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type quality \
+  --requirement-key QRQ-002 \
   --testable no \
   --testability-note "Imported from REQUIREMENTS.md; reviewed as policy." \
   "Lint imported quality requirement" | tail -n 1)"
@@ -155,6 +180,7 @@ printf 'source_refs:\n  - "REQUIREMENTS.md#lint-imported-quality-requirement"\n'
 imported_note_requirement_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type functional-requirement \
+  --requirement-key FRQ-002 \
   --testable no \
   --testability-note "Imported requirement is review-only for now." \
   "Lint imported note wording" | tail -n 1)"
@@ -169,6 +195,7 @@ printf 'source_refs:\n  - "USE_CASES.md#lint-imported-note-wording"\n' \
 constraint_requirement_path="$(pi-en-coord-new \
   --coord-dir .pi-en/coordination \
   --type constraint \
+  --requirement-key CRQ-001 \
   --testable no \
   --testability-note "Reviewed as a constraint requirement." \
   "Lint constraint requirement item" | tail -n 1)"
@@ -189,6 +216,16 @@ grep -q '^id: PIEN-QRQ-[0-9]\{8\}-[0-9]\{6\}-[0-9]\{3\}$' \
   ".pi-en/coordination/$imported_requirement_path"
 grep -q '^id: PIEN-CRQ-[0-9]\{8\}-[0-9]\{6\}-001$' \
   ".pi-en/coordination/$constraint_requirement_path"
+cp ".pi-en/coordination/$constraint_requirement_path" "$tmp/constraint.clean.yaml"
+sed -i 's/^requirement_key: .*/requirement_key: QRQ-001/' \
+  ".pi-en/coordination/$constraint_requirement_path"
+if pi-en-coord-lint \
+  --coord-dir .pi-en/coordination \
+  --project-root . >/dev/null 2>&1; then
+  printf 'expected lint to fail for duplicate active requirement_key\n' >&2
+  exit 1
+fi
+cp "$tmp/constraint.clean.yaml" ".pi-en/coordination/$constraint_requirement_path"
 
 pi-en-coord-lint \
   --coord-dir .pi-en/coordination \

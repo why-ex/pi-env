@@ -32,6 +32,7 @@ Options:
   --role ROLE              Coordination role; default: PI_EN_COORD_ROLE
   --testable yes|no        Whether an item-matched test is required; default: yes
   --testability-note TEXT  Required rationale when --testable no
+  --requirement-key KEY    Stable public key for FRQ/QRQ/CRQ requirement items
   --id ID                  Explicit item ID; default: timestamp ID with type code
   -h, --help               Show this help
 
@@ -48,6 +49,10 @@ non-alphanumeric characters are removed for item IDs.
 
 Generated IDs use:
   <PROJECTKEY>-<TYPECODE>-<YYYYMMDD-HHMMSS>-<NNN>
+
+For requirement items, the generated `id` is only the coordination item ID.
+Pass --requirement-key with a stable public requirement identifier such as
+UC-001, CMD-004, AUTH-001, TEST-001, or CRQ-001.
 
 The NNN collision/order suffix starts at 001 for each timestamp. Filenames
 use the item ID only, for example PIEN-ISS-20260607-204155-001.yaml.
@@ -68,6 +73,7 @@ role="$(coord_default_role)"
 testable="yes"
 testability_note=""
 explicit_id=""
+requirement_key=""
 title_parts=()
 
 while [ "$#" -gt 0 ]; do
@@ -139,6 +145,11 @@ while [ "$#" -gt 0 ]; do
     --testability-note)
       [ "$#" -ge 2 ] || coord_die "--testability-note requires a value"
       testability_note="$2"
+      shift 2
+      ;;
+    --requirement-key)
+      [ "$#" -ge 2 ] || coord_die "--requirement-key requires a value"
+      requirement_key="$2"
       shift 2
       ;;
     --id)
@@ -301,31 +312,39 @@ fi
 
 requirement_metadata=""
 case "$item_type" in
+  functional-requirement|quality-requirement|constraint-requirement)
+    if [ -z "$(coord_trim "$requirement_key")" ]; then
+      coord_die "--requirement-key is required for requirement items; choose a stable public key such as UC-001, CMD-004, AUTH-001, TEST-001, or CRQ-001 (the generated item id is only the coordination id)"
+    fi
+    if printf '%s' "$requirement_key" | grep -Eq '^[A-Z0-9]+-[A-Z0-9]{1,4}-[0-9]{8}-[0-9]{6}-[0-9]{3}$'; then
+      coord_die "--requirement-key must be a stable public requirement key, not a generated coordination item id"
+    fi
+    ;;
+  *)
+    if [ -n "$(coord_trim "$requirement_key")" ]; then
+      coord_die "--requirement-key is only valid for functional, quality, or constraint requirement items"
+    fi
+    ;;
+esac
+case "$item_type" in
   functional-requirement)
-    requirement_metadata="requirement_key: $item_id
+    requirement_metadata="requirement_key: $(coord_yaml_scalar "$requirement_key")
 requirement_class: functional
 requirement_kind: detailed-behavior
 domain: requirements
 "
     ;;
   quality-requirement)
-    requirement_metadata="requirement_key: $item_id
+    requirement_metadata="requirement_key: $(coord_yaml_scalar "$requirement_key")
 requirement_class: quality
 requirement_kind: quality
 domain: requirements
 "
     ;;
   constraint-requirement)
-    requirement_metadata="requirement_key: $item_id
+    requirement_metadata="requirement_key: $(coord_yaml_scalar "$requirement_key")
 requirement_class: constraint
 requirement_kind: constraint
-domain: requirements
-"
-    ;;
-  requirement)
-    requirement_metadata="requirement_key: $item_id
-requirement_class: legacy
-requirement_kind: legacy
 domain: requirements
 "
     ;;
