@@ -81,7 +81,9 @@ Environment knobs:
   PI_EN_BWRAP_HOST_XDG_GIT_CONFIG=/path Host XDG git config (default: $XDG_CONFIG_HOME/git/config or ~/.config/git/config)
   PI_EN_BWRAP_DEFAULT_TOOLS="..."  Override default --tools list
   PI_EN_BWRAP_AGENT_BIN_SHADOW=0 Disable Nix-runtime shadowing of /home/pi/.pi/agent/bin
-  PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS="rg fd ..." Override the Nix tool names to shadow
+  PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS="rg fd ..."
+                               Replace curated Nix shadow tools; missing entries warn,
+                               and empty or unresolved lists skip the shadow bind
   PI_EN_BWRAP_EXTRA_PATH=/nix/store/.../bin[:...] Add validated Nix-store command dirs after pi-en runtime tools
   PI_EN_BWRAP_HOST_EXTRA_PATH=/opt/tools/bin[:...] Host runtime only: add validated host command dirs
   PI_EN_BWRAP_HOST_RO_PATHS=/opt/pi-en/share/pi-en/scripts[:...]

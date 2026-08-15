@@ -94,6 +94,16 @@ The exported path is an interface between the Nix layer and the sandbox layer,
 not a host-path inheritance mechanism. Nix computes package paths;
 `pi-en-bwrap` decides whether they are safe to admit.
 
+Nix runtime startup may also populate a generated agent-bin shadow directory for
+curated command names such as `rg` and `fd`. The shadow entries are symlinks to
+executables resolved only from `PI_EN_RUNTIME_PATH` or validated
+`PI_EN_BWRAP_EXTRA_PATH` paths that canonicalize under `/nix/store`. Binding
+that directory over `/home/pi/.pi/agent/bin` prevents Pi's own host-provided bin
+precedence from selecting stale or non-reproducible tools inside the sandbox;
+it does not delete or mutate user agent state. Users can disable the bind with
+`PI_EN_BWRAP_AGENT_BIN_SHADOW=0` or replace the curated tool list with
+`PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS`.
+
 ## 4. Agent-oriented flake integration recipes
 
 External project flakes often already encode domain-specific shell policy:

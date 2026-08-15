@@ -803,6 +803,24 @@ Pi starts. Host-runtime users should use `PI_EN_BWRAP_HOST_EXTRA_PATH` instead;
 those entries are canonicalized, must exist, are mounted read-only, and are
 rejected under host `$HOME`.
 
+In Nix runtime mode, Pi-en may bind a generated read-only shadow directory over
+`/home/pi/.pi/agent/bin`. This masks stale or host-specific Pi-provided tools
+that would otherwise take precedence inside Pi, while leaving the user's host
+agent directory untouched. The default curated shadow list includes `rg`, `fd`,
+`grep`, `find`, `ls`, `bash`, `sh`, `node`, `jq`, `git`, `sed`, `awk`, `tar`,
+and `gzip`. Each entry is a symlink resolved only from trusted Nix-store paths
+already admitted by `PI_EN_RUNTIME_PATH` or by validated
+`PI_EN_BWRAP_EXTRA_PATH`; Pi-en does not scan arbitrary host paths to populate
+this directory.
+
+Set `PI_EN_BWRAP_AGENT_BIN_SHADOW=0` to opt out and keep the normal sandbox
+agent `bin` directory visible. Set `PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS` to a
+space-separated replacement list when you need a narrower or custom shadow set,
+for example `PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS="rg fd"`. Invalid tool names
+fail before startup. Missing tools in an explicit list emit warnings and are
+skipped; if the list is empty or no listed tool resolves from trusted Nix paths,
+Pi-en does not bind the shadow directory.
+
 #### Add Pi-en to an existing devshell
 
 Use this when the project already has a custom `mkShell` and you only want to
@@ -1237,6 +1255,8 @@ PI_EN_COORD_PROJECT=pi-en                 # coordination project/domain name
 PI_EN_COORD_PROJECT_KEY=PIEN              # optional generated item ID prefix
 PI_EN_COORD_ROLE=architect                 # active coordination role for helper commits/events
 PI_EN_BWRAP_DEFAULT_TOOLS="read,bash,..."  # override pi-en/pi-en-bwrap default tools
+PI_EN_BWRAP_AGENT_BIN_SHADOW=0              # Nix runtime: do not mask /home/pi/.pi/agent/bin
+PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS="rg fd"  # Nix runtime: override generated shadow tool list
 PI_EN_BWRAP_EXTRA_PATH=/nix/store/.../bin   # Nix runtime: validated /nix/store command dirs
 PI_EN_BWRAP_HOST_EXTRA_PATH=/opt/tools/bin  # host runtime: validated read-only host command dirs
 PI_EN_BWRAP_NET=0                          # disable network sharing

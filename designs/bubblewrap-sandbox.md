@@ -98,6 +98,15 @@ launcher must not scan all of `/nix/store`, inherit host `PATH`, or mount host
 `/bin` or `/usr/bin` merely to discover project tools. Unsafe extra path
 entries should fail closed before Pi starts.
 
+When Nix runtime mode is active, the sandbox may mask
+`/home/pi/.pi/agent/bin` with a generated read-only directory of curated tool
+symlinks, such as `rg` and `fd`, resolved only from trusted Nix-store runtime or
+extra-path entries. This mount is a safety and reproducibility layer over the
+sandbox's copied/persistent agent directory: it avoids accidentally selecting
+Pi-provided host binaries while preserving the user's host and sandbox agent
+state. Opt-out and explicit-list environment variables keep the behavior
+controlled by the same documented path policy.
+
 ## 4. Network mode and limits
 
 Network access is explicit. `NET-001` and `NET-002` distinguish the default
