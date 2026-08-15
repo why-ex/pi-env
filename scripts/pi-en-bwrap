@@ -80,6 +80,8 @@ Environment knobs:
   PI_EN_BWRAP_HOST_GITCONFIG=/path  Host global git config (default: ~/.gitconfig)
   PI_EN_BWRAP_HOST_XDG_GIT_CONFIG=/path Host XDG git config (default: $XDG_CONFIG_HOME/git/config or ~/.config/git/config)
   PI_EN_BWRAP_DEFAULT_TOOLS="..."  Override default --tools list
+  PI_EN_BWRAP_AGENT_BIN_SHADOW=0 Disable Nix-runtime shadowing of /home/pi/.pi/agent/bin
+  PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS="rg fd ..." Override the Nix tool names to shadow
   PI_EN_BWRAP_EXTRA_PATH=/nix/store/.../bin[:...] Add validated Nix-store command dirs after pi-en runtime tools
   PI_EN_BWRAP_HOST_EXTRA_PATH=/opt/tools/bin[:...] Host runtime only: add validated host command dirs
   PI_EN_BWRAP_HOST_RO_PATHS=/opt/pi-en/share/pi-en/scripts[:...]
@@ -999,6 +1001,73 @@ if [ -n "${PI_EN_BWRAP_HOST_RO_PATHS:-}" ]; then
   IFS="$old_ifs"
 fi
 
+agent_bin_shadow_bind_args=()
+agent_bin_shadow_dir="$state_base/agent-bin-shadow"
+agent_bin_shadow_default_tools="rg fd grep find ls bash sh node jq git sed awk tar gzip"
+agent_bin_shadow_enabled=0
+if [ "$host_runtime" != "1" ] && [ "${PI_EN_BWRAP_AGENT_BIN_SHADOW:-1}" != "0" ]; then
+  agent_bin_shadow_enabled=1
+fi
+
+agent_bin_shadow_tool_valid() {
+  case "$1" in
+    ""|*/*|.*|*..*|*[!abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.+-]*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+agent_bin_shadow_resolve_tool() {
+  local tool="$1" entry candidate old_ifs
+  old_ifs="$IFS"
+  IFS=:
+  for entry in ${PI_EN_RUNTIME_PATH:-}; do
+    IFS="$old_ifs"
+    [ -n "$entry" ] || { IFS=:; continue; }
+    case "$entry" in /*) ;; *) IFS=:; continue ;; esac
+    [ -d "$entry" ] || { IFS=:; continue; }
+    candidate="$entry/$tool"
+    if [ -x "$candidate" ] && candidate="$(realpath -e "$candidate" 2>/dev/null)"; then
+      case "$candidate" in /nix/store/*) printf '%s' "$candidate"; IFS="$old_ifs"; return 0 ;; esac
+    fi
+    IFS=:
+  done
+  for entry in $validated_extra_path; do
+    IFS="$old_ifs"
+    [ -n "$entry" ] || { IFS=:; continue; }
+    candidate="$entry/$tool"
+    if [ -x "$candidate" ] && candidate="$(realpath -e "$candidate" 2>/dev/null)"; then
+      case "$candidate" in /nix/store/*) printf '%s' "$candidate"; IFS="$old_ifs"; return 0 ;; esac
+    fi
+    IFS=:
+  done
+  IFS="$old_ifs"
+  return 1
+}
+
+if [ "$agent_bin_shadow_enabled" = "1" ]; then
+  agent_bin_shadow_tools="${PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS:-$agent_bin_shadow_default_tools}"
+  rm -rf "$agent_bin_shadow_dir"
+  mkdir -p "$agent_bin_shadow_dir"
+  agent_bin_shadow_count=0
+  for shadow_tool in $agent_bin_shadow_tools; do
+    if ! agent_bin_shadow_tool_valid "$shadow_tool"; then
+      echo "pi-en-bwrap: invalid PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS entry: $shadow_tool" >&2
+      exit 2
+    fi
+    if shadow_tool_path="$(agent_bin_shadow_resolve_tool "$shadow_tool")"; then
+      ln -s "$shadow_tool_path" "$agent_bin_shadow_dir/$shadow_tool"
+      agent_bin_shadow_count=$((agent_bin_shadow_count + 1))
+    elif [ -n "${PI_EN_BWRAP_AGENT_BIN_SHADOW_TOOLS:-}" ]; then
+      echo "pi-en-bwrap: warning: requested agent-bin shadow tool was not found in trusted Nix paths: $shadow_tool" >&2
+    fi
+  done
+  if [ "$agent_bin_shadow_count" -gt 0 ]; then
+    agent_bin_shadow_bind_args=(--ro-bind "$agent_bin_shadow_dir" /home/pi/.pi/agent/bin)
+  else
+    echo "pi-en-bwrap: warning: no agent-bin shadow tools resolved from trusted Nix paths" >&2
+  fi
+fi
+
 sandbox_path="${PI_EN_RUNTIME_PATH:-}"
 sandbox_path="$(append_path_entry "$validated_extra_path" "$sandbox_path")"
 if [ "$host_runtime" = "1" ]; then
@@ -1100,6 +1169,7 @@ bwrap_args+=(
   "${role_manager_bind_args[@]}"
   --bind "$state_base/home" /home/pi
   --bind "$state_base/agent" /home/pi/.pi/agent
+  "${agent_bin_shadow_bind_args[@]}"
   "${extension_bind_args[@]}"
   "${session_bind_args[@]}"
   "${coord_bind_args[@]}"
